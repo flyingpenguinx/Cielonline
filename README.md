@@ -1,4 +1,4 @@
-# CielWorks QR Studio
+# Cielonline QR Studio
 
 **QR codes made for you!**
 
@@ -165,7 +165,7 @@ Recommended QR code generators:
 
 ## 📄 License
 
-© 2024 CielWorks. All rights reserved.
+© 2025 Cielonline. All rights reserved.
 
 ## 🤝 Contact
 

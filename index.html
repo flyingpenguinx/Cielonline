@@ -3,313 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CielWorks QR Studio - QR codes made for you!</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            text-align: center;
-            padding: 60px 20px;
-            color: white;
-        }
-        
-        header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        header .tagline {
-            font-size: 1.5em;
-            font-style: italic;
-            opacity: 0.9;
-        }
-        
-        .content {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            margin: 20px auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        
-        .intro {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        
-        .intro h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 2em;
-        }
-        
-        .intro p {
-            font-size: 1.1em;
-            color: #666;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .qr-types {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin: 50px 0;
-        }
-        
-        .qr-type {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 10px;
-            padding: 30px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .qr-type:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-        
-        .qr-type h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.8em;
-        }
-        
-        .qr-type h4 {
-            color: #764ba2;
-            margin: 20px 0 10px 0;
-            font-size: 1.2em;
-        }
-        
-        .qr-type ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .qr-type ul li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-        }
-        
-        .qr-type ul li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #667eea;
-            font-weight: bold;
-        }
-        
-        .demo-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-            padding: 40px;
-            margin: 50px 0;
-            text-align: center;
-        }
-        
-        .demo-section h2 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-        }
-        
-        .demo-card {
-            background: white;
-            color: #333;
-            border-radius: 10px;
-            padding: 30px;
-            max-width: 600px;
-            margin: 30px auto;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-        
-        .demo-card h3 {
-            color: #667eea;
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        
-        .demo-card .title {
-            color: #764ba2;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-        }
-        
-        .demo-card .contact-info {
-            text-align: left;
-            margin: 20px 0;
-        }
-        
-        .demo-card .contact-info p {
-            padding: 10px 0;
-            font-size: 1.1em;
-        }
-        
-        .demo-card .contact-info strong {
-            color: #667eea;
-            display: inline-block;
-            width: 80px;
-        }
-        
-        .demo-links {
-            margin-top: 30px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            margin: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-        
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: white;
-        }
-        
-        footer p {
-            opacity: 0.9;
-        }
-        
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 2em;
-            }
-            
-            header .tagline {
-                font-size: 1.2em;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .qr-types {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <title>Cielonline QR Studio | Modern QR solutions</title>
+    <meta name="description" content="Cielonline QR Studio crafts modern hosted digital cards and streamlined vCards for professional, on-brand sharing.">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🌟 CielWorks QR Studio</h1>
-            <p class="tagline">QR codes made for you!</p>
+    <div class="page">
+        <header class="hero">
+            <div class="container">
+                <p class="eyebrow">Cielonline QR Studio</p>
+                <h1>Modern QR experiences tailored for your brand</h1>
+                <p class="lead">Deliver an elevated first impression with responsive digital cards and effortless vCards built for clarity and flexibility.</p>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="cards/carlos-leon/carlos-leon.html">Explore Hosted Card</a>
+                    <a class="btn btn-secondary" href="cards/carlos-leon/carlos-leon.vcf" download>Download vCard</a>
+                </div>
+            </div>
         </header>
-        
-        <div class="content">
-            <div class="intro">
-                <h2>Professional QR Code Solutions</h2>
-                <p>Transform the way you share information with our two powerful QR code solutions. Whether you need a dynamic, updateable digital business card or a traditional vCard format, we've got you covered.</p>
-            </div>
-            
-            <div class="qr-types">
-                <div class="qr-type">
-                    <h3>🌐 Hosted Card</h3>
-                    <p>A dynamic, web-based digital business card that you can update anytime without changing the QR code.</p>
-                    
-                    <h4>Perfect For:</h4>
-                    <ul>
-                        <li>Professionals who update their information frequently</li>
-                        <li>Businesses wanting rich, branded presentations</li>
-                        <li>Anyone needing analytics and tracking</li>
-                        <li>Sharing portfolios, social links, and media</li>
-                    </ul>
-                    
-                    <h4>Benefits:</h4>
-                    <ul>
-                        <li>Update anytime without reprinting</li>
-                        <li>Rich multimedia content</li>
-                        <li>Custom branding and design</li>
-                        <li>Works on any device with a browser</li>
-                        <li>No app installation required</li>
-                    </ul>
+
+        <main>
+            <section class="section intro">
+                <div class="container">
+                    <div class="section-header">
+                        <h2 class="section-heading">Two streamlined ways to share</h2>
+                        <p class="section-lead">Choose between a dynamic hosted profile that stays fresh and a ready-to-save vCard that works anywhere. Both are designed to feel polished, trustworthy, and on-brand.</p>
+                    </div>
+
+                    <div class="feature-grid">
+                        <article class="feature-card">
+                            <h3>Hosted Digital Card</h3>
+                            <p class="feature-subhead">A live, web-based experience that grows with your business and showcases your full story.</p>
+                            <div>
+                                <h4>Perfect for</h4>
+                                <ul>
+                                    <li>Professionals who refresh their details often</li>
+                                    <li>Brands that want a richer visual presentation</li>
+                                    <li>Teams that track engagement and interactions</li>
+                                    <li>Sharing portfolios, media, and social profiles</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Standout benefits</h4>
+                                <ul>
+                                    <li>Update content anytime; your QR never changes</li>
+                                    <li>Customize the layout and branding to match your identity</li>
+                                    <li>Deliver multimedia experiences on any device</li>
+                                    <li>No app or download needed for your audience</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="feature-card">
+                            <h3>Eco vCard</h3>
+                            <p class="feature-subhead">A lightweight contact file that saves directly to address books when scanned.</p>
+                            <div>
+                                <h4>Perfect for</h4>
+                                <ul>
+                                    <li>Networking events where speed matters</li>
+                                    <li>Sharing details without relying on a data connection</li>
+                                    <li>Users who prefer contacts in their native phone apps</li>
+                                    <li>Complementing printed collateral with a modern touch</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4>Standout benefits</h4>
+                                <ul>
+                                    <li>Instantly adds your details with a single tap</li>
+                                    <li>Works everywhere once downloaded</li>
+                                    <li>Compatible across iOS, Android, and desktop</li>
+                                    <li>Streamlined and easy to understand</li>
+                                </ul>
+                            </div>
+                        </article>
+                    </div>
                 </div>
-                
-                <div class="qr-type">
-                    <h3>🌱 Eco vCard</h3>
-                    <p>A traditional vCard (.vcf) file that adds contacts directly to your phone's address book with a single scan.</p>
-                    
-                    <h4>Perfect For:</h4>
-                    <ul>
-                        <li>Traditional networking events</li>
-                        <li>Quick contact sharing</li>
-                        <li>Users preferring native phone contacts</li>
-                        <li>Offline contact exchange</li>
-                    </ul>
-                    
-                    <h4>Benefits:</h4>
-                    <ul>
-                        <li>Instant contact save</li>
-                        <li>Works offline once downloaded</li>
-                        <li>Universal compatibility</li>
-                        <li>Integrates with phone's native contacts</li>
-                        <li>Simple and straightforward</li>
-                    </ul>
+            </section>
+
+            <section class="section demo">
+                <div class="container demo-wrapper">
+                    <div class="section-header">
+                        <h2 class="section-heading">See it in action</h2>
+                        <p class="section-lead">Scan the demo to experience both formats. Update the hosted card whenever you need and deliver a consistent vCard for traditional sharing.</p>
+                    </div>
+
+                    <div class="demo-card center">
+                        <div>
+                            <h3>Carlos Leon</h3>
+                            <p class="title">Owner &amp; Founder, Cielonline</p>
+                        </div>
+
+                        <div class="contact-info">
+                            <p><strong>Phone:</strong> (916) 616-3269</p>
+                            <p><strong>Email:</strong> carloslmgustavo@gmail.com</p>
+                            <p><strong>Tagline:</strong> "QR codes made for you!"</p>
+                        </div>
+
+                        <div class="demo-links">
+                            <a class="btn btn-primary" href="cards/carlos-leon/carlos-leon.html">View Hosted Card</a>
+                            <a class="btn btn-secondary" href="cards/carlos-leon/carlos-leon.vcf" download>Download vCard</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="demo-section">
-            <h2>See It In Action</h2>
-            <p style="font-size: 1.2em; margin-bottom: 10px;">Experience both QR code types with our founder's demo</p>
-            
-            <div class="demo-card">
-                <h3>Carlos Leon</h3>
-                <p class="title">Owner & Founder, CielWorks</p>
-                
-                <div class="contact-info">
-                    <p><strong>Phone:</strong> (916) 616-3269</p>
-                    <p><strong>Email:</strong> carloslmgustavo@gmail.com</p>
-                    <p><strong>Tagline:</strong> <em>"QR codes made for you!"</em></p>
-                </div>
-                
-                <div class="demo-links">
-                    <a href="cards/carlos-leon/carlos-leon.html" class="btn">View Hosted Card</a>
-                    <a href="cards/carlos-leon/carlos-leon.vcf" class="btn btn-secondary" download>Download vCard</a>
-                </div>
-            </div>
-        </div>
-        
+            </section>
+        </main>
+
         <footer>
-            <p>&copy; 2024 CielWorks QR Studio. All rights reserved.</p>
-            <p>Empowering connections through innovative QR solutions.</p>
+            <p>&copy; 2025 Cielonline QR Studio. All rights reserved.</p>
         </footer>
     </div>
 </body>
 </html>
+
+
+
+
+
