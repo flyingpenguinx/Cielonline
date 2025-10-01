@@ -1,0 +1,14 @@
+# GitHub Pages Configuration for CielWorks QR Studio
+# This configuration enables GitHub Pages for this repository
+
+# Site settings
+title: CielWorks QR Studio
+description: QR codes made for you!
+url: https://cielonline.com
+
+# Build settings
+markdown: kramdown
+exclude:
+  - README.md
+  - .git
+  - .gitignore
