@@ -1,0 +1,26 @@
+mobile view sizing
+    push it in a little further away from the edges
+    
+colors
+    top header color is fine, try to blend it to the rest of website
+    all areas are different colors so blend/match them
+
+see it in action demo box 
+    edit it a bit, make border just a bit darker 
+    spacing between name, number, email is too much. try to get it a bit closer together
+    add animation as you scroll down to it
+
+footer
+    push it all the way down
+
+url
+    see why it says .html and file names, look into how other websites keep it clean
+
+add page image so it is not default
+
+logo?
+
+*******start process of adding QR maker studio into website
+
+hosted card
+    hover makes letters white and invisible
