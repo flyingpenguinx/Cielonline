@@ -34,7 +34,7 @@ export default function LoginPage({ onMagicLink, onSignInWithPassword, onSignUpW
   };
 
   return (
-    <main className="container main-space">
+    <main className="container main-space login-main">
       <section className="panel auth-panel">
         <h1>Log in to Cielonline</h1>
         <p className="muted">Use password login or magic link. Once logged in, you can create and manage QR codes.</p>

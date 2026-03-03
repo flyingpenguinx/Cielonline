@@ -1,0 +1,192 @@
+Act as an expert React Front-End Developer. I am building a Clean SaaS application. You must strictly follow these layout and design rules for all components:
+
+No random margins: NEVER use arbitrary margins (e.g., margin-top: 13px). Only use an 8px spacing scale (8px, 16px, 24px, 32px, 48px, 64px).
+
+Layout Foundation: Use Flexbox for almost everything. Use the gap property to space child elements evenly. Never use float or absolute positioning unless strictly necessary for a modal/overlay.
+
+Centering: To center an element vertically and horizontally in a container, ALWAYS use: display: flex; flex-direction: column; align-items: center; justify-content: center;
+
+Colors & Fonts: Background: #FAFAFA, Cards/Surfaces: #FFFFFF, Primary Accent: #2563EB, Text Primary: #0F172A, Text Muted: #64748B, Borders: #E2E8F0, Font: 'Inter' or sans-serif.
+
+Borders & Radii: Cards get border-radius: 8px and a 1px solid #E2E8F0 border. Buttons get border-radius: 6px. No heavy drop shadows.
+
+Please generate the React component requested using these exact spacing and color rules.
+
+
+Gemini said
+It is incredibly common for AI to generate "awkward" UI. When left to its own devices, AI tends to mix different layout methods—throwing in random margin-top: 15px here, an absolute position there, and forgetting to use proper Flexbox alignment. This results in things looking slightly off-center and disjointed.
+
+To fix this in React, you need to stop asking the AI to "design a page" and start forcing it to use a Strict Flexbox/Grid Layout System.
+
+Here is the exact prompt you should feed into your AI, followed by the React boilerplate for your four specific pages that guarantees perfect alignment for Theme 1 (Clean SaaS).
+
+Step 1: The "Strict React Spacing" Master Prompt
+Whenever you ask your AI to build a new React component for this project, paste this prompt first. This acts as its strict rulebook.
+
+Copy and paste this to your coding AI:
+"Act as an expert React Front-End Developer. I am building a Clean SaaS application. You must strictly follow these layout and design rules for all components:
+
+No random margins: NEVER use arbitrary margins (e.g., margin-top: 13px). Only use an 8px spacing scale (8px, 16px, 24px, 32px, 48px, 64px).
+
+Layout Foundation: Use Flexbox for almost everything. Use the gap property to space child elements evenly. Never use float or absolute positioning unless strictly necessary for a modal/overlay.
+
+Centering: To center an element vertically and horizontally in a container, ALWAYS use: display: flex; flex-direction: column; align-items: center; justify-content: center;
+
+Colors & Fonts: Background: #FAFAFA, Cards/Surfaces: #FFFFFF, Primary Accent: #2563EB, Text Primary: #0F172A, Text Muted: #64748B, Borders: #E2E8F0, Font: 'Inter' or sans-serif.
+
+Borders & Radii: Cards get border-radius: 8px and a 1px solid #E2E8F0 border. Buttons get border-radius: 6px. No heavy drop shadows.
+
+Please generate the React component requested using these exact spacing and color rules."
+
+Step 2: The React Layout Blueprints
+Here is the core structural code for your application. By setting up your high-level layouts correctly, everything the AI builds inside them will automatically stay aligned.
+
+(Note: For simplicity, I'm using standard CSS classes here. If you use Tailwind or CSS Modules, the structural logic remains exactly the same.)
+
+1. The Global CSS (index.css or App.css)
+This forces the entire app to obey Theme 1 and resets weird default browser spacing.
+
+CSS
+:root {
+  --bg: #FAFAFA;
+  --surface: #FFFFFF;
+  --primary: #2563EB;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text-main);
+}
+body { background-color: var(--bg); }
+2. The Login Page (Perfectly Centered)
+The trick to a perfect login page is making the wrapper 100vh (viewport height) and using Flexbox to lock the card dead center.
+
+JavaScript
+import React from 'react';
+
+export default function LoginPage() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',       // Centers vertically
+      justifyContent: 'center',   // Centers horizontally
+      minHeight: '100vh',
+      backgroundColor: 'var(--bg)',
+      padding: '24px'
+    }}>
+      <div style={{
+        backgroundColor: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '8px',
+        padding: '32px',
+        width: '100%',
+        maxWidth: '400px',        // Stops it from getting too wide
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',              // Perfectly spaces out the form inputs
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+      }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '8px' }}>Welcome Back</h2>
+        <input placeholder="Email" style={{ padding: '12px', borderRadius: '6px', border: '1px solid var(--border)' }} />
+        <input placeholder="Password" type="password" style={{ padding: '12px', borderRadius: '6px', border: '1px solid var(--border)' }} />
+        <button style={{
+          backgroundColor: 'var(--primary)', color: 'white', padding: '12px', borderRadius: '6px', border: 'none', fontWeight: 'bold', cursor: 'pointer'
+        }}>Log In</button>
+      </div>
+    </div>
+  );
+}
+3. The Dashboard Layout (Sidebar + Content)
+Dashboards look awkward when the sidebar and main content aren't linked. We use a master Flex container (flexDirection: 'row') to keep them perfectly side-by-side.
+
+JavaScript
+import React from 'react';
+
+export default function DashboardLayout({ children }) {
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+      
+      {/* Sidebar: Fixed width, borders on the right */}
+      <aside style={{
+        width: '260px',
+        backgroundColor: 'var(--surface)',
+        borderRight: '1px solid var(--border)',
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <h3 style={{ color: 'var(--primary)', fontWeight: 'bold', marginBottom: '24px' }}>My App</h3>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>Dashboard</button>
+          <button style={{ textAlign: 'left', padding: '8px 12px', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary)', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>QR Builder</button>
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <main style={{
+        flex: 1,                  // Takes up the remaining space
+        padding: '48px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '24px'               // Spaces out dashboard widgets perfectly
+      }}>
+        {children}
+      </main>
+      
+    </div>
+  );
+}
+4. The QR Code Builder (Inside Dashboard)
+This component lives inside the DashboardLayout. It uses a 2-column grid: controls on the left, live preview on the right.
+
+JavaScript
+import React from 'react';
+import DashboardLayout from './DashboardLayout';
+
+export default function QRCodeBuilder() {
+  return (
+    <DashboardLayout>
+      <div>
+        <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>QR Code Builder</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Create and customize your QR codes.</p>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr', // Two equal columns
+        gap: '32px',                    // Perfect spacing between form and preview
+        marginTop: '16px'
+      }}>
+        
+        {/* Left Column: Form Controls */}
+        <div style={{
+          backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px'
+        }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+            Destination URL
+            <input placeholder="https://..." style={{ padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', fontWeight: 'normal' }} />
+          </label>
+          <button style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '12px', borderRadius: '6px', border: 'none', fontWeight: 'bold' }}>Generate QR</button>
+        </div>
+
+        {/* Right Column: Centered Preview Area */}
+        <div style={{
+          backgroundColor: 'var(--surface)', border: '1px dashed var(--border)', borderRadius: '8px', padding: '24px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px'
+        }}>
+          {/* Placeholder for the actual QR Code graphic */}
+          <div style={{ width: '150px', height: '150px', backgroundColor: '#E2E8F0', borderRadius: '8px', marginBottom: '16px' }}></div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Live Preview</p>
+        </div>
+
+      </div>
+    </DashboardLayout>
+  );
+}
+By heavily relying on display: flex, display: grid, and the gap property, you eliminate the math that usually causes AI to mess up alignments.

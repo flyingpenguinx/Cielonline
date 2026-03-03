@@ -22,7 +22,7 @@ function TemplateA({ card }) {
   return (
     <article className="template-card template-a" style={{ "--template-bg": card.background_color }}>
       <Avatar card={card} />
-      <h3>{card.full_name || "Your Name"}</h3>
+      <h3>{card.full_name || "Carlos Leon"}</h3>
       <p>{card.title}</p>
       <p>{card.company}</p>
       <ContactRows card={card} />
@@ -34,7 +34,7 @@ function TemplateB({ card }) {
   return (
     <article className="template-card template-b" style={{ "--template-bg": card.background_color }}>
       <div>
-        <h3>{card.full_name || "Your Name"}</h3>
+        <h3>{card.full_name || "Carlos Leon"}</h3>
         <p>{card.title}</p>
       </div>
       <Avatar card={card} />
@@ -48,7 +48,7 @@ function TemplateC({ card }) {
     <article className="template-card template-c" style={{ "--template-bg": card.background_color }}>
       <Avatar card={card} />
       <div>
-        <h3>{card.full_name || "Your Name"}</h3>
+        <h3>{card.full_name || "Carlos Leon"}</h3>
         <p>{card.company}</p>
         <p>{card.bio}</p>
       </div>
@@ -60,7 +60,7 @@ function TemplateC({ card }) {
 function TemplateD({ card }) {
   return (
     <article className="template-card template-d" style={{ "--template-bg": card.background_color }}>
-      <h3>{card.full_name || "Your Name"}</h3>
+      <h3>{card.full_name || "Carlos Leon"}</h3>
       <Avatar card={card} />
       <p>{card.title}</p>
       <ContactRows card={card} />
@@ -73,7 +73,7 @@ function TemplateE({ card }) {
     <article className="template-card template-e" style={{ "--template-bg": card.background_color }}>
       <Avatar card={card} />
       <div>
-        <h3>{card.full_name || "Your Name"}</h3>
+        <h3>{card.full_name || "Carlos Leon"}</h3>
         <p>{card.title}</p>
         <p>{card.company}</p>
       </div>

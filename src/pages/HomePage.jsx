@@ -1,4 +1,25 @@
 import { Link } from "react-router-dom";
+import CardPreview from "../components/CardPreview";
+import PhoneFrame from "../components/PhoneFrame";
+
+const carlosCardExample = {
+  full_name: "Carlos Leon",
+  slug: "carlos-leon",
+  title: "Owner & Founder",
+  company: "Cielonline",
+  bio: "QR codes made for you.",
+  website: "https://cielonline.com",
+  avatar_url: "",
+  template_key: "template-c",
+  background_color: "#355dff",
+  phone_1: "(916) 616-3269",
+  phone_2: "",
+  email_1: "carloslmgustavo@gmail.com",
+  email_2: "",
+  address: "Sacramento, CA",
+  instagram_url: "",
+  linkedin_url: ""
+};
 
 export default function HomePage({ session }) {
 
@@ -6,9 +27,11 @@ export default function HomePage({ session }) {
     <main className="container main-space">
       <section className="hero-panel panel">
         <h1>Cielonline QR Studio</h1>
-        <p>
-          Create professional QR experiences for digital business cards, website links, and Wi-Fi access.
-          Build your card with custom templates, colors, profile photo (or initials fallback), and mobile-ready vCard download.
+        <p className="hero-lead">
+          Professional QR experiences for digital business cards, website links, and Wi-Fi access.
+        </p>
+        <p className="muted">
+          Design once, preview instantly, and publish a clean mobile-first card with one dashboard.
         </p>
         <div className="hero-actions">
           {session ? (
@@ -26,27 +49,52 @@ export default function HomePage({ session }) {
         </div>
       </section>
 
-      <section className="panel">
-        <h2>What the system does</h2>
-        <div className="saved-cards">
+      <div className="home-grid">
+        <section className="panel">
+          <h2>What you can build (examples)</h2>
+          <div className="phone-example-grid">
+            <article className="feature-item">
+              <h3>Business Card QR</h3>
+              <PhoneFrame className="home-phone">
+                <CardPreview card={carlosCardExample} />
+              </PhoneFrame>
+            </article>
+
+            <article className="feature-item">
+              <h3>Website QR</h3>
+              <PhoneFrame className="home-phone">
+                <div className="mini-screen-content">
+                  <p className="mini-screen-title">Cielonline</p>
+                  <p className="muted">Landing page opened from QR scan.</p>
+                  <a className="btn btn-secondary" href="https://cielonline.com" target="_blank" rel="noreferrer">
+                    Open Website
+                  </a>
+                </div>
+              </PhoneFrame>
+            </article>
+
+            <article className="feature-item">
+              <h3>Wi-Fi QR</h3>
+              <PhoneFrame className="home-phone">
+                <div className="mini-screen-content">
+                  <p className="mini-screen-title">Join Network</p>
+                  <p className="muted">SSID: Cielonline Guest</p>
+                  <p className="muted">Tap connect after scanning.</p>
+                </div>
+              </PhoneFrame>
+            </article>
+          </div>
+        </section>
+
+        <section className="panel">
+          <h2>Example profile</h2>
           <article className="saved-card-item">
-            <p><strong>Business Card QR</strong></p>
-            <p>Hosted digital card with 5 unique templates and custom background colors.</p>
+            <p><strong>Carlos Leon</strong></p>
+            <p className="muted">Owner & Founder · Cielonline</p>
+            <p className="muted">/c/carlos-leon</p>
           </article>
-          <article className="saved-card-item">
-            <p><strong>Website QR</strong></p>
-            <p>Point any QR code to a target URL and keep everything managed in one dashboard.</p>
-          </article>
-          <article className="saved-card-item">
-            <p><strong>Wi-Fi QR</strong></p>
-            <p>Generate scan-to-connect Wi-Fi payloads for events, offices, and storefronts.</p>
-          </article>
-          <article className="saved-card-item">
-            <p><strong>Mobile Contact Save</strong></p>
-            <p>Visitors can tap “Add to Contacts (vCard)” on iPhone and Android.</p>
-          </article>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

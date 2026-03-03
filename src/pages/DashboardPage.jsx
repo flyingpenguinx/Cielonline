@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import CardBuilderForm from "../components/CardBuilderForm";
 import CardPreview from "../components/CardPreview";
+import PhoneFrame from "../components/PhoneFrame";
 import QrBuilder from "../components/QrBuilder";
 import { useCardForm } from "../hooks/useCardForm";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
 
 const previewCard = {
-  full_name: "Alex Rivera",
-  slug: "alex-rivera",
-  title: "Founder",
+  full_name: "Carlos Leon",
+  slug: "carlos-leon",
+  title: "Owner & Founder",
   company: "Cielonline",
   bio: "Helping businesses share contact info with branded QR experiences.",
   website: "https://cielonline.com",
@@ -25,8 +26,7 @@ const previewCard = {
 };
 
 const previewSavedCards = [
-  { id: "preview-1", full_name: "Alex Rivera", slug: "alex-rivera" },
-  { id: "preview-2", full_name: "Carlos Leon", slug: "carlos-leon" }
+  { id: "preview-1", full_name: "Carlos Leon", slug: "carlos-leon" }
 ];
 
 export default function DashboardPage({ user, previewOnly = false }) {
@@ -145,7 +145,9 @@ export default function DashboardPage({ user, previewOnly = false }) {
         <CardBuilderForm card={card} onChange={updateCard} onSubmit={saveCard} saving={savingCard} />
         <section className="panel">
           <h2>Live card preview</h2>
-          <CardPreview card={card} />
+          <PhoneFrame className="phone-preview-center">
+            <CardPreview card={card} />
+          </PhoneFrame>
           <div className="row-gap">
             <button type="button" className="btn btn-secondary" onClick={resetCard}>
               Clear form
@@ -154,31 +156,33 @@ export default function DashboardPage({ user, previewOnly = false }) {
         </section>
       </div>
 
-      <QrBuilder cards={cards} onSaveQr={saveQr} />
+      <div className="dashboard-bottom-grid">
+        <QrBuilder cards={cards} onSaveQr={saveQr} />
 
-      <section className="panel">
-        <h2>Your saved cards</h2>
-        {previewOnly ? (
-          <p className="muted">Preview mode active. This section mirrors what logged-in users will see.</p>
-        ) : null}
-        {!isSupabaseConfigured ? (
-          <p className="muted">Preview mode active. Add Supabase env values to enable login and persistence.</p>
-        ) : null}
-        {cards.length === 0 ? (
-          <p className="muted">No saved cards yet.</p>
-        ) : (
-          <div className="saved-cards">
-            {cards.map((savedCard) => (
-              <article key={savedCard.id} className="saved-card-item">
-                <p>
-                  <strong>{savedCard.full_name}</strong>
-                </p>
-                <p>/c/{savedCard.slug}</p>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+        <section className="panel">
+          <h2>Your saved cards</h2>
+          {previewOnly ? (
+            <p className="muted">Preview mode active. This section mirrors what logged-in users will see.</p>
+          ) : null}
+          {!isSupabaseConfigured ? (
+            <p className="muted">Preview mode active. Add Supabase env values to enable login and persistence.</p>
+          ) : null}
+          {cards.length === 0 ? (
+            <p className="muted">No saved cards yet.</p>
+          ) : (
+            <div className="saved-cards compact">
+              {cards.map((savedCard) => (
+                <article key={savedCard.id} className="saved-card-item">
+                  <p>
+                    <strong>{savedCard.full_name}</strong>
+                  </p>
+                  <p>/c/{savedCard.slug}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       {status ? <p className="status-banner">{status}</p> : null}
     </main>
