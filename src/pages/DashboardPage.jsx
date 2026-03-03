@@ -141,7 +141,7 @@ export default function DashboardPage({ user, previewOnly = false }) {
 
   return (
     <main className="container main-space">
-      <div className="dashboard-grid">
+      <div className="dashboard-layout">
         <CardBuilderForm card={card} onChange={updateCard} onSubmit={saveCard} saving={savingCard} />
         <section className="panel">
           <h2>Live card preview</h2>

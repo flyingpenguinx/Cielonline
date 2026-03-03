@@ -36,7 +36,7 @@ export default function QrBuilder({ cards, onSaveQr }) {
   };
 
   return (
-    <section className="panel qr-builder-panel">
+    <section className="builder-panel qr-builder-panel">
       <h2>Create QR content</h2>
       <p className="muted">Choose a QR type, add only the required fields, then save the configuration.</p>
       <div className="qr-builder-grid">

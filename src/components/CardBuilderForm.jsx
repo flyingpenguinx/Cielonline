@@ -19,7 +19,7 @@ const fields = [
 
 export default function CardBuilderForm({ card, onChange, onSubmit, saving }) {
   return (
-    <form className="panel" onSubmit={onSubmit}>
+    <form className="builder-panel" onSubmit={onSubmit}>
       <h2>Create or update your card</h2>
       <p className="muted">Fields are optional unless marked. Users can save directly to Contacts on iPhone or Android via vCard.</p>
 
