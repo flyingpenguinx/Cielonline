@@ -9,27 +9,27 @@ function ContactRows({ card }) {
   return (
     <div className="contact-rows-modern">
       {card.phone_1 && (
-        <a href={	el:\} className="contact-item">
+        <a href={`tel:${card.phone_1}`} className="contact-item">
           <PhoneIcon /> <span>{card.phone_1}</span>
         </a>
       )}
       {card.phone_2 && (
-        <a href={	el:\} className="contact-item">
+        <a href={`tel:${card.phone_2}`} className="contact-item">
           <PhoneIcon /> <span>{card.phone_2}</span>
         </a>
       )}
       {card.email_1 && (
-        <a href={mailto:\} className="contact-item">
+        <a href={`mailto:${card.email_1}`} className="contact-item">
           <EmailIcon /> <span>{card.email_1}</span>
         </a>
       )}
       {card.email_2 && (
-        <a href={mailto:\} className="contact-item">
+        <a href={`mailto:${card.email_2}`} className="contact-item">
           <EmailIcon /> <span>{card.email_2}</span>
         </a>
       )}
       {card.website && (
-        <a href={card.website.startsWith('http') ? card.website : https://\} target="_blank" rel="noopener noreferrer" className="contact-item">
+        <a href={card.website.startsWith('http') ? card.website : `https://${card.website}`} target="_blank" rel="noopener noreferrer" className="contact-item">
           <GlobeIcon /> <span>{card.website}</span>
         </a>
       )}
@@ -44,7 +44,7 @@ function ContactRows({ card }) {
 
 function Avatar({ card }) {
   if (card.avatar_url) {
-    return <img className="avatar modern-avatar" src={card.avatar_url} alt={\ avatar} />;
+    return <img className="avatar modern-avatar" src={card.avatar_url} alt={`${card.full_name} avatar`} />;
   }
   return <div className="avatar initials modern-avatar">{initialsFromName(card.full_name)}</div>;
 }
@@ -135,7 +135,7 @@ function TemplateE({ card }) {
 
 export default function CardPreview({ template, card, wrapperClass = "" }) {
   if (!card) return null;
-  const classes = card-preview \;
+  const classes = `card-preview ${wrapperClass}`;
 
   const renderTemplate = () => {
     switch (template) {
