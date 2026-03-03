@@ -1,98 +1,156 @@
-Cielonline Supabase Setup (Very Simple Step-by-Step)
-Date: 2026-02-26
+Cielonline Supabase Setup + SQL (First-Time Friendly)
+Last updated: 2026-03-02
 
-============================================================
-A) WHAT YOU WILL GET AFTER THIS SETUP
-============================================================
-- Public home page (marketing page)
-- Login page (email/password OR magic link)
-- Protected dashboard (only logged-in users can create QR codes)
-- Preview route (/preview) so you can see the builder before auth is finished
+====================================================================
+0) WHAT THIS GUIDE HELPS YOU DO
+====================================================================
+You will set up Supabase from scratch and connect it to this project.
 
-Important:
-- People can always view frontend code loaded in their browser.
-- Real security comes from Supabase Auth + RLS policies (below).
+After finishing, you will have:
+- A live website you can visually test
+- Working Login / Create Account page
+- Protected dashboard writes (cards + QR codes)
+- Safe public reads for published cards only
 
-============================================================
-B) SUPABASE: CREATE PROJECT
-============================================================
-1) Go to https://supabase.com
-2) Click New project
-3) Fill project name, DB password, region
-4) Wait until status says project is ready
+Important beginner note:
+- You DO NOT manually insert passwords into the database.
+- Supabase Auth handles credentials securely.
 
-============================================================
-C) FIND AND ENABLE EMAIL LOGIN (IF UI LOOKS DIFFERENT)
-============================================================
-Supabase has changed menu labels over time. Use this order:
 
-Path 1 (most common):
-- Left sidebar -> Authentication -> Providers
+====================================================================
+1) PUBLISH-FIRST WORKFLOW (SO YOU CAN SEE IT ONLINE EARLY)
+====================================================================
+If your priority is to see UI online first, do this order:
 
-Path 2 (newer UI variants):
-- Left sidebar -> Authentication -> Sign In / Providers
+Phase A (now): Deploy frontend first
+- Deploy to Vercel now, even without Supabase env vars.
+- You can still visually test routes like / and /preview.
 
-Path 3 (if you still can’t find it):
-- Open top search bar in Supabase dashboard
-- Search: "Providers" or "Email provider"
+Phase B (next): Add Supabase and turn on login/database
+- Create Supabase project
+- Add env vars (local + Vercel)
+- Run SQL
+- Test signup/login and saving cards
 
-Now configure:
-1) Open Email provider
-2) Turn it ON
-3) Enable both options if available:
-   - Email + Password
-   - Magic Link
-4) Click Save
 
-If you want easiest testing right now:
-- Keep "Confirm email" OFF temporarily (you can re-enable later)
+====================================================================
+2) CREATE A SUPABASE PROJECT
+====================================================================
+1. Go to https://supabase.com
+2. Click "New project"
+3. Choose organization
+4. Enter:
+   - Project name: anything you want
+   - Database password: save this somewhere safe
+   - Region: choose closest to your users
+5. Wait until project status = healthy/ready
 
-============================================================
-D) AUTH URL SETTINGS (VERY IMPORTANT)
-============================================================
-Go to:
-- Authentication -> URL Configuration
 
-Set:
-- Site URL: http://localhost:5173
-- Redirect URLs (add all):
-  - http://localhost:5173/dashboard
-  - https://cielonline.com/dashboard
-  - https://www.cielonline.com/dashboard
+====================================================================
+3) GET YOUR PROJECT URL + ANON KEY
+====================================================================
+In Supabase dashboard:
+1. Go to Project Settings -> API
+2. Copy these two values:
+   - Project URL
+   - Project API key (anon public)
 
-Click Save.
+For this app, the variable names MUST be exactly:
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
 
-============================================================
-E) COPY API KEYS TO YOUR LOCAL APP
-============================================================
-Go to:
-- Project Settings -> API
 
-Copy:
-- Project URL
-- anon public key
+====================================================================
+4) CONNECT LOCAL PROJECT WITH .env (FIRST TIME)
+====================================================================
+You will create a file named .env in the project root (same level as package.json).
 
-Create file in your project root named .env with:
+1. In your project root, create file: .env
+2. Paste this:
 
 VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+VITE_SUPABASE_ANON_KEY=YOUR_ANON_PUBLIC_KEY
 
-Do NOT put service_role key in .env for frontend.
+3. Save the file
+4. Restart dev server (important):
+   - stop terminal
+   - run npm run dev again
 
-============================================================
-F) CREATE TABLES + SECURITY (RLS)
-============================================================
-Go to:
-- SQL Editor -> New query
+Notes:
+- Do not put quotes unless needed.
+- Do not use SERVICE_ROLE key in frontend.
+- .env is for local development only; Vercel needs separate env vars too.
 
-Paste and run all SQL below:
 
-------------------------------------------------------------
+====================================================================
+5) ADD ENV VARS TO VERCEL (LIVE WEBSITE)
+====================================================================
+In Vercel dashboard:
+1. Open your project
+2. Go to Settings -> Environment Variables
+3. Add both keys:
+   - Name: VITE_SUPABASE_URL
+     Value: your Supabase Project URL
+   - Name: VITE_SUPABASE_ANON_KEY
+     Value: your Supabase anon public key
+4. Apply to: Production, Preview, Development (recommended)
+5. Redeploy project
+
+After redeploy, your live site can use Supabase.
+
+
+====================================================================
+6) SET UP AUTH PROVIDER (EMAIL/PASSWORD + MAGIC LINK)
+====================================================================
+1. Go to Authentication -> Providers
+2. Open Email provider
+3. Enable:
+   - Email/Password
+   - Magic Link (optional but recommended)
+4. Save
+
+For easier testing today:
+- You can temporarily disable "Confirm email" in Auth settings.
+
+
+====================================================================
+7) SET AUTH URLS (CRITICAL)
+====================================================================
+Go to Authentication -> URL Configuration and set:
+
+Site URL:
+- http://localhost:5173
+
+Additional Redirect URLs (add each one):
+- http://localhost:5173/dashboard
+- https://YOUR-VERCEL-DOMAIN.vercel.app/dashboard
+- https://cielonline.com/dashboard
+- https://www.cielonline.com/dashboard
+
+Save changes.
+
+
+====================================================================
+8) RUN THIS SQL IN SUPABASE (COPY/PASTE)
+====================================================================
+Go to SQL Editor -> New query and run everything below.
+
+--------------------------------------------------------------------
 create extension if not exists pgcrypto;
 
-create type public.qr_target_type as enum ('card', 'url', 'wifi');
+do $$
+begin
+  if not exists (
+    select 1 from pg_type t
+    join pg_namespace n on n.oid = t.typnamespace
+    where t.typname = 'qr_target_type' and n.nspname = 'public'
+  ) then
+    create type public.qr_target_type as enum ('card', 'url', 'wifi');
+  end if;
+end
+$$;
 
-create table public.cards (
+create table if not exists public.cards (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
   slug text not null unique check (slug ~ '^[a-z0-9-]{3,60}$'),
@@ -103,7 +161,7 @@ create table public.cards (
   website text,
   avatar_url text,
   template_key text not null default 'template-a' check (template_key in (
-    'template-a','template-b','template-c','template-d','template-e'
+    'template-a', 'template-b', 'template-c', 'template-d', 'template-e'
   )),
   background_color text not null default '#355dff',
   phone_1 text,
@@ -111,13 +169,15 @@ create table public.cards (
   email_1 text,
   email_2 text,
   address text,
+  instagram_url text,
+  linkedin_url text,
   social jsonb not null default '{}'::jsonb,
   is_published boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table public.qr_codes (
+create table if not exists public.qr_codes (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
   slug text not null unique check (slug ~ '^[a-z0-9-]{3,80}$'),
@@ -126,7 +186,7 @@ create table public.qr_codes (
   target_url text,
   wifi_ssid text,
   wifi_password text,
-  wifi_encryption text check (wifi_encryption in ('WPA','WEP','nopass')),
+  wifi_encryption text check (wifi_encryption in ('WPA', 'WEP', 'nopass')),
   wifi_hidden boolean not null default false,
   qr_payload text,
   is_active boolean not null default true,
@@ -141,7 +201,7 @@ create table public.qr_codes (
   )
 );
 
-create table public.scan_events (
+create table if not exists public.scan_events (
   id bigint generated always as identity primary key,
   qr_id uuid not null references public.qr_codes(id) on delete cascade,
   scanned_at timestamptz not null default now(),
@@ -160,10 +220,12 @@ begin
 end;
 $$;
 
+drop trigger if exists cards_set_updated_at on public.cards;
 create trigger cards_set_updated_at
 before update on public.cards
 for each row execute function public.set_updated_at();
 
+drop trigger if exists qrcodes_set_updated_at on public.qr_codes;
 create trigger qrcodes_set_updated_at
 before update on public.qr_codes
 for each row execute function public.set_updated_at();
@@ -172,7 +234,7 @@ alter table public.cards enable row level security;
 alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
 
--- owner can fully manage own cards
+drop policy if exists cards_owner_all on public.cards;
 create policy cards_owner_all
 on public.cards
 for all
@@ -180,14 +242,14 @@ to authenticated
 using (auth.uid() = owner_id)
 with check (auth.uid() = owner_id);
 
--- public can read only published cards
+drop policy if exists cards_public_read_published on public.cards;
 create policy cards_public_read_published
 on public.cards
 for select
 to anon, authenticated
 using (is_published = true);
 
--- owner can fully manage own QRs
+drop policy if exists qrcodes_owner_all on public.qr_codes;
 create policy qrcodes_owner_all
 on public.qr_codes
 for all
@@ -195,73 +257,80 @@ to authenticated
 using (auth.uid() = owner_id)
 with check (auth.uid() = owner_id);
 
--- block direct client access to scan_events
+drop policy if exists scan_events_block_client on public.scan_events;
 create policy scan_events_block_client
 on public.scan_events
 for all
 to anon, authenticated
 using (false)
 with check (false);
-------------------------------------------------------------
+--------------------------------------------------------------------
 
-============================================================
-G) CREATE YOUR FIRST USER (NO MANUAL PASSWORD HASHING)
-============================================================
-DO NOT insert directly into auth.users table.
-Use one of these:
 
-Option 1 (easiest): from your app
-1) Start app locally (steps below)
-2) Go to /login
-3) Click Create Account
-4) Enter your email + password
+====================================================================
+9) HOW TO CREATE LOGIN CREDENTIALS (NO MANUAL DB INSERT)
+====================================================================
+You have 2 safe options:
 
-Option 2 (Supabase dashboard)
-1) Authentication -> Users
-2) Click Add user / Invite user (button name depends on UI)
-3) Create user with email + password
+Option A (recommended): create account from your app
+1. Run app locally or open live site
+2. Go to /login
+3. Click Create Account
+4. Enter email + password
 
-============================================================
-H) RUN LOCALHOST AND SEE THE BUILDER NOW
-============================================================
-In project folder:
-1) npm install
-2) npm run dev
-3) Open:
-   - Home page: http://127.0.0.1:5173/
-   - Login page: http://127.0.0.1:5173/login
-   - Preview builder now (no login required): http://127.0.0.1:5173/preview
+Option B: create user in Supabase dashboard
+1. Authentication -> Users
+2. Click Add user
+3. Enter email/password
 
-So even before auth is finished, you can see what the QR builder looks like on /preview.
+Do not manually insert rows into auth.users.
 
-============================================================
-I) HOW TO VERIFY SECURITY WORKS
-============================================================
-Test 1 (logged out):
-- /dashboard should redirect to /login
-- cannot create records in qr_codes
 
-Test 2 (logged in):
-- can create cards and QRs
+====================================================================
+10) TEST CHECKLIST (LOCAL + LIVE)
+====================================================================
+Local test:
+1. npm install
+2. npm run dev
+3. Open http://localhost:5173/preview (visual builder test)
+4. Open http://localhost:5173/login and create account/sign in
+5. Open /dashboard and save a card + QR
 
-Test 3 (different account):
-- user B cannot edit user A records
+Live test (Vercel URL):
+1. Open /login
+2. Sign in
+3. Save card
+4. In Supabase Table Editor -> cards, confirm row exists
 
-============================================================
-J) ANSWERS TO YOUR 2 MAIN SECURITY QUESTIONS
-============================================================
-1) "Can users inspect and find login credentials?"
-- They cannot get your users’ passwords from frontend.
-- Supabase securely stores password hashes.
-- Do not expose service role key.
 
-2) "Can I hide all QR builder code from non-logged users?"
-- You can prevent loading most builder code until login (already improved).
-- You cannot guarantee complete secrecy of shipped frontend code.
-- Data/action security is enforced by RLS policies above.
+====================================================================
+11) QUICK TROUBLESHOOTING
+====================================================================
+Problem: "Supabase is not configured yet"
+- Cause: missing or misspelled env var names
+- Fix: ensure exact names are used:
+  - VITE_SUPABASE_URL
+  - VITE_SUPABASE_ANON_KEY
+- Restart dev server locally, redeploy on Vercel
 
-============================================================
-K) NEXT STEP WHEN YOU WANT PAID ACCESS
-============================================================
-- Add subscriptions table + Stripe webhook.
-- Add policy/rule so only paid users can insert/update qr_codes.
+Problem: Login works but save fails
+- Cause: SQL not run fully or RLS policies missing
+- Fix: rerun full SQL script in section 8
+
+Problem: Magic link redirects wrong URL
+- Cause: missing redirect URL in Auth settings
+- Fix: add correct local + production dashboard URLs
+
+
+====================================================================
+12) WHY THIS MATTERS FOR FUTURE PROJECTS
+====================================================================
+Reuse this exact pattern every time:
+1. Create Supabase project
+2. Add frontend env vars (VITE_...)
+3. Configure Auth URLs
+4. Create tables + RLS first
+5. Only expose anon key in frontend
+6. Keep service role key server-side only
+
+If you follow that flow, your next Supabase project will be much faster.

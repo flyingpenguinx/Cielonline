@@ -10,19 +10,22 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 function AppHeader({ session, signOut }) {
   return (
     <header className="app-header">
-      <Link className="brand" to="/">
-        Cielonline QR Studio
-      </Link>
-      <nav className="app-nav">
-        <Link to="/">Home</Link>
-        <Link to="/preview">Preview Builder</Link>
-        {session ? <Link to="/dashboard">Dashboard</Link> : <Link to="/login">Log in</Link>}
-        {session ? (
-          <button className="btn btn-secondary" onClick={signOut}>
-            Sign out
-          </button>
-        ) : null}
-      </nav>
+      <div className="header-inner container">
+        <Link className="brand" to="/" aria-label="Go to home page">
+          <img className="brand-logo" src="/my-ink-trace.svg" alt="Cielonline" />
+          <span className="brand-text">Cielonline QR Studio</span>
+        </Link>
+        <nav className="app-nav">
+          <Link to="/">Home</Link>
+          <Link to="/preview">Preview Builder</Link>
+          {session ? <Link to="/dashboard">Dashboard</Link> : <Link to="/login">Log in</Link>}
+          {session ? (
+            <button className="btn btn-secondary" onClick={signOut}>
+              Sign out
+            </button>
+          ) : null}
+        </nav>
+      </div>
     </header>
   );
 }
