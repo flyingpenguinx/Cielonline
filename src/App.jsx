@@ -1,5 +1,5 @@
-import { Suspense, lazy } from "react";
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { Suspense, lazy, useState, useCallback, useEffect } from "react";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -7,24 +7,60 @@ import PublicCardPage from "./pages/PublicCardPage";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="18" x2="21" y2="18" />
+  </svg>
+);
+
 function AppHeader({ session, signOut }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  // Close drawer on route change
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  const toggle = useCallback(() => setMobileOpen((v) => !v), []);
+  const close = useCallback(() => setMobileOpen(false), []);
+
+  const navLinks = (
+    <>
+      <Link to="/" onClick={close}>Home</Link>
+      <Link to="/preview" onClick={close}>Preview Builder</Link>
+      {session ? <Link to="/dashboard" onClick={close}>Dashboard</Link> : <Link to="/login" onClick={close}>Log in</Link>}
+      {session ? (
+        <button className="btn btn-secondary" onClick={() => { signOut(); close(); }}>
+          Sign out
+        </button>
+      ) : null}
+    </>
+  );
+
   return (
     <header className="app-header">
-      <div className="header-inner container">
+      <div className="header-inner">
         <Link className="brand" to="/" aria-label="Go to home page">
           <img className="brand-logo" src="/Logo.svg" alt="Cielonline" />
           <span className="brand-text">Cielonline</span>
         </Link>
-        <nav className="app-nav">
-          <Link to="/">Home</Link>
-          <Link to="/preview">Preview Builder</Link>
-          {session ? <Link to="/dashboard">Dashboard</Link> : <Link to="/login">Log in</Link>}
-          {session ? (
-            <button className="btn btn-secondary" onClick={signOut}>
-              Sign out
-            </button>
-          ) : null}
-        </nav>
+
+        {/* Desktop nav */}
+        <nav className="app-nav">{navLinks}</nav>
+
+        {/* Mobile hamburger */}
+        <button className="hamburger-btn" onClick={toggle} aria-label="Toggle menu">
+          <MenuIcon />
+        </button>
+
+        {/* Mobile drawer */}
+        <div className={`mobile-nav-overlay ${mobileOpen ? "open" : ""}`} onClick={close}>
+          <nav className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
+            <button className="mobile-nav-close" onClick={close} aria-label="Close menu">&times;</button>
+            {navLinks}
+          </nav>
+        </div>
       </div>
     </header>
   );
@@ -34,7 +70,12 @@ export default function App() {
   const { loading, session, signInWithEmail, signInWithPassword, signUpWithPassword, signOut } = useAuth();
 
   if (loading) {
-    return <div className="loading-state">Loading...</div>;
+    return (
+      <div className="loading-state">
+        <div className="loading-spinner" />
+        <span>Loading...</span>
+      </div>
+    );
   }
 
   return (
@@ -59,7 +100,7 @@ export default function App() {
         <Route
           path="/preview"
           element={
-            <Suspense fallback={<div className="loading-state">Loading preview...</div>}>
+            <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading preview...</span></div>}>
               <DashboardPage previewOnly />
             </Suspense>
           }
@@ -68,7 +109,7 @@ export default function App() {
           path="/dashboard"
           element={
             session ? (
-              <Suspense fallback={<div className="loading-state">Loading dashboard...</div>}>
+              <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading dashboard...</span></div>}>
                 <DashboardPage user={session.user} />
               </Suspense>
             ) : (

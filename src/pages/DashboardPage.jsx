@@ -34,6 +34,7 @@ export default function DashboardPage({ user, previewOnly = false }) {
   const [cards, setCards] = useState([]);
   const [savingCard, setSavingCard] = useState(false);
   const [status, setStatus] = useState("");
+  const [activeTab, setActiveTab] = useState("builder");
 
   const loadCards = async () => {
     if (previewOnly) {
@@ -140,25 +141,59 @@ export default function DashboardPage({ user, previewOnly = false }) {
   };
 
   return (
-    <main className="container main-space">
-      <div className="dashboard-layout">
-        <CardBuilderForm card={card} onChange={updateCard} onSubmit={saveCard} saving={savingCard} />
-        <section className="panel">
-          <h2>Live card preview</h2>
-          <PhoneFrame className="phone-preview-center">
-            <CardPreview card={card} />
-          </PhoneFrame>
-          <div className="row-gap">
-            <button type="button" className="btn btn-secondary" onClick={resetCard}>
-              Clear form
-            </button>
-          </div>
-        </section>
+    <main className="container main-space fade-in">
+      {/* ── Dashboard Tabs ── */}
+      <div className="dashboard-tabs">
+        <button
+          type="button"
+          className={`dashboard-tab ${activeTab === "builder" ? "active" : ""}`}
+          onClick={() => setActiveTab("builder")}
+        >
+          <span className="tab-icon">🃏</span> Card Builder
+        </button>
+        <button
+          type="button"
+          className={`dashboard-tab ${activeTab === "qr" ? "active" : ""}`}
+          onClick={() => setActiveTab("qr")}
+        >
+          <span className="tab-icon">📱</span> QR Workshop
+        </button>
+        <button
+          type="button"
+          className={`dashboard-tab ${activeTab === "saved" ? "active" : ""}`}
+          onClick={() => setActiveTab("saved")}
+        >
+          <span className="tab-icon">💾</span> Saved Cards
+        </button>
       </div>
 
-      <div className="dashboard-bottom-grid">
-        <QrBuilder cards={cards} onSaveQr={saveQr} />
+      {/* ── Card Builder Tab ── */}
+      {activeTab === "builder" && (
+        <div className="dashboard-grid">
+          <CardBuilderForm card={card} onChange={updateCard} onSubmit={saveCard} saving={savingCard} />
+          <div className="preview-panel">
+            <section className="panel">
+              <h2>Live Preview</h2>
+              <PhoneFrame className="phone-preview-center">
+                <CardPreview card={card} />
+              </PhoneFrame>
+              <div className="row-gap">
+                <button type="button" className="btn btn-secondary" onClick={resetCard}>
+                  Clear form
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
 
+      {/* ── QR Workshop Tab ── */}
+      {activeTab === "qr" && (
+        <QrBuilder cards={cards} onSaveQr={saveQr} />
+      )}
+
+      {/* ── Saved Cards Tab ── */}
+      {activeTab === "saved" && (
         <section className="panel">
           <h2>Your saved cards</h2>
           {previewOnly ? (
@@ -168,23 +203,21 @@ export default function DashboardPage({ user, previewOnly = false }) {
             <p className="muted">Preview mode active. Add Supabase env values to enable login and persistence.</p>
           ) : null}
           {cards.length === 0 ? (
-            <p className="muted">No saved cards yet.</p>
+            <p className="muted">No saved cards yet. Switch to "Card Builder" to create your first card.</p>
           ) : (
             <div className="saved-cards compact">
               {cards.map((savedCard) => (
                 <article key={savedCard.id} className="saved-card-item">
-                  <p>
-                    <strong>{savedCard.full_name}</strong>
-                  </p>
-                  <p>/c/{savedCard.slug}</p>
+                  <p><strong>{savedCard.full_name}</strong></p>
+                  <p className="muted">/c/{savedCard.slug}</p>
                 </article>
               ))}
             </div>
           )}
         </section>
-      </div>
+      )}
 
-      {status ? <p className="status-banner">{status}</p> : null}
+      {status ? <p className="status-banner" style={{ marginTop: 16 }}>{status}</p> : null}
     </main>
   );
 }

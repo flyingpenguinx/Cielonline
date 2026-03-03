@@ -42,16 +42,16 @@ export default function PublicCardPage() {
   }, [slug]);
 
   if (loading) {
-    return <main className="container main-space">Loading card...</main>;
+    return <main className="container main-space"><div className="loading-state"><div className="loading-spinner" /><span>Loading card...</span></div></main>;
   }
 
   if (error || !card) {
-    return <main className="container main-space">{error || "Card not found."}</main>;
+    return <main className="container main-space"><div className="loading-state"><span>{error || "Card not found."}</span></div></main>;
   }
 
   return (
     <main className="container main-space">
-      <section className="panel">
+      <section className="panel public-card-page fade-in" style={{ maxWidth: 480, margin: '0 auto' }}>
         <CardPreview card={card} />
         <div className="public-actions">
           {card.phone_1 ? (
