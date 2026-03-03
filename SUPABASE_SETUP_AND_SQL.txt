@@ -65,14 +65,16 @@ For this app, the variable names MUST be exactly:
 ====================================================================
 You will create a file named .env in the project root (same level as package.json).
 
-1. In your project root, create file: .env
-2. Paste this:
+Step-by-step (Windows + VS Code):
+1. In VS Code Explorer, right-click project root -> New File
+2. Name it exactly: .env
+3. Paste this:
 
 VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_ANON_PUBLIC_KEY
 
-3. Save the file
-4. Restart dev server (important):
+4. Save the file
+5. Restart dev server (important):
    - stop terminal
    - run npm run dev again
 
@@ -97,6 +99,14 @@ In Vercel dashboard:
 5. Redeploy project
 
 After redeploy, your live site can use Supabase.
+
+How to find your Vercel domain:
+1. In Vercel, open your project
+2. Go to Overview tab
+3. Under "Domains", copy the default domain
+  Example: my-app-abc123.vercel.app
+4. Use that in Supabase Redirect URLs, for example:
+  - https://my-app-abc123.vercel.app/dashboard
 
 
 ====================================================================
@@ -126,6 +136,10 @@ Additional Redirect URLs (add each one):
 - https://YOUR-VERCEL-DOMAIN.vercel.app/dashboard
 - https://cielonline.com/dashboard
 - https://www.cielonline.com/dashboard
+
+Important:
+- Replace YOUR-VERCEL-DOMAIN with your real Vercel project domain from step 5.
+- If you use only custom domain in production, keep both vercel.app and custom domain during setup.
 
 Save changes.
 

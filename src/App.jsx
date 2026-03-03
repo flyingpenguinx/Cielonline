@@ -12,8 +12,8 @@ function AppHeader({ session, signOut }) {
     <header className="app-header">
       <div className="header-inner container">
         <Link className="brand" to="/" aria-label="Go to home page">
-          <img className="brand-logo" src="/my-ink-trace.svg" alt="Cielonline" />
-          <span className="brand-text">Cielonline QR Studio</span>
+          <img className="brand-logo" src="/Logo.svg" alt="Cielonline" />
+          <span className="brand-text">Cielonline</span>
         </Link>
         <nav className="app-nav">
           <Link to="/">Home</Link>
