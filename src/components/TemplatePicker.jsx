@@ -3,18 +3,19 @@ import { templateOptions } from "../hooks/useCardForm";
 export default function TemplatePicker({ selected, onChange }) {
   return (
     <fieldset className="fieldset">
-      <legend>Template (5 options)</legend>
+      <legend>Template layout</legend>
       <div className="template-grid">
-        {templateOptions.map((template) => (
-          <label key={template} className="template-option">
+        {templateOptions.map((t) => (
+          <label key={t.key} className={`template-option ${selected === t.key ? "selected" : ""}`}>
             <input
               type="radio"
               name="template"
-              value={template}
-              checked={selected === template}
+              value={t.key}
+              checked={selected === t.key}
               onChange={(event) => onChange(event.target.value)}
             />
-            <span>{template.replace("template-", "Template ").toUpperCase()}</span>
+            <span className="template-icon">{t.icon}</span>
+            <span className="template-label">{t.label}</span>
           </label>
         ))}
       </div>

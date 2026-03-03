@@ -1,14 +1,24 @@
 import { useMemo, useState } from "react";
 
-export const templateOptions = ["template-a", "template-b", "template-c", "template-d", "template-e"];
+export const templateOptions = [
+  { key: "template-a", label: "Classic", icon: "📋" },
+  { key: "template-b", label: "Split", icon: "🔲" },
+  { key: "template-c", label: "Sidebar", icon: "📐" },
+  { key: "template-d", label: "Centered", icon: "🎯" },
+  { key: "template-e", label: "Glass", icon: "✨" },
+];
 
-export const colorOptions = [
-  "#355dff",
-  "#0f766e",
-  "#7c3aed",
-  "#b45309",
-  "#be123c",
-  "#1f2937"
+export const cardStyleOptions = [
+  { key: "flat", label: "Flat" },
+  { key: "glossy", label: "Glossy" },
+  { key: "gradient", label: "Gradient" },
+  { key: "minimal", label: "Minimal" },
+];
+
+export const presetColors = [
+  "#355dff", "#0f766e", "#7c3aed", "#b45309",
+  "#be123c", "#1f2937", "#059669", "#d946ef",
+  "#0891b2", "#ea580c", "#4f46e5", "#000000",
 ];
 
 const emptyCard = {
@@ -20,6 +30,7 @@ const emptyCard = {
   website: "",
   avatar_url: "",
   template_key: "template-a",
+  card_style: "flat",
   background_color: "#355dff",
   phone_1: "",
   phone_2: "",
@@ -27,7 +38,12 @@ const emptyCard = {
   email_2: "",
   address: "",
   instagram_url: "",
-  linkedin_url: ""
+  linkedin_url: "",
+  facebook_url: "",
+  twitter_url: "",
+  tiktok_url: "",
+  youtube_url: "",
+  github_url: "",
 };
 
 export function useCardForm(initialData = {}) {
@@ -47,22 +63,29 @@ export function useCardForm(initialData = {}) {
       .replace(/^-|-$/g, "")
       .slice(0, 60);
 
+    const trimField = (key) => (card[key] ?? "").trim();
+
     return {
       ...card,
       slug: normalizedSlug,
-      full_name: card.full_name.trim(),
-      title: card.title.trim(),
-      company: card.company.trim(),
-      bio: card.bio.trim(),
-      website: card.website.trim(),
-      avatar_url: card.avatar_url.trim(),
-      phone_1: card.phone_1.trim(),
-      phone_2: card.phone_2.trim(),
-      email_1: card.email_1.trim(),
-      email_2: card.email_2.trim(),
-      address: card.address.trim(),
-      instagram_url: card.instagram_url.trim(),
-      linkedin_url: card.linkedin_url.trim()
+      full_name: trimField("full_name"),
+      title: trimField("title"),
+      company: trimField("company"),
+      bio: trimField("bio"),
+      website: trimField("website"),
+      avatar_url: trimField("avatar_url"),
+      phone_1: trimField("phone_1"),
+      phone_2: trimField("phone_2"),
+      email_1: trimField("email_1"),
+      email_2: trimField("email_2"),
+      address: trimField("address"),
+      instagram_url: trimField("instagram_url"),
+      linkedin_url: trimField("linkedin_url"),
+      facebook_url: trimField("facebook_url"),
+      twitter_url: trimField("twitter_url"),
+      tiktok_url: trimField("tiktok_url"),
+      youtube_url: trimField("youtube_url"),
+      github_url: trimField("github_url"),
     };
   }, [card]);
 

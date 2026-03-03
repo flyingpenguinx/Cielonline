@@ -15,14 +15,20 @@ const previewCard = {
   website: "https://cielonline.com",
   avatar_url: "",
   template_key: "template-c",
+  card_style: "flat",
   background_color: "#355dff",
   phone_1: "+1 (555) 123-4500",
   phone_2: "",
   email_1: "alex@cielonline.com",
   email_2: "",
   address: "Sacramento, CA",
-  instagram_url: "",
-  linkedin_url: ""
+  instagram_url: "https://instagram.com/cielonline",
+  linkedin_url: "https://linkedin.com/in/carlosleon",
+  facebook_url: "",
+  twitter_url: "",
+  tiktok_url: "",
+  youtube_url: "",
+  github_url: "",
 };
 
 const previewSavedCards = [
@@ -86,7 +92,12 @@ export default function DashboardPage({ user, previewOnly = false }) {
       owner_id: user.id,
       social: {
         instagram_url: sanitized.instagram_url || null,
-        linkedin_url: sanitized.linkedin_url || null
+        linkedin_url: sanitized.linkedin_url || null,
+        facebook_url: sanitized.facebook_url || null,
+        twitter_url: sanitized.twitter_url || null,
+        tiktok_url: sanitized.tiktok_url || null,
+        youtube_url: sanitized.youtube_url || null,
+        github_url: sanitized.github_url || null,
       }
     };
 

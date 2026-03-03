@@ -11,14 +11,20 @@ const carlosCardExample = {
   website: "https://cielonline.com",
   avatar_url: "",
   template_key: "template-c",
+  card_style: "glossy",
   background_color: "#355dff",
   phone_1: "(916) 616-3269",
   phone_2: "",
   email_1: "carloslmgustavo@gmail.com",
   email_2: "",
   address: "Sacramento, CA",
-  instagram_url: "",
-  linkedin_url: ""
+  instagram_url: "https://instagram.com/cielonline",
+  linkedin_url: "https://linkedin.com/in/carlosleon",
+  facebook_url: "",
+  twitter_url: "",
+  tiktok_url: "",
+  youtube_url: "",
+  github_url: "",
 };
 
 export default function HomePage({ session }) {

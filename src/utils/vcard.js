@@ -30,6 +30,18 @@ export function buildVCard(card) {
   if (card.address) lines.push(`ADR;TYPE=WORK:;;${esc(card.address)};;;;`);
   if (card.bio) lines.push(`NOTE:${esc(card.bio)}`);
 
+  // Social media URLs
+  if (card.instagram_url) lines.push(`X-SOCIALPROFILE;TYPE=instagram:${esc(card.instagram_url)}`);
+  if (card.linkedin_url) lines.push(`X-SOCIALPROFILE;TYPE=linkedin:${esc(card.linkedin_url)}`);
+  if (card.facebook_url) lines.push(`X-SOCIALPROFILE;TYPE=facebook:${esc(card.facebook_url)}`);
+  if (card.twitter_url) lines.push(`X-SOCIALPROFILE;TYPE=twitter:${esc(card.twitter_url)}`);
+  if (card.tiktok_url) lines.push(`X-SOCIALPROFILE;TYPE=tiktok:${esc(card.tiktok_url)}`);
+  if (card.youtube_url) lines.push(`URL;TYPE=youtube:${esc(card.youtube_url)}`);
+  if (card.github_url) lines.push(`URL;TYPE=github:${esc(card.github_url)}`);
+
+  // Avatar / photo
+  if (card.avatar_url) lines.push(`PHOTO;VALUE=uri:${esc(card.avatar_url)}`);
+
   lines.push(`REV:${now}`);
   lines.push("END:VCARD");
   return lines.join("\r\n");
