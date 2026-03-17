@@ -348,3 +348,107 @@ Reuse this exact pattern every time:
 6. Keep service role key server-side only
 
 If you follow that flow, your next Supabase project will be much faster.
+
+
+====================================================================
+13) CLIENT SITES — ADMINISTRATION PORTAL SQL
+====================================================================
+Run this SQL in Supabase SQL Editor to enable the Administration portal.
+This creates tables for client websites and their editable content blocks.
+
+--------------------------------------------------------------------
+-- Client sites: each site is assigned to a user (client)
+create table if not exists public.client_sites (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  site_name text not null,
+  site_url text,
+  slug text not null unique check (slug ~ '^[a-z0-9-]{2,80}$'),
+  description text,
+  favicon_url text,
+  is_published boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Content blocks for each site page
+create table if not exists public.site_blocks (
+  id uuid primary key default gen_random_uuid(),
+  site_id uuid not null references public.client_sites(id) on delete cascade,
+  page_path text not null default '/',
+  block_type text not null check (block_type in (
+    'hero', 'heading', 'text', 'image', 'button', 'divider', 'spacer', 'gallery', 'columns'
+  )),
+  content jsonb not null default '{}'::jsonb,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Triggers
+drop trigger if exists client_sites_set_updated_at on public.client_sites;
+create trigger client_sites_set_updated_at
+before update on public.client_sites
+for each row execute function public.set_updated_at();
+
+drop trigger if exists site_blocks_set_updated_at on public.site_blocks;
+create trigger site_blocks_set_updated_at
+before update on public.site_blocks
+for each row execute function public.set_updated_at();
+
+-- RLS
+alter table public.client_sites enable row level security;
+alter table public.site_blocks enable row level security;
+
+-- Owners can manage their own sites
+drop policy if exists client_sites_owner_all on public.client_sites;
+create policy client_sites_owner_all
+on public.client_sites
+for all
+to authenticated
+using (auth.uid() = owner_id)
+with check (auth.uid() = owner_id);
+
+-- Published sites are readable by everyone (for public rendering)
+drop policy if exists client_sites_public_read on public.client_sites;
+create policy client_sites_public_read
+on public.client_sites
+for select
+to anon, authenticated
+using (is_published = true);
+
+-- Site blocks: owners can manage blocks for their sites
+drop policy if exists site_blocks_owner_all on public.site_blocks;
+create policy site_blocks_owner_all
+on public.site_blocks
+for all
+to authenticated
+using (
+  exists (
+    select 1 from public.client_sites
+    where client_sites.id = site_blocks.site_id
+    and client_sites.owner_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.client_sites
+    where client_sites.id = site_blocks.site_id
+    and client_sites.owner_id = auth.uid()
+  )
+);
+
+-- Published site blocks are readable by everyone
+drop policy if exists site_blocks_public_read on public.site_blocks;
+create policy site_blocks_public_read
+on public.site_blocks
+for select
+to anon, authenticated
+using (
+  exists (
+    select 1 from public.client_sites
+    where client_sites.id = site_blocks.site_id
+    and client_sites.is_published = true
+  )
+);
+--------------------------------------------------------------------

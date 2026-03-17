@@ -6,6 +6,8 @@ import LoginPage from "./pages/LoginPage";
 import PublicCardPage from "./pages/PublicCardPage";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
+const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
 
 const MenuIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -35,6 +37,7 @@ function AppHeader({ session, signOut }) {
     <>
       <Link to="/" onClick={close}>Home</Link>
       <Link to="/preview" onClick={close}>Preview Builder</Link>
+      {session ? <Link to="/site-editor" onClick={close}>My Sites</Link> : null}
       {session ? <Link to="/dashboard" onClick={close}>Dashboard</Link> : <Link to="/login" onClick={close}>Log in</Link>}
       {session ? (
         <button className="btn btn-secondary" onClick={() => { signOut(); close(); }}>
@@ -120,6 +123,26 @@ export default function App() {
             ) : (
               <Navigate to="/login" replace />
             )
+          }
+        />
+        <Route
+          path="/site-editor"
+          element={
+            session ? (
+              <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading editor...</span></div>}>
+                <SiteEditorPage user={session.user} />
+              </Suspense>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/s/:slug"
+          element={
+            <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading site...</span></div>}>
+              <PublicSitePage />
+            </Suspense>
           }
         />
         <Route path="/c/:slug" element={<PublicCardPage />} />

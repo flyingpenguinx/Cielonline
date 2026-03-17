@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CielOnline</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400&display=swap');
+
+        :root {
+            --bg-color: #fcfcfc;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-color: #0d0d0d;
+            --line-color: rgba(210, 215, 230, 0.5); /* Subtle Blue-Gray for lines */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- BUILDING LINES ANIMATED BACKGROUND --- */
+        #background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.8; /* Subtle presence */
+        }
+
+        /* Elements inside the SVG */
+        .build-line {
+            stroke: var(--line-color);
+            stroke-width: 0.5;
+            fill: none;
+            animation: dashLine 15s linear infinite;
+        }
+
+        /* Animations for different structures */
+        .dash-shape {
+            stroke-dasharray: 15;
+            animation: dashMove 20s linear infinite;
+        }
+
+        .slow-fade {
+            animation: fadeIO 8s ease-in-out infinite alternate;
+        }
+
+        /* SVG Construction Grid Animation */
+        @keyframes dashLine {
+            from { stroke-dashoffset: 1000; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        @keyframes dashMove {
+            to { stroke-dashoffset: 300; }
+        }
+
+        @keyframes fadeIO {
+            0% { opacity: 0; transform: scale(0.98) translate(-5px, -5px); }
+            50% { opacity: 0.4; transform: scale(1) translate(0,0); }
+            100% { opacity: 0; transform: scale(1.02) translate(5px, 5px); }
+        }
+
+        /* --- Page Content --- */
+        .main-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 1200px;
+            padding: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        h1 {
+            font-size: 5rem;
+            font-weight: 200; /* Extra light for clean look */
+            margin: 0;
+            letter-spacing: -3px;
+        }
+
+        .description {
+            font-size: 1.25rem;
+            color: #555;
+            max-width: 550px;
+            margin: 20px auto 0;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .nav-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .nav-item {
+            background: var(--card-bg);
+            border: 1px solid #eaeaea;
+            padding: 60px 40px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            backdrop-filter: blur(15px); /* Increased blur */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+        }
+
+        .nav-item:hover {
+            background: #ffffff;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+            transform: translateY(-10px);
+            border-color: #ddd;
+        }
+
+        .nav-item h2 {
+            font-weight: 300;
+            font-size: 1.6rem;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-item .status {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* Coming Soon variant */
+        .coming-soon {
+            cursor: default;
+            background: rgba(245, 245, 245, 0.3);
+        }
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #eaeaea;
+        }
+
+        @media (max-width: 900px) {
+            .nav-container { grid-template-columns: 1fr; }
+            h1 { font-size: 3.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <svg id="background-animation" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+                <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(210, 215, 230, 0.2)" stroke-width="0.5"/>
+            </pattern>
+        </defs>
+
+        <rect width="1000" height="1000" fill="url(#grid)" />
+
+        <rect class="build-line dash-shape slow-fade" x="150" y="200" width="300" height="200" rx="5" />
+        <rect class="build-line slow-fade" x="600" y="300" width="250" height="150" rx="5" />
+        <circle class="build-line slow-fade" cx="800" cy="700" r="100" />
+        <rect class="build-line dash-shape slow-fade" x="200" y="700" width="200" height="200" rx="5" />
+
+        <path class="build-line" d="M 500,0 V 1000 M 0,500 H 1000" stroke-opacity="0.3" />
+        <path class="build-line dash-shape" d="M 150,200 L 450,400 M 600,450 L 850,300" />
+        <path class="build-line" d="M 0,200 H 1000 M 0,800 H 1000" stroke-opacity="0.1" />
+
+    </svg>
+
+    <div class="main-wrapper">
+        <header>
+            <h1>CielOnline</h1>
+            <p class="description">
+                CielOnline is the home for your online needs, with a focus in making all your online needs much simpler.
+            </p>
+        </header>
+
+        <nav class="nav-container">
+            <a href="/dashboard" class="nav-item">
+                <h2>QR Builder</h2>
+                <div class="status">Launch Tool</div>
+            </a>
+
+            <div class="nav-item coming-soon">
+                <h2>Website Builder</h2>
+                <div class="status">Coming Soon</div>
+            </div>
+
+            <a href="/site-editor" class="nav-item">
+                <h2>Administration</h2>
+                <div class="status">Client Portal</div>
+            </a>
+        </nav>
+    </div>
+
+</body>
+</html>
