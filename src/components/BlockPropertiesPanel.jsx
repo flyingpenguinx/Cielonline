@@ -161,6 +161,123 @@ export default function BlockPropertiesPanel({ block, onChange }) {
           </div>
         </div>
       )}
+
+      {/* Gallery columns */}
+      {type === "gallery" && (
+        <div className="field">
+          <span>Grid Columns</span>
+          <div className="style-row">
+            {[2, 3, 4].map((n) => (
+              <button
+                key={n}
+                type="button"
+                className={`style-chip ${content.columns === n ? "selected" : ""}`}
+                onClick={() => onChange(block.id, { columns: n })}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Services List options */}
+      {type === "services_list" && (
+        <>
+          <div className="field">
+            <span>Display Columns</span>
+            <div className="style-row">
+              {[1, 2, 3].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`style-chip ${content.columns === n ? "selected" : ""}`}
+                  onClick={() => onChange(block.id, { columns: n })}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={content.show_price !== false}
+              onChange={(e) => onChange(block.id, { show_price: e.target.checked })}
+            />
+            <span>Show Prices</span>
+          </label>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={content.show_duration !== false}
+              onChange={(e) => onChange(block.id, { show_duration: e.target.checked })}
+            />
+            <span>Show Duration</span>
+          </label>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={content.show_description !== false}
+              onChange={(e) => onChange(block.id, { show_description: e.target.checked })}
+            />
+            <span>Show Description</span>
+          </label>
+        </>
+      )}
+
+      {/* Contact Form options */}
+      {type === "contact_form" && (
+        <>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={content.show_service_picker !== false}
+              onChange={(e) => onChange(block.id, { show_service_picker: e.target.checked })}
+            />
+            <span>Service Picker</span>
+          </label>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={content.show_vehicle_field !== false}
+              onChange={(e) => onChange(block.id, { show_vehicle_field: e.target.checked })}
+            />
+            <span>Vehicle Info Field</span>
+          </label>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={content.show_preferred_date !== false}
+              onChange={(e) => onChange(block.id, { show_preferred_date: e.target.checked })}
+            />
+            <span>Preferred Date Picker</span>
+          </label>
+          <div className="field">
+            <span>Success Message</span>
+            <input
+              type="text"
+              value={content.success_message || ""}
+              onChange={(e) => onChange(block.id, { success_message: e.target.value })}
+              placeholder="Thank you! We'll be in touch shortly."
+            />
+          </div>
+        </>
+      )}
+
+      {/* Map height */}
+      {type === "map" && (
+        <div className="field">
+          <span>Map Height ({content.height || 400}px)</span>
+          <input
+            type="range"
+            min="200"
+            max="600"
+            value={content.height || 400}
+            onChange={(e) => onChange(block.id, { height: Number(e.target.value) })}
+          />
+        </div>
+      )}
     </div>
   );
 }

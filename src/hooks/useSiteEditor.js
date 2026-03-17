@@ -9,11 +9,15 @@ const BLOCK_DEFAULTS = {
   button: { text: "Learn More", url: "#", align: "center", variant: "primary" },
   divider: { style: "solid" },
   spacer: { height: 40 },
-  gallery: { images: [] },
+  gallery: { images: [], columns: 3 },
   columns: { count: 2, items: [{ heading: "Column 1", text: "Content" }, { heading: "Column 2", text: "Content" }] },
+  services_list: { heading: "Our Services", show_price: true, show_duration: true, show_description: true, columns: 2 },
+  contact_form: { heading: "Get in Touch", subtitle: "Fill out the form and we'll get back to you shortly.", button_text: "Send Message", show_service_picker: true, show_vehicle_field: true, show_preferred_date: true, success_message: "Thank you! We'll be in touch shortly." },
+  video: { url: "", caption: "" },
+  map: { embed_url: "", height: 400 },
 };
 
-export function useSiteEditor(user) {
+export function useSiteEditor(user, initialSiteId) {
   const [sites, setSites] = useState([]);
   const [activeSite, setActiveSite] = useState(null);
   const [blocks, setBlocks] = useState([]);
@@ -59,6 +63,16 @@ export function useSiteEditor(user) {
     }
     return data ?? [];
   }, []);
+
+  // Auto-open site when initialSiteId is provided (used by admin WebsiteTab)
+  useEffect(() => {
+    if (!initialSiteId || activeSite) return;
+    const match = sites.find((s) => s.id === initialSiteId);
+    if (match) {
+      setActiveSite(match);
+      loadBlocks(match.id).then(setBlocks);
+    }
+  }, [initialSiteId, sites, activeSite, loadBlocks]);
 
   const openSite = useCallback(async (site) => {
     setActiveSite(site);

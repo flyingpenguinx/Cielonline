@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
 
-function renderBlock(block) {
+/* ── Static block renderer (hero, heading, text, image, etc.) ── */
+function renderStaticBlock(block) {
   const { block_type: type, content } = block;
 
   switch (type) {
@@ -78,15 +79,236 @@ function renderBlock(block) {
         </div>
       );
 
+    case "gallery": {
+      const images = content.images || [];
+      if (images.length === 0) return null;
+      return (
+        <div key={block.id} className="pub-gallery">
+          <div className="pub-gallery-grid" style={{ gridTemplateColumns: `repeat(${content.columns || 3}, 1fr)` }}>
+            {images.map((img, i) => (
+              <figure key={i} className="pub-gallery-item">
+                <img src={img.src} alt={img.alt || ""} />
+                {img.caption && <figcaption>{img.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    case "video": {
+      if (!content.url) return null;
+      const ytMatch = content.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+      const vimeoMatch = content.url.match(/vimeo\.com\/(\d+)/);
+      let embedUrl = "";
+      if (ytMatch) embedUrl = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
+      else if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+      if (!embedUrl) return null;
+      return (
+        <div key={block.id} className="pub-video">
+          <div className="pub-video-embed">
+            <iframe
+              src={embedUrl}
+              title="Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          {content.caption && <p className="pub-video-caption">{content.caption}</p>}
+        </div>
+      );
+    }
+
+    case "map":
+      if (!content.embed_url) return null;
+      return (
+        <div key={block.id} className="pub-map" style={{ height: content.height || 400 }}>
+          <iframe
+            src={content.embed_url}
+            title="Map"
+            style={{ border: 0, width: "100%", height: "100%" }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+      );
+
     default:
       return null;
   }
 }
 
+/* ── Services List (live from DB) ── */
+function PubServicesList({ block, services }) {
+  const { content } = block;
+  const activeServices = services.filter((s) => s.is_active !== false);
+  if (activeServices.length === 0) return null;
+
+  return (
+    <div key={block.id} className="pub-services-list">
+      {content.heading && <h2 style={{ textAlign: "center" }}>{content.heading}</h2>}
+      <div
+        className="pub-services-grid"
+        style={{ gridTemplateColumns: `repeat(${content.columns || 2}, 1fr)` }}
+      >
+        {activeServices.map((svc) => (
+          <div key={svc.id} className="pub-service-card">
+            <h3>{svc.name}</h3>
+            {content.show_description !== false && svc.description && (
+              <p>{svc.description}</p>
+            )}
+            <div className="pub-service-meta">
+              {content.show_price !== false && svc.price != null && (
+                <span className="pub-service-price">${parseFloat(svc.price).toFixed(2)}</span>
+              )}
+              {content.show_duration !== false && svc.duration_minutes && (
+                <span className="pub-service-duration">{svc.duration_minutes} min</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Contact Form (submits to inquiries table) ── */
+function PubContactForm({ block, siteId, services }) {
+  const { content } = block;
+  const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", vehicle: "", preferred_date: "", message: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [err, setErr] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.email) return;
+    setSubmitting(true);
+    setErr("");
+    try {
+      const { error } = await supabase.from("inquiries").insert({
+        site_id: siteId,
+        name: form.name,
+        email: form.email,
+        phone: form.phone || null,
+        message: form.message || null,
+        service_requested: form.service || null,
+        vehicle_info: form.vehicle || null,
+        preferred_date: form.preferred_date || null,
+        status: "new",
+        source: "website",
+      });
+      if (error) throw error;
+      setSubmitted(true);
+    } catch (e) {
+      setErr("Something went wrong. Please try again or call us directly.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="pub-contact-form pub-contact-success">
+        <h2>✓</h2>
+        <p>{content.success_message || "Thank you! We'll be in touch shortly."}</p>
+      </div>
+    );
+  }
+
+  const activeServices = services.filter((s) => s.is_active !== false);
+
+  return (
+    <div className="pub-contact-form">
+      {content.heading && <h2 style={{ textAlign: "center" }}>{content.heading}</h2>}
+      {content.subtitle && <p className="pub-form-subtitle">{content.subtitle}</p>}
+      <form onSubmit={handleSubmit} className="pub-form">
+        <div className="pub-form-row">
+          <label className="pub-field">
+            <span>Name *</span>
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </label>
+          <label className="pub-field">
+            <span>Email *</span>
+            <input
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </label>
+        </div>
+        <div className="pub-form-row">
+          <label className="pub-field">
+            <span>Phone</span>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </label>
+          {content.show_service_picker !== false && activeServices.length > 0 && (
+            <label className="pub-field">
+              <span>Service</span>
+              <select value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })}>
+                <option value="">Select a service...</option>
+                {activeServices.map((s) => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        {content.show_vehicle_field !== false && (
+          <label className="pub-field">
+            <span>Vehicle Info</span>
+            <input
+              type="text"
+              value={form.vehicle}
+              onChange={(e) => setForm({ ...form, vehicle: e.target.value })}
+              placeholder="e.g., 2024 Tesla Model 3 White"
+            />
+          </label>
+        )}
+        {content.show_preferred_date !== false && (
+          <label className="pub-field">
+            <span>Preferred Date</span>
+            <input
+              type="date"
+              value={form.preferred_date}
+              onChange={(e) => setForm({ ...form, preferred_date: e.target.value })}
+            />
+          </label>
+        )}
+        <label className="pub-field">
+          <span>Message</span>
+          <textarea
+            rows={4}
+            value={form.message}
+            onChange={(e) => setForm({ ...form, message: e.target.value })}
+          />
+        </label>
+        {err && <p className="pub-form-error">{err}</p>}
+        <button type="submit" className="site-btn site-btn-primary pub-submit-btn" disabled={submitting}>
+          {submitting ? "Sending..." : (content.button_text || "Send Message")}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+/* ── Main Public Site Page ── */
 export default function PublicSitePage() {
   const { slug } = useParams();
   const [site, setSite] = useState(null);
   const [blocks, setBlocks] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -102,7 +324,6 @@ export default function PublicSitePage() {
         .from("client_sites")
         .select("*")
         .eq("slug", slug)
-        .eq("is_published", true)
         .single();
 
       if (siteErr || !siteData) {
@@ -113,13 +334,22 @@ export default function PublicSitePage() {
 
       setSite(siteData);
 
-      const { data: blockData } = await supabase
-        .from("site_blocks")
-        .select("*")
-        .eq("site_id", siteData.id)
-        .order("sort_order", { ascending: true });
+      const [blocksRes, servicesRes] = await Promise.all([
+        supabase
+          .from("site_blocks")
+          .select("*")
+          .eq("site_id", siteData.id)
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("services")
+          .select("*")
+          .eq("site_id", siteData.id)
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
+      ]);
 
-      setBlocks(blockData ?? []);
+      setBlocks(blocksRes.data ?? []);
+      setServices(servicesRes.data ?? []);
       setLoading(false);
     })();
   }, [slug]);
@@ -147,7 +377,15 @@ export default function PublicSitePage() {
         <link rel="icon" href={site.favicon_url} />
       )}
       <div className="public-site-content">
-        {blocks.map(renderBlock)}
+        {blocks.map((block) => {
+          if (block.block_type === "services_list") {
+            return <PubServicesList key={block.id} block={block} services={services} />;
+          }
+          if (block.block_type === "contact_form") {
+            return <PubContactForm key={block.id} block={block} siteId={site.id} services={services} />;
+          }
+          return renderStaticBlock(block);
+        })}
       </div>
     </main>
   );

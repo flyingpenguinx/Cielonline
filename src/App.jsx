@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import PublicCardPage from "./pages/PublicCardPage";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
 const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
 
@@ -37,8 +38,9 @@ function AppHeader({ session, signOut }) {
     <>
       <Link to="/" onClick={close}>Home</Link>
       <Link to="/preview" onClick={close}>Preview Builder</Link>
+      {session ? <Link to="/admin" onClick={close}>Admin Portal</Link> : null}
       {session ? <Link to="/site-editor" onClick={close}>My Sites</Link> : null}
-      {session ? <Link to="/dashboard" onClick={close}>Dashboard</Link> : <Link to="/login" onClick={close}>Log in</Link>}
+      {session ? <Link to="/dashboard" onClick={close}>QR Dashboard</Link> : <Link to="/login" onClick={close}>Log in</Link>}
       {session ? (
         <button className="btn btn-secondary" onClick={() => { signOut(); close(); }}>
           Sign out
@@ -119,6 +121,18 @@ export default function App() {
             session ? (
               <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading dashboard...</span></div>}>
                 <DashboardPage user={session.user} />
+              </Suspense>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            session ? (
+              <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading admin...</span></div>}>
+                <AdminDashboardPage user={session.user} />
               </Suspense>
             ) : (
               <Navigate to="/login" replace />

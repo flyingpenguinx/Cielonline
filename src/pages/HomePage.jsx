@@ -44,9 +44,14 @@ export default function HomePage({ session }) {
           </p>
           <div className="hero-actions">
             {session ? (
-              <Link className="btn btn-primary btn-lg" to="/dashboard">
-                Open Dashboard
-              </Link>
+              <>
+                <Link className="btn btn-primary btn-lg" to="/admin">
+                  Admin Portal
+                </Link>
+                <Link className="btn btn-secondary btn-lg" to="/dashboard">
+                  QR Dashboard
+                </Link>
+              </>
             ) : (
               <Link className="btn btn-primary btn-lg" to="/login">
                 Get Started

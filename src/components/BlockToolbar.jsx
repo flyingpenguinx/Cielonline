@@ -1,14 +1,19 @@
 import { useState } from "react";
 
 const BLOCK_TYPES = [
-  { type: "hero",    label: "Hero Banner",  icon: "🖼️" },
-  { type: "heading", label: "Heading",      icon: "📝" },
-  { type: "text",    label: "Text Block",   icon: "📄" },
-  { type: "image",   label: "Image",        icon: "🖼" },
-  { type: "button",  label: "Button",       icon: "🔘" },
-  { type: "columns", label: "Columns",      icon: "▥" },
-  { type: "divider", label: "Divider",      icon: "—" },
-  { type: "spacer",  label: "Spacer",       icon: "↕" },
+  { type: "hero",          label: "Hero Banner",    icon: "🖼️" },
+  { type: "heading",       label: "Heading",        icon: "📝" },
+  { type: "text",          label: "Text Block",     icon: "📄" },
+  { type: "image",         label: "Image",          icon: "🖼" },
+  { type: "gallery",       label: "Gallery",        icon: "🖼️" },
+  { type: "button",        label: "Button",         icon: "🔘" },
+  { type: "columns",       label: "Columns",        icon: "▥" },
+  { type: "services_list", label: "Services / Prices",  icon: "💰" },
+  { type: "contact_form",  label: "Contact Form",       icon: "📬" },
+  { type: "video",         label: "Video Embed",        icon: "🎬" },
+  { type: "map",           label: "Map Embed",          icon: "📍" },
+  { type: "divider",       label: "Divider",        icon: "—" },
+  { type: "spacer",        label: "Spacer",         icon: "↕" },
 ];
 
 export default function BlockToolbar({ onAdd }) {
