@@ -621,8 +621,12 @@ Open http://localhost:5173
 - **Landing page**: http://localhost:5173/landing (or landing.html)
 - **Home**: http://localhost:5173/
 - **Login**: http://localhost:5173/login
+- **Preview Builder**: http://localhost:5173/preview (read-only, non-logged-in only)
+- **Dashboard Hub**: http://localhost:5173/dashboard (requires login — main hub)
+- **QR Builder**: http://localhost:5173/qr-builder (requires login)
+- **QR Dashboard**: http://localhost:5173/qr-dashboard (requires login)
 - **Admin Portal**: http://localhost:5173/admin (requires login)
-- **QR Dashboard**: http://localhost:5173/dashboard (requires login)
+- **My Sites Editor**: http://localhost:5173/site-editor (requires login)
 
 ---
 

@@ -45,21 +45,23 @@ export default function HomePage({ session }) {
           <div className="hero-actions">
             {session ? (
               <>
-                <Link className="btn btn-primary btn-lg" to="/admin">
-                  Admin Portal
+                <Link className="btn btn-primary btn-lg" to="/dashboard">
+                  Dashboard
                 </Link>
-                <Link className="btn btn-secondary btn-lg" to="/dashboard">
-                  QR Dashboard
+                <Link className="btn btn-secondary btn-lg" to="/admin">
+                  Admin Portal
                 </Link>
               </>
             ) : (
-              <Link className="btn btn-primary btn-lg" to="/login">
-                Get Started
-              </Link>
+              <>
+                <Link className="btn btn-primary btn-lg" to="/login">
+                  Get Started
+                </Link>
+                <Link className="btn btn-secondary btn-lg" to="/preview">
+                  Try the Builder
+                </Link>
+              </>
             )}
-            <Link className="btn btn-secondary btn-lg" to="/preview">
-              Try the Builder
-            </Link>
           </div>
         </div>
       </section>

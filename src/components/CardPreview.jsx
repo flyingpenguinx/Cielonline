@@ -115,24 +115,50 @@ function styleClass(card) {
   return `card-style-${style}`;
 }
 
+/* ── Font class helper ── */
+function fontClass(card) {
+  const font = card.font_style || "default";
+  return `card-font-${font}`;
+}
+
+/* ── Border radius class helper ── */
+function radiusClass(card) {
+  const r = card.border_radius || "rounded";
+  return `card-radius-${r}`;
+}
+
 /* ── Bio Row ── */
 function BioRow({ card }) {
   if (!card.bio) return null;
   return <p className="card-bio">{card.bio}</p>;
 }
 
+/* ── Tagline Row ── */
+function TaglineRow({ card }) {
+  if (!card.tagline) return null;
+  return <p className="card-tagline">{card.tagline}</p>;
+}
+
+/* ── Logo ── */
+function CardLogo({ card }) {
+  if (!card.show_logo || !card.logo_url) return null;
+  return <img className="card-logo" src={card.logo_url} alt={`${card.company || ""} logo`} />;
+}
+
 /* ── Template A: Classic top-accent ── */
 function TemplateA({ card }) {
   return (
-    <article className={`template-card modern-template modern-template-a ${styleClass(card)}`} style={{ "--template-bg": card.background_color }}>
+    <article className={`template-card modern-template modern-template-a ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="card-top-accent" />
       <div className="card-content">
+        <CardLogo card={card} />
         <Avatar card={card} />
         <div className="card-header-info">
           <h3>{card.full_name || "Your Name"}</h3>
           {card.title && <p className="job-title">{card.title}</p>}
           {card.company && <p className="company-name">{card.company}</p>}
         </div>
+        <TaglineRow card={card} />
         <BioRow card={card} />
         <SocialIcons card={card} />
         <ContactRows card={card} />
@@ -144,7 +170,7 @@ function TemplateA({ card }) {
 /* ── Template B: Horizontal header ── */
 function TemplateB({ card }) {
   return (
-    <article className={`template-card modern-template modern-template-b ${styleClass(card)}`} style={{ "--template-bg": card.background_color }}>
+    <article className={`template-card modern-template modern-template-b ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="card-content">
         <div className="card-header-horizontal">
           <div className="header-text">
@@ -154,6 +180,8 @@ function TemplateB({ card }) {
           </div>
           <Avatar card={card} />
         </div>
+        <CardLogo card={card} />
+        <TaglineRow card={card} />
         <BioRow card={card} />
         <SocialIcons card={card} />
         <ContactRows card={card} />
@@ -165,16 +193,18 @@ function TemplateB({ card }) {
 /* ── Template C: Sidebar ── */
 function TemplateC({ card }) {
   return (
-    <article className={`template-card modern-template modern-template-c ${styleClass(card)}`} style={{ "--template-bg": card.background_color }}>
+    <article className={`template-card modern-template modern-template-c ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="split-layout">
         <div className="split-left">
           <Avatar card={card} />
+          <CardLogo card={card} />
           <SocialIcons card={card} />
         </div>
         <div className="split-right">
           <h3>{card.full_name || "Your Name"}</h3>
           {card.title && <p className="job-title">{card.title}</p>}
           {card.company && <p className="company-name">{card.company}</p>}
+          <TaglineRow card={card} />
           <BioRow card={card} />
           <ContactRows card={card} />
         </div>
@@ -186,13 +216,15 @@ function TemplateC({ card }) {
 /* ── Template D: Centered with divider ── */
 function TemplateD({ card }) {
   return (
-    <article className={`template-card modern-template modern-template-d ${styleClass(card)}`} style={{ "--template-bg": card.background_color }}>
+    <article className={`template-card modern-template modern-template-d ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="card-content centered-content">
+        <CardLogo card={card} />
         <Avatar card={card} />
         <h3>{card.full_name || "Your Name"}</h3>
         {card.title && <p className="job-title">{card.title}</p>}
         {card.company && <p className="company-name">{card.company}</p>}
         <div className="divider" />
+        <TaglineRow card={card} />
         <BioRow card={card} />
         <SocialIcons card={card} />
         <ContactRows card={card} />
@@ -204,14 +236,16 @@ function TemplateD({ card }) {
 /* ── Template E: Glass ── */
 function TemplateE({ card }) {
   return (
-    <article className={`template-card modern-template modern-template-e ${styleClass(card)}`} style={{ "--template-bg": card.background_color }}>
+    <article className={`template-card modern-template modern-template-e ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="glass-content">
+        <CardLogo card={card} />
         <div className="card-header-info">
           <h3>{card.full_name || "Your Name"}</h3>
           {card.title && <p className="job-title">{card.title}</p>}
           {card.company && <p className="company-name">{card.company}</p>}
         </div>
         <Avatar card={card} />
+        <TaglineRow card={card} />
         <BioRow card={card} />
         <SocialIcons card={card} />
         <ContactRows card={card} />

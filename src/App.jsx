@@ -5,7 +5,10 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import PublicCardPage from "./pages/PublicCardPage";
 
+const HubPage = lazy(() => import("./pages/HubPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const QrBuilderPage = lazy(() => import("./pages/QrBuilderPage"));
+const QrDashboardPage = lazy(() => import("./pages/QrDashboardPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
 const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
@@ -37,10 +40,12 @@ function AppHeader({ session, signOut }) {
   const navLinks = (
     <>
       <Link to="/" onClick={close}>Home</Link>
-      <Link to="/preview" onClick={close}>Preview Builder</Link>
+      {!session && <Link to="/preview" onClick={close}>Preview Builder</Link>}
+      {session ? <Link to="/dashboard" onClick={close}>Dashboard</Link> : null}
+      {session ? <Link to="/qr-builder" onClick={close}>Build QR</Link> : null}
       {session ? <Link to="/admin" onClick={close}>Admin Portal</Link> : null}
       {session ? <Link to="/site-editor" onClick={close}>My Sites</Link> : null}
-      {session ? <Link to="/dashboard" onClick={close}>QR Dashboard</Link> : <Link to="/login" onClick={close}>Log in</Link>}
+      {session ? <Link to="/qr-dashboard" onClick={close}>QR Dashboard</Link> : <Link to="/login" onClick={close}>Log in</Link>}
       {session ? (
         <button className="btn btn-secondary" onClick={() => { signOut(); close(); }}>
           Sign out
@@ -110,9 +115,13 @@ export default function App() {
         <Route
           path="/preview"
           element={
-            <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading preview...</span></div>}>
-              <DashboardPage previewOnly />
-            </Suspense>
+            session ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading preview...</span></div>}>
+                <DashboardPage previewOnly />
+              </Suspense>
+            )
           }
         />
         <Route
@@ -120,7 +129,31 @@ export default function App() {
           element={
             session ? (
               <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading dashboard...</span></div>}>
-                <DashboardPage user={session.user} />
+                <HubPage user={session.user} />
+              </Suspense>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/qr-builder"
+          element={
+            session ? (
+              <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading builder...</span></div>}>
+                <QrBuilderPage user={session.user} />
+              </Suspense>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/qr-dashboard"
+          element={
+            session ? (
+              <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading QR dashboard...</span></div>}>
+                <QrDashboardPage user={session.user} />
               </Suspense>
             ) : (
               <Navigate to="/login" replace />

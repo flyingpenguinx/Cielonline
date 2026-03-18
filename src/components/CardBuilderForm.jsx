@@ -114,10 +114,18 @@ export default function CardBuilderForm({ card, onChange, onSubmit, saving }) {
         <label className="field field-full">
           <span>Short bio</span>
           <textarea
-            rows={2}
+            rows={3}
             value={card.bio ?? ""}
-            placeholder="A short tagline or description..."
+            placeholder="A short tagline or description about you or your business..."
             onChange={(event) => onChange("bio", event.target.value)}
+          />
+        </label>
+        <label className="field field-full">
+          <span>Tagline / Motto</span>
+          <input
+            value={card.tagline ?? ""}
+            placeholder="e.g. Quality work, every time."
+            onChange={(event) => onChange("tagline", event.target.value)}
           />
         </label>
       </FormSection>
@@ -171,6 +179,97 @@ export default function CardBuilderForm({ card, onChange, onSubmit, saving }) {
               <span className="color-hex-value">{card.background_color}</span>
             </div>
           </div>
+        </fieldset>
+
+        {/* Text color */}
+        <fieldset className="fieldset">
+          <legend>Text color</legend>
+          <div className="color-custom">
+            <label className="color-picker-label">
+              <span>Pick color</span>
+              <input
+                type="color"
+                value={card.text_color || "#0f172a"}
+                onChange={(event) => onChange("text_color", event.target.value)}
+                className="color-picker-input"
+              />
+            </label>
+            <span className="color-hex-value">{card.text_color || "#0f172a"}</span>
+          </div>
+        </fieldset>
+
+        {/* Font style */}
+        <fieldset className="fieldset">
+          <legend>Font style</legend>
+          <div className="style-row">
+            {[
+              { key: "default", label: "Default" },
+              { key: "serif", label: "Serif" },
+              { key: "mono", label: "Mono" },
+              { key: "rounded", label: "Rounded" },
+            ].map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                className={`style-chip ${(card.font_style || "default") === f.key ? "selected" : ""}`}
+                onClick={() => onChange("font_style", f.key)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Border radius */}
+        <fieldset className="fieldset">
+          <legend>Card corners</legend>
+          <div className="style-row">
+            {[
+              { key: "sharp", label: "Sharp" },
+              { key: "rounded", label: "Rounded" },
+              { key: "pill", label: "Pill" },
+            ].map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                className={`style-chip ${(card.border_radius || "rounded") === r.key ? "selected" : ""}`}
+                onClick={() => onChange("border_radius", r.key)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Layout options */}
+        <fieldset className="fieldset">
+          <legend>Layout options</legend>
+          <label className="checkbox-field" style={{ paddingTop: 0 }}>
+            <input
+              type="checkbox"
+              checked={card.show_logo || false}
+              onChange={(event) => onChange("show_logo", event.target.checked)}
+            />
+            <span>Show company logo</span>
+          </label>
+          {card.show_logo && (
+            <label className="field" style={{ marginTop: 8 }}>
+              <span>Logo URL</span>
+              <input
+                value={card.logo_url ?? ""}
+                placeholder="https://example.com/logo.png"
+                onChange={(event) => onChange("logo_url", event.target.value)}
+              />
+            </label>
+          )}
+          <label className="checkbox-field" style={{ paddingTop: 8 }}>
+            <input
+              type="checkbox"
+              checked={card.show_qr_on_card || false}
+              onChange={(event) => onChange("show_qr_on_card", event.target.checked)}
+            />
+            <span>Show QR code on card</span>
+          </label>
         </fieldset>
       </FormSection>
 

@@ -5,7 +5,7 @@
 
 /* --- Design Tokens --- */
 :root {
-  --bg: #f0f4f8;
+  --bg: #F2F0EF;
   --surface: #ffffff;
   --text: #0f172a;
   --text-secondary: #475569;
@@ -468,7 +468,7 @@ input, textarea, select { font: inherit; }
   background:
     radial-gradient(circle at 30% 20%, rgba(37,99,235,.06) 0%, transparent 50%),
     radial-gradient(circle at 70% 80%, rgba(124,58,237,.06) 0%, transparent 50%),
-    var(--bg);
+    #F2F0EF;
 }
 .auth-panel {
   width: 100%;
@@ -3539,4 +3539,271 @@ input, textarea, select { font: inherit; }
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
+}
+
+/* ================================================================
+   HUB PAGE (Post-Login Dashboard)
+   ================================================================ */
+.hub-welcome {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.hub-welcome h1 {
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  margin-bottom: 4px;
+}
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.hub-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 24px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  text-decoration: none;
+  color: var(--text);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.hub-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--hub-accent, var(--accent));
+  border-radius: 0 4px 4px 0;
+}
+.hub-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--hub-accent, var(--accent));
+  border-color: var(--hub-accent, var(--accent));
+}
+.hub-card-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+.hub-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.hub-card-body h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: -.01em;
+}
+.hub-card-body p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+.hub-card-arrow {
+  font-size: 20px;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+.hub-card:hover .hub-card-arrow {
+  color: var(--hub-accent, var(--accent));
+  transform: translateX(4px);
+}
+
+@media (max-width: 640px) {
+  .hub-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .hub-card {
+    padding: 20px 18px;
+  }
+  .hub-card-icon {
+    font-size: 28px;
+  }
+  .hub-card-body h3 {
+    font-size: 16px;
+  }
+}
+
+/* ================================================================
+   QR DASHBOARD PAGE
+   ================================================================ */
+.qr-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+.qr-dash-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  transition: var(--transition-fast);
+}
+.qr-dash-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.qr-dash-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.qr-dash-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.qr-dash-card-left strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.qr-dash-type-icon {
+  font-size: 20px;
+}
+.qr-dash-type-badge {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.qr-dash-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.qr-dash-card-body {
+  display: flex;
+  gap: 16px;
+  padding: 16px 20px;
+  align-items: flex-start;
+}
+.qr-dash-preview {
+  flex-shrink: 0;
+}
+.qr-dash-img {
+  width: 120px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-xs);
+}
+.qr-dash-info {
+  flex: 1;
+  min-width: 0;
+}
+.qr-dash-info p {
+  font-size: 13px;
+  margin: 0 0 4px;
+  word-break: break-all;
+}
+.qr-dash-edit-form {
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideDown 200ms var(--ease);
+}
+
+@media (max-width: 640px) {
+  .qr-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .qr-dash-card-body {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* ================================================================
+   CARD CUSTOMIZATION — Font, Radius, Tagline, Logo
+   ================================================================ */
+.card-tagline {
+  font-size: .75rem;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: .02em;
+  padding: .2rem 0;
+}
+.card-logo {
+  max-width: 60px;
+  max-height: 36px;
+  object-fit: contain;
+  margin-bottom: .4rem;
+}
+
+/* Font variants */
+.card-font-serif h3,
+.card-font-serif .job-title,
+.card-font-serif .company-name,
+.card-font-serif .card-bio,
+.card-font-serif .card-tagline {
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+.card-font-mono h3,
+.card-font-mono .job-title,
+.card-font-mono .company-name,
+.card-font-mono .card-bio,
+.card-font-mono .card-tagline {
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+}
+.card-font-rounded h3,
+.card-font-rounded .job-title,
+.card-font-rounded .company-name,
+.card-font-rounded .card-bio,
+.card-font-rounded .card-tagline {
+  font-family: 'Nunito', 'Comfortaa', system-ui, sans-serif;
+}
+
+/* Border radius variants */
+.card-radius-sharp.modern-template { border-radius: 4px; }
+.card-radius-sharp .contact-item { border-radius: 4px; }
+.card-radius-sharp .social-icon-link { border-radius: 4px; }
+.card-radius-sharp .modern-avatar { border-radius: 8px; }
+
+.card-radius-pill.modern-template { border-radius: 32px; }
+.card-radius-pill .contact-item { border-radius: 20px; }
+.card-radius-pill .social-icon-link { border-radius: 50%; }
+
+/* Custom text color override */
+.modern-template[style*="--card-text"] h3 {
+  color: var(--card-text, #0f172a);
+}
+.modern-template[style*="--card-text"] .card-bio,
+.modern-template[style*="--card-text"] .card-tagline {
+  color: var(--card-text, #475569);
+  opacity: .8;
+}
+
+/* Saved card row layout */
+.saved-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
