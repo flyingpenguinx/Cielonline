@@ -56,11 +56,11 @@ function HeadingBlock({ content, editing, onChange }) {
         value={content.text || ""}
         onChange={(e) => onChange({ text: e.target.value })}
         placeholder="Heading text"
-        style={{ textAlign: content.align || "left" }}
+        style={{ textAlign: content.align || "left", color: content.textColor || "#0f172a" }}
       />
     );
   }
-  return <Tag style={{ textAlign: content.align || "left" }}>{content.text || "Heading"}</Tag>;
+  return <Tag style={{ textAlign: content.align || "left", color: content.textColor || "#0f172a" }}>{content.text || "Heading"}</Tag>;
 }
 
 function TextBlock({ content, editing, onChange }) {
@@ -71,12 +71,12 @@ function TextBlock({ content, editing, onChange }) {
         value={content.text || ""}
         onChange={(e) => onChange({ text: e.target.value })}
         placeholder="Type your text..."
-        style={{ textAlign: content.align || "left" }}
+        style={{ textAlign: content.align || "left", color: content.textColor || "#334155" }}
         rows={4}
       />
     );
   }
-  return <p style={{ textAlign: content.align || "left", whiteSpace: "pre-wrap" }}>{content.text || "Text block"}</p>;
+  return <p style={{ textAlign: content.align || "left", whiteSpace: "pre-wrap", color: content.textColor || "#334155" }}>{content.text || "Text block"}</p>;
 }
 
 function ImageBlock({ content, editing, onChange }) {
@@ -140,7 +140,12 @@ function ButtonBlock({ content, editing, onChange }) {
   }
   return (
     <div style={{ textAlign: content.align || "center" }}>
-      <span className={`site-btn site-btn-${content.variant || "primary"}`}>{content.text || "Button"}</span>
+      <span
+        className={`site-btn site-btn-${content.variant || "primary"}`}
+        style={{ background: content.backgroundColor, color: content.textColor || undefined }}
+      >
+        {content.text || "Button"}
+      </span>
     </div>
   );
 }
@@ -172,7 +177,14 @@ function SpacerBlock({ content, editing, onChange }) {
 function ColumnsBlock({ content, editing, onChange }) {
   const items = content.items || [];
   return (
-    <div className="site-block-columns" style={{ gridTemplateColumns: `repeat(${content.count || 2}, 1fr)` }}>
+    <div
+      className="site-block-columns"
+      style={{
+        gridTemplateColumns: `repeat(${content.count || 2}, 1fr)`,
+        background: content.backgroundColor || undefined,
+        color: content.textColor || undefined,
+      }}
+    >
       {items.map((col, i) => (
         <div key={i} className="site-column">
           {editing ? (
@@ -290,9 +302,9 @@ function GalleryBlock({ content, editing, onChange }) {
 /* ── Services List Block (renders live from DB) ── */
 function ServicesListBlock({ content, editing, onChange }) {
   return (
-    <div className="site-block-services-list">
-      <h2 style={{ textAlign: "center" }}>{content.heading || "Our Services"}</h2>
-      <p className="muted" style={{ textAlign: "center", marginBottom: 16 }}>
+    <div className="site-block-services-list" style={{ background: content.backgroundColor || undefined, color: content.textColor || undefined }}>
+      <h2 style={{ textAlign: "center", color: content.textColor || undefined }}>{content.heading || "Our Services"}</h2>
+      <p className="muted" style={{ textAlign: "center", marginBottom: 16, color: content.textColor || undefined, opacity: 0.8 }}>
         {editing
           ? "⚡ This block auto-renders your services from the Services tab — with live prices."
           : "Services and prices load from your service list automatically."
@@ -301,7 +313,7 @@ function ServicesListBlock({ content, editing, onChange }) {
       <div className="services-preview-grid" style={{ gridTemplateColumns: `repeat(${content.columns || 2}, 1fr)` }}>
         {/* Preview placeholders */}
         {[1, 2, 3, 4].slice(0, content.columns || 2).map((n) => (
-          <div key={n} className="service-preview-card">
+          <div key={n} className="service-preview-card" style={{ background: content.cardBackground || undefined, color: content.textColor || undefined }}>
             <strong>Service {n}</strong>
             {content.show_description !== false && <p className="muted">Description loads from Services tab</p>}
             <div className="service-preview-meta">
@@ -318,7 +330,7 @@ function ServicesListBlock({ content, editing, onChange }) {
 /* ── Contact Form Block ── */
 function ContactFormBlock({ content, editing, onChange }) {
   return (
-    <div className="site-block-contact-form">
+    <div className="site-block-contact-form" style={{ background: content.backgroundColor || undefined, color: content.textColor || undefined }}>
       {editing ? (
         <>
           <input
@@ -337,8 +349,8 @@ function ContactFormBlock({ content, editing, onChange }) {
         </>
       ) : (
         <>
-          <h2 style={{ textAlign: "center" }}>{content.heading || "Get in Touch"}</h2>
-          {content.subtitle && <p className="muted" style={{ textAlign: "center" }}>{content.subtitle}</p>}
+          <h2 style={{ textAlign: "center", color: content.textColor || undefined }}>{content.heading || "Get in Touch"}</h2>
+          {content.subtitle && <p className="muted" style={{ textAlign: "center", color: content.textColor || undefined, opacity: 0.8 }}>{content.subtitle}</p>}
         </>
       )}
       <div className="contact-form-preview">
@@ -469,7 +481,7 @@ const RENDERERS = {
   map: MapBlock,
 };
 
-export default function SiteBlock({ block, selected, editing, onSelect, onChange, onDelete, onMove, totalBlocks, index }) {
+export default function SiteBlock({ block, selected, editing, onSelect, onChange, onDelete, onMove, totalBlocks, index, onDragStart, onDragEnd }) {
   const Renderer = RENDERERS[block.block_type];
   if (!Renderer) return null;
 
@@ -484,7 +496,25 @@ export default function SiteBlock({ block, selected, editing, onSelect, onChange
       {/* Block controls — visible when selected */}
       {selected && (
         <div className="site-block-controls">
-          <span className="site-block-label">{BLOCK_LABELS[block.block_type] || block.block_type}</span>
+          <div className="site-block-title-row">
+            <button
+              type="button"
+              className="block-action-btn block-drag-handle"
+              draggable
+              onDragStart={(event) => {
+                event.stopPropagation();
+                onDragStart?.();
+              }}
+              onDragEnd={(event) => {
+                event.stopPropagation();
+                onDragEnd?.();
+              }}
+              title="Drag to reorder"
+            >
+              ⋮⋮
+            </button>
+            <span className="site-block-label">{BLOCK_LABELS[block.block_type] || block.block_type}</span>
+          </div>
           <div className="site-block-actions">
             <button
               type="button"

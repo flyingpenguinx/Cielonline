@@ -25,12 +25,12 @@ function renderStaticBlock(block) {
 
     case "heading": {
       const Tag = `h${content.level || 2}`;
-      return <Tag key={block.id} style={{ textAlign: content.align || "left" }}>{content.text}</Tag>;
+      return <Tag key={block.id} style={{ textAlign: content.align || "left", color: content.textColor || "#0f172a" }}>{content.text}</Tag>;
     }
 
     case "text":
       return (
-        <p key={block.id} style={{ textAlign: content.align || "left", whiteSpace: "pre-wrap" }}>
+        <p key={block.id} style={{ textAlign: content.align || "left", whiteSpace: "pre-wrap", color: content.textColor || "#334155" }}>
           {content.text}
         </p>
       );
@@ -51,6 +51,7 @@ function renderStaticBlock(block) {
             href={content.url || "#"}
             target="_blank"
             rel="noopener noreferrer"
+            style={{ background: content.backgroundColor, color: content.textColor || undefined }}
           >
             {content.text || "Button"}
           </a>
@@ -68,7 +69,11 @@ function renderStaticBlock(block) {
         <div
           key={block.id}
           className="pub-columns"
-          style={{ gridTemplateColumns: `repeat(${content.count || 2}, 1fr)` }}
+          style={{
+            gridTemplateColumns: `repeat(${content.count || 2}, 1fr)`,
+            background: content.backgroundColor || undefined,
+            color: content.textColor || undefined,
+          }}
         >
           {(content.items || []).map((col, i) => (
             <div key={i} className="pub-column">
@@ -146,14 +151,14 @@ function PubServicesList({ block, services }) {
   if (activeServices.length === 0) return null;
 
   return (
-    <div key={block.id} className="pub-services-list">
-      {content.heading && <h2 style={{ textAlign: "center" }}>{content.heading}</h2>}
+    <div key={block.id} className="pub-services-list" style={{ background: content.backgroundColor || undefined, color: content.textColor || undefined }}>
+      {content.heading && <h2 style={{ textAlign: "center", color: content.textColor || undefined }}>{content.heading}</h2>}
       <div
         className="pub-services-grid"
         style={{ gridTemplateColumns: `repeat(${content.columns || 2}, 1fr)` }}
       >
         {activeServices.map((svc) => (
-          <div key={svc.id} className="pub-service-card">
+          <div key={svc.id} className="pub-service-card" style={{ background: content.cardBackground || undefined, color: content.textColor || undefined }}>
             <h3>{svc.name}</h3>
             {content.show_description !== false && svc.description && (
               <p>{svc.description}</p>
@@ -210,7 +215,7 @@ function PubContactForm({ block, siteId, services }) {
 
   if (submitted) {
     return (
-      <div className="pub-contact-form pub-contact-success">
+      <div className="pub-contact-form pub-contact-success" style={{ background: content.backgroundColor || undefined, color: content.textColor || undefined }}>
         <h2>✓</h2>
         <p>{content.success_message || "Thank you! We'll be in touch shortly."}</p>
       </div>
@@ -220,9 +225,9 @@ function PubContactForm({ block, siteId, services }) {
   const activeServices = services.filter((s) => s.is_active !== false);
 
   return (
-    <div className="pub-contact-form">
-      {content.heading && <h2 style={{ textAlign: "center" }}>{content.heading}</h2>}
-      {content.subtitle && <p className="pub-form-subtitle">{content.subtitle}</p>}
+    <div className="pub-contact-form" style={{ background: content.backgroundColor || undefined, color: content.textColor || undefined }}>
+      {content.heading && <h2 style={{ textAlign: "center", color: content.textColor || undefined }}>{content.heading}</h2>}
+      {content.subtitle && <p className="pub-form-subtitle" style={{ color: content.textColor || undefined, opacity: 0.8 }}>{content.subtitle}</p>}
       <form onSubmit={handleSubmit} className="pub-form">
         <div className="pub-form-row">
           <label className="pub-field">

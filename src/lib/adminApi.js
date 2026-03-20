@@ -21,6 +21,18 @@ export async function fetchUserSites(userId) {
   return data ?? [];
 }
 
+export async function updateClientSite(id, updates) {
+  guard();
+  const { data, error } = await supabase
+    .from("client_sites")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ══════════════════════════════════════════════════════════════════
 // CUSTOMERS (CRM)
 // ══════════════════════════════════════════════════════════════════

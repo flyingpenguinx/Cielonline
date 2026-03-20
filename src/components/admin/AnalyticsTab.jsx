@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { fetchInquiries, fetchAppointments, fetchCustomers } from "../../lib/adminApi";
+import { fetchPayments, fetchSiteEvents } from "../../lib/sitePlatformApi";
 
 function formatMonthLabel(dateStr) {
   const d = new Date(dateStr + "-01");
@@ -45,19 +46,25 @@ export default function AnalyticsTab({ siteId }) {
   const [inquiries, setInquiries] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [siteEvents, setSiteEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [inq, appts, custs] = await Promise.all([
+      const [inq, appts, custs, paymentRows, eventRows] = await Promise.all([
         fetchInquiries(siteId),
         fetchAppointments(siteId),
         fetchCustomers(siteId),
+        fetchPayments(siteId),
+        fetchSiteEvents(siteId),
       ]);
       setInquiries(inq);
       setAppointments(appts);
       setCustomers(custs);
+      setPayments(paymentRows);
+      setSiteEvents(eventRows);
     } catch (err) {
       console.error(err);
     } finally {
@@ -127,6 +134,30 @@ export default function AnalyticsTab({ siteId }) {
     return Object.entries(map).map(([k, v]) => ({ label: k.replace(/_/g, " "), value: v }));
   }, [customers]);
 
+  const revenueByMonth = useMemo(() => {
+    const map = {};
+    payments
+      .filter((payment) => payment.status === "paid")
+      .forEach((payment) => {
+        const key = getMonthKey(payment.paid_at || payment.created_at);
+        map[key] = (map[key] || 0) + Number(payment.amount || 0);
+      });
+    const sorted = Object.keys(map).sort();
+    return sorted.slice(-6).map((k) => ({ label: formatMonthLabel(k), value: Number(map[k].toFixed(2)) }));
+  }, [payments]);
+
+  const topEvents = useMemo(() => {
+    const map = {};
+    siteEvents.forEach((event) => {
+      const key = event.event_name || event.event_type || "unknown";
+      map[key] = (map[key] || 0) + 1;
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([label, value]) => ({ label: label.replace(/_/g, " "), value }));
+  }, [siteEvents]);
+
   const busiestDays = useMemo(() => {
     const map = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
     appointments.forEach((a) => {
@@ -145,6 +176,13 @@ export default function AnalyticsTab({ siteId }) {
   const completionRate = appointments.length > 0
     ? ((completedAppts / appointments.length) * 100).toFixed(1)
     : 0;
+
+  const totalRevenue = payments
+    .filter((payment) => payment.status === "paid")
+    .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+    .toFixed(2);
+
+  const pageViews = siteEvents.filter((event) => event.event_type === "page_view").length;
 
   if (loading) {
     return (
@@ -189,6 +227,14 @@ export default function AnalyticsTab({ siteId }) {
           <div className="analytics-stat-value">{completionRate}%</div>
           <div className="analytics-stat-label">Completion Rate</div>
         </div>
+        <div className="analytics-stat">
+          <div className="analytics-stat-value">{pageViews}</div>
+          <div className="analytics-stat-label">Tracked Page Views</div>
+        </div>
+        <div className="analytics-stat">
+          <div className="analytics-stat-value">${totalRevenue}</div>
+          <div className="analytics-stat-label">Revenue Collected</div>
+        </div>
       </div>
 
       {/* Charts Grid */}
@@ -206,6 +252,11 @@ export default function AnalyticsTab({ siteId }) {
         {customersByMonth.length > 0 && (
           <div className="panel">
             <BarChart data={customersByMonth} label="New Customers by Month" color="#8b5cf6" />
+          </div>
+        )}
+        {revenueByMonth.length > 0 && (
+          <div className="panel">
+            <BarChart data={revenueByMonth} label="Revenue by Month" color="#0f766e" />
           </div>
         )}
         <div className="panel">
@@ -226,15 +277,20 @@ export default function AnalyticsTab({ siteId }) {
             <BarChart data={customersBySource} label="Customers by Source" color="#8b5cf6" />
           </div>
         )}
+        {topEvents.length > 0 && (
+          <div className="panel">
+            <BarChart data={topEvents} label="Top Website Events" color="#0f172a" />
+          </div>
+        )}
       </div>
 
       {/* Empty state */}
-      {inquiries.length === 0 && appointments.length === 0 && customers.length === 0 && (
+      {inquiries.length === 0 && appointments.length === 0 && customers.length === 0 && payments.length === 0 && siteEvents.length === 0 && (
         <div className="admin-empty">
           <span className="admin-empty-icon">📊</span>
           <h3>No data yet</h3>
           <p className="muted">
-            Analytics will populate as inquiries, appointments, and customers are added.
+            Analytics will populate as inquiries, appointments, customers, payments, and site activity are added.
           </p>
         </div>
       )}

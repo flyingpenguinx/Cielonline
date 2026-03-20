@@ -10,6 +10,18 @@ export default function BlockPropertiesPanel({ block, onChange }) {
 
   const { block_type: type, content } = block;
 
+  const renderColorField = (label, field, fallback) => (
+    <div className="field">
+      <span>{label}</span>
+      <input
+        type="color"
+        value={content[field] || fallback}
+        onChange={(e) => onChange(block.id, { [field]: e.target.value })}
+        className="color-picker-input"
+      />
+    </div>
+  );
+
   return (
     <div className="panel block-props-panel">
       <h3>Block Properties</h3>
@@ -55,50 +67,36 @@ export default function BlockPropertiesPanel({ block, onChange }) {
       {/* Hero colors */}
       {type === "hero" && (
         <>
+          {renderColorField("Background Color", "backgroundColor", "#1e293b")}
+          {renderColorField("Text Color", "textColor", "#ffffff")}
+        </>
+      )}
+
+      {type === "heading" && renderColorField("Text Color", "textColor", "#0f172a")}
+
+      {type === "text" && renderColorField("Text Color", "textColor", "#334155")}
+
+      {/* Button variant */}
+      {type === "button" && (
+        <>
           <div className="field">
-            <span>Background Color</span>
-            <input
-              type="color"
-              value={content.backgroundColor || "#1e293b"}
-              onChange={(e) => onChange(block.id, { backgroundColor: e.target.value })}
-              className="color-picker-input"
-            />
-          </div>
-          <div className="field">
-            <span>Text Color</span>
+            <span>Style</span>
             <div className="style-row">
-              {["#ffffff", "#0f172a"].map((c) => (
+              {["primary", "secondary"].map((v) => (
                 <button
-                  key={c}
+                  key={v}
                   type="button"
-                  className={`style-chip ${content.textColor === c ? "selected" : ""}`}
-                  onClick={() => onChange(block.id, { textColor: c })}
+                  className={`style-chip ${content.variant === v ? "selected" : ""}`}
+                  onClick={() => onChange(block.id, { variant: v })}
                 >
-                  {c === "#ffffff" ? "White" : "Dark"}
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
                 </button>
               ))}
             </div>
           </div>
+          {renderColorField("Button Color", "backgroundColor", "#355dff")}
+          {renderColorField("Button Text", "textColor", "#ffffff")}
         </>
-      )}
-
-      {/* Button variant */}
-      {type === "button" && (
-        <div className="field">
-          <span>Style</span>
-          <div className="style-row">
-            {["primary", "secondary"].map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`style-chip ${content.variant === v ? "selected" : ""}`}
-                onClick={() => onChange(block.id, { variant: v })}
-              >
-                {v.charAt(0).toUpperCase() + v.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
       )}
 
       {/* Image width */}
@@ -141,25 +139,29 @@ export default function BlockPropertiesPanel({ block, onChange }) {
 
       {/* Columns count */}
       {type === "columns" && (
-        <div className="field">
-          <span>Number of Columns</span>
-          <div className="style-row">
-            {[2, 3].map((n) => (
-              <button
-                key={n}
-                type="button"
-                className={`style-chip ${content.count === n ? "selected" : ""}`}
-                onClick={() => {
-                  const items = [...(content.items || [])];
-                  while (items.length < n) items.push({ heading: `Column ${items.length + 1}`, text: "Content" });
-                  onChange(block.id, { count: n, items: items.slice(0, n) });
-                }}
-              >
-                {n} Columns
-              </button>
-            ))}
+        <>
+          <div className="field">
+            <span>Number of Columns</span>
+            <div className="style-row">
+              {[2, 3].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`style-chip ${content.count === n ? "selected" : ""}`}
+                  onClick={() => {
+                    const items = [...(content.items || [])];
+                    while (items.length < n) items.push({ heading: `Column ${items.length + 1}`, text: "Content" });
+                    onChange(block.id, { count: n, items: items.slice(0, n) });
+                  }}
+                >
+                  {n} Columns
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+          {renderColorField("Section Background", "backgroundColor", "#ffffff")}
+          {renderColorField("Text Color", "textColor", "#0f172a")}
+        </>
       )}
 
       {/* Gallery columns */}
@@ -223,6 +225,9 @@ export default function BlockPropertiesPanel({ block, onChange }) {
             />
             <span>Show Description</span>
           </label>
+          {renderColorField("Section Background", "backgroundColor", "#ffffff")}
+          {renderColorField("Text Color", "textColor", "#0f172a")}
+          {renderColorField("Card Background", "cardBackground", "#f8fafc")}
         </>
       )}
 
@@ -262,6 +267,8 @@ export default function BlockPropertiesPanel({ block, onChange }) {
               placeholder="Thank you! We'll be in touch shortly."
             />
           </div>
+          {renderColorField("Section Background", "backgroundColor", "#ffffff")}
+          {renderColorField("Text Color", "textColor", "#0f172a")}
         </>
       )}
 

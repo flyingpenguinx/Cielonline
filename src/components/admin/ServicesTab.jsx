@@ -5,9 +5,11 @@ const EMPTY_FORM = {
   name: "",
   description: "",
   price: "",
+  deposit_amount: "",
   duration_minutes: 60,
   sort_order: 0,
   is_active: true,
+  booking_enabled: true,
 };
 
 export default function ServicesTab({ siteId }) {
@@ -44,9 +46,11 @@ export default function ServicesTab({ siteId }) {
         name: form.name,
         description: form.description || null,
         price: form.price ? parseFloat(form.price) : null,
+        deposit_amount: form.deposit_amount ? parseFloat(form.deposit_amount) : null,
         duration_minutes: parseInt(form.duration_minutes) || 60,
         sort_order: parseInt(form.sort_order) || 0,
         is_active: form.is_active,
+        booking_enabled: form.booking_enabled,
       };
 
       if (editingId) {
@@ -71,9 +75,11 @@ export default function ServicesTab({ siteId }) {
       name: svc.name || "",
       description: svc.description || "",
       price: svc.price || "",
+      deposit_amount: svc.deposit_amount || "",
       duration_minutes: svc.duration_minutes || 60,
       sort_order: svc.sort_order || 0,
       is_active: svc.is_active !== false,
+      booking_enabled: svc.booking_enabled !== false,
     });
     setEditingId(svc.id);
     setShowForm(true);
@@ -135,6 +141,17 @@ export default function ServicesTab({ siteId }) {
               />
             </label>
             <label className="field">
+              <span>Deposit ($)</span>
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={form.deposit_amount}
+                onChange={(e) => setForm({ ...form, deposit_amount: e.target.value })}
+                placeholder="Optional"
+              />
+            </label>
+            <label className="field">
               <span>Duration (min)</span>
               <input
                 type="number"
@@ -160,6 +177,14 @@ export default function ServicesTab({ siteId }) {
               onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
             />
             <span>Active (visible to customers)</span>
+          </label>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={form.booking_enabled}
+              onChange={(e) => setForm({ ...form, booking_enabled: e.target.checked })}
+            />
+            <span>Allow online booking for this service</span>
           </label>
           <div className="row-gap">
             <button type="submit" className="btn btn-primary" disabled={saving}>
@@ -217,7 +242,9 @@ export default function ServicesTab({ siteId }) {
                 {svc.description && <p className="muted">{svc.description}</p>}
                 <div className="service-meta">
                   {svc.price != null && <span className="service-price">${parseFloat(svc.price).toFixed(2)}</span>}
+                  {svc.deposit_amount != null && <span className="muted">Deposit ${parseFloat(svc.deposit_amount).toFixed(2)}</span>}
                   {svc.duration_minutes && <span className="muted">{svc.duration_minutes} min</span>}
+                  {svc.booking_enabled === false && <span className="service-inactive-badge">Booking Off</span>}
                   {!svc.is_active && <span className="service-inactive-badge">Inactive</span>}
                 </div>
               </div>

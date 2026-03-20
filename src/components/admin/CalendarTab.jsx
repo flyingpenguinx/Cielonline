@@ -9,6 +9,7 @@ import {
 } from "../../lib/adminApi";
 
 const STATUS_LABELS = {
+  requested: "Requested",
   scheduled: "Scheduled",
   confirmed: "Confirmed",
   in_progress: "In Progress",
@@ -18,6 +19,7 @@ const STATUS_LABELS = {
 };
 
 const STATUS_COLORS = {
+  requested: "#7c3aed",
   scheduled: "#2563eb",
   confirmed: "#10b981",
   in_progress: "#f59e0b",

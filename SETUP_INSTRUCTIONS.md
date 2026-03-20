@@ -14,6 +14,8 @@ Cielonline is an administration platform for businesses. After setup, users can:
 
 The first connected website is **vividautodetails.com** (car detailing).
 
+For long-term multi-site operations, prefer **Vercel** over GitHub Pages for client websites that need embedded live previews inside Cielonline. GitHub Pages is acceptable for a simple static launch, but Vercel gives you better control over preview deployments, headers, and future operational flexibility.
+
 ---
 
 ## Tech Stack
@@ -24,11 +26,14 @@ The first connected website is **vividautodetails.com** (car detailing).
 | Backend / DB | Supabase (Postgres + Auth + RLS) |
 | Hosting | Vercel |
 | Email | Resend (via Supabase Edge Functions) |
+| Payments | Stripe Connect Standard |
 | Domain | cielonline.com |
 
 ---
 
 ## Step-by-Step Setup
+
+Before running SQL, also review `SUPABASE_AI_AGENT_PROMPT.md`. That prompt is designed for Supabase AI to audit the current project and add any missing schema, enum, index, trigger, or RLS pieces required by Cielonline.
 
 ### 1. Create a Supabase Project
 
@@ -57,6 +62,8 @@ Create a file named `.env` in the project root (same level as `package.json`):
 VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_ANON_PUBLIC_KEY
 ```
+
+You can also start from `.env.example` in the repo.
 
 ### 4. Run the Database SQL
 
@@ -420,6 +427,100 @@ CREATE INDEX IF NOT EXISTS idx_customer_notes_customer ON public.customer_notes(
 CREATE INDEX IF NOT EXISTS idx_site_blocks_site ON public.site_blocks(site_id);
 ```
 
+### 5. Configure Stripe Connect For Client-Owned Payments
+
+This is the recommended production payment architecture for client businesses like Vivid.
+
+Use Stripe Connect Standard.
+
+Why this is the right model:
+1. Your client owns their Stripe account.
+2. Their payouts go to their bank account directly.
+3. Their taxes, disputes, and compliance stay attached to their own business account.
+4. Cielonline acts as the platform CRM and payment-link generator, not the merchant of record.
+
+Create one platform Stripe account for Cielonline, then let each client connect their own Stripe account through onboarding.
+
+Required Supabase Edge Function secrets:
+
+1. `SUPABASE_URL`
+2. `SUPABASE_ANON_KEY`
+3. `SUPABASE_SERVICE_ROLE_KEY`
+4. `STRIPE_SECRET_KEY`
+5. `STRIPE_WEBHOOK_SECRET`
+6. `RESEND_API_KEY` if using email notifications
+7. `ADMIN_NOTIFICATION_EMAIL` if using email notifications
+
+Deploy these edge functions:
+
+1. `notify-admin`
+2. `create-stripe-account-link`
+3. `create-stripe-checkout-link`
+4. `create-public-booking-checkout`
+5. `stripe-webhook`
+
+Example commands:
+
+```bash
+supabase functions deploy notify-admin
+supabase functions deploy create-stripe-account-link
+supabase functions deploy create-stripe-checkout-link
+supabase functions deploy create-public-booking-checkout
+supabase functions deploy stripe-webhook
+```
+
+In Stripe dashboard, add a webhook endpoint pointing to your deployed Supabase function:
+
+```text
+https://YOUR_PROJECT_ID.functions.supabase.co/stripe-webhook
+```
+
+Subscribe it to at least:
+
+1. `checkout.session.completed`
+2. `payment_intent.payment_failed`
+3. `account.updated`
+
+Automatic behavior after this is deployed:
+
+1. When you click `Connect Stripe`, Cielonline creates or reuses the client's connected account and stores the Stripe account ID in Supabase automatically.
+2. When the client finishes onboarding in Stripe, Stripe sends `account.updated` events.
+3. The webhook updates the client's `client_sites.settings` record automatically.
+4. You do not manually paste the Stripe account ID into Supabase.
+
+After deployment:
+1. open the Payments tab for a client site
+2. click `Connect Stripe`
+3. complete onboarding as that client business
+4. create a payment record
+5. click `Generate Checkout`
+6. send the checkout URL to the customer or let the booking flow use it for deposits
+
+### 6. Vercel Move For Vivid
+
+When moving Vivid from GitHub Pages to Vercel:
+
+1. deploy the static Vivid site to Vercel
+2. update the client site `site_url` in Cielonline Overview
+3. point the custom domain DNS to Vercel
+4. confirm the bridge script still loads correctly
+5. confirm the Visual Canvas iframe preview loads on the Vercel URL
+
+### 7. Local Preview
+
+Run the app locally:
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the local URL printed by Vite, usually:
+
+```text
+http://localhost:5173
+```
+
 ### 5. Seed the First Client Site (Vivid Auto Details)
 
 After running the schema SQL above, you need to create a user account and assign the Vivid Auto Details site. Run this in the SQL Editor **AFTER** you have created your user account (via the /login page):
@@ -674,4 +775,196 @@ Open http://localhost:5173
 | **Calendar** | Month view calendar showing all appointments. Click a day to see details. Create, edit, delete appointments. Link to customers and services. |
 | **Customers** | Full CRM — add/edit/delete customers. Vehicle info (make, model, year, color, plate). Tags, source tracking. Notes. Appointment history per customer. |
 | **Services** | Manage business services (name, description, price, duration). Toggle active/inactive. |
+| **Payments** | Track deposits, payment links, balances, and paid status per customer or appointment. |
 | **Analytics** | Charts: inquiries by month, appointments by month, busiest days, conversion rate, customer sources. |
+
+---
+
+## External Site Control Add-On SQL
+
+Run this SQL after the base schema if you want the newer external-site management features used by the Vivid integration in this repo.
+
+This adds:
+- managed website content fields per site
+- tracked website events for analytics
+- payment records for deposits / invoices
+- public booking support improvements
+- service settings for deposits and online booking
+
+```sql
+alter table public.client_sites
+  add column if not exists booking_page_enabled boolean not null default true;
+
+alter table public.services
+  add column if not exists deposit_amount numeric(10,2),
+  add column if not exists booking_enabled boolean not null default true;
+
+create table if not exists public.site_content_entries (
+  id uuid primary key default gen_random_uuid(),
+  site_id uuid not null references public.client_sites(id) on delete cascade,
+  content_key text not null,
+  label text not null,
+  field_type text not null default 'text' check (field_type in ('text', 'textarea', 'url', 'json')),
+  section_name text not null default 'General',
+  page_path text not null default '/',
+  value_text text,
+  value_json jsonb,
+  is_public boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint site_content_entries_unique unique (site_id, content_key)
+);
+
+create table if not exists public.site_events (
+  id bigint generated always as identity primary key,
+  site_id uuid not null references public.client_sites(id) on delete cascade,
+  page_path text,
+  event_type text not null default 'engagement',
+  event_name text not null,
+  visitor_id text,
+  referrer text,
+  user_agent text,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.payments (
+  id uuid primary key default gen_random_uuid(),
+  site_id uuid not null references public.client_sites(id) on delete cascade,
+  customer_id uuid references public.customers(id) on delete set null,
+  appointment_id uuid references public.appointments(id) on delete set null,
+  label text not null,
+  amount numeric(10,2) not null,
+  currency text not null default 'USD',
+  status text not null default 'pending' check (status in ('pending', 'payment_link_sent', 'paid', 'failed', 'refunded', 'cancelled')),
+  payment_method text,
+  external_reference text,
+  checkout_url text,
+  due_at timestamptz,
+  paid_at timestamptz,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists site_content_entries_set_updated_at on public.site_content_entries;
+create trigger site_content_entries_set_updated_at
+before update on public.site_content_entries
+for each row execute function public.set_updated_at();
+
+drop trigger if exists payments_set_updated_at on public.payments;
+create trigger payments_set_updated_at
+before update on public.payments
+for each row execute function public.set_updated_at();
+
+alter table public.site_content_entries enable row level security;
+alter table public.site_events enable row level security;
+alter table public.payments enable row level security;
+
+drop policy if exists client_sites_public_read on public.client_sites;
+create policy client_sites_public_read on public.client_sites
+for select to anon, authenticated
+using (is_published = true);
+
+drop policy if exists site_content_entries_owner on public.site_content_entries;
+create policy site_content_entries_owner on public.site_content_entries
+for all to authenticated
+using (
+  exists (
+    select 1 from public.client_sites s
+    where s.id = site_content_entries.site_id and s.owner_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.client_sites s
+    where s.id = site_content_entries.site_id and s.owner_id = auth.uid()
+  )
+);
+
+drop policy if exists site_content_entries_public_read on public.site_content_entries;
+create policy site_content_entries_public_read on public.site_content_entries
+for select to anon, authenticated
+using (is_public = true);
+
+drop policy if exists site_events_owner on public.site_events;
+create policy site_events_owner on public.site_events
+for select to authenticated
+using (
+  exists (
+    select 1 from public.client_sites s
+    where s.id = site_events.site_id and s.owner_id = auth.uid()
+  )
+);
+
+drop policy if exists site_events_public_insert on public.site_events;
+create policy site_events_public_insert on public.site_events
+for insert to anon, authenticated
+with check (site_id is not null);
+
+drop policy if exists payments_owner on public.payments;
+create policy payments_owner on public.payments
+for all to authenticated
+using (
+  exists (
+    select 1 from public.client_sites s
+    where s.id = payments.site_id and s.owner_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.client_sites s
+    where s.id = payments.site_id and s.owner_id = auth.uid()
+  )
+);
+
+drop policy if exists customers_public_insert on public.customers;
+create policy customers_public_insert on public.customers
+for insert to anon, authenticated
+with check (site_id is not null);
+
+drop policy if exists appointments_public_insert on public.appointments;
+create policy appointments_public_insert on public.appointments
+for insert to anon, authenticated
+with check (site_id is not null);
+
+drop policy if exists payments_public_insert on public.payments;
+create policy payments_public_insert on public.payments
+for insert to anon, authenticated
+with check (site_id is not null and status in ('pending', 'payment_link_sent'));
+
+create index if not exists idx_site_content_entries_site on public.site_content_entries(site_id);
+create index if not exists idx_site_content_entries_key on public.site_content_entries(site_id, content_key);
+create index if not exists idx_site_events_site on public.site_events(site_id, created_at desc);
+create index if not exists idx_site_events_name on public.site_events(site_id, event_name);
+create index if not exists idx_payments_site on public.payments(site_id, created_at desc);
+create index if not exists idx_payments_status on public.payments(site_id, status);
+```
+
+### Booking Portal Route
+
+After deploying the updated frontend, each published site gets a hosted booking portal at:
+
+```text
+https://your-domain.com/book/<site-slug>
+```
+
+For Vivid, the route becomes:
+
+```text
+https://cielonline.com/book/vivid-auto-details
+```
+
+### Updated Vivid Bridge Snippet
+
+The Vivid handoff copy in this workspace now uses the reusable bridge include below. It resolves the site by slug, so you do not need to hardcode a UUID into the website:
+
+```html
+<script
+  src="https://cielonline.com/bridge.js"
+  data-supabase-url="https://rmuqwdfbjisugvbotdox.supabase.co"
+  data-supabase-key="YOUR_PUBLIC_ANON_KEY"
+  data-site-slug="vivid-auto-details"
+></script>
+```

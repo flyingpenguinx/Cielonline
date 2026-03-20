@@ -8,6 +8,7 @@ const InquiriesTab = lazy(() => import("../components/admin/InquiriesTab"));
 const CalendarTab = lazy(() => import("../components/admin/CalendarTab"));
 const CustomersTab = lazy(() => import("../components/admin/CustomersTab"));
 const ServicesTab = lazy(() => import("../components/admin/ServicesTab"));
+const PaymentsTab = lazy(() => import("../components/admin/PaymentsTab"));
 const AnalyticsTab = lazy(() => import("../components/admin/AnalyticsTab"));
 
 const TABS = [
@@ -17,6 +18,7 @@ const TABS = [
   { key: "calendar", label: "Calendar", icon: "📅" },
   { key: "customers", label: "Customers", icon: "👥" },
   { key: "services", label: "Services", icon: "🛠️" },
+  { key: "payments", label: "Payments", icon: "💳" },
   { key: "analytics", label: "Analytics", icon: "📈" },
 ];
 
@@ -32,6 +34,11 @@ export default function AdminDashboardPage({ user }) {
   const [activeSite, setActiveSite] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+
+  const handleSiteUpdated = useCallback((updatedSite) => {
+    setSites((prev) => prev.map((site) => (site.id === updatedSite.id ? updatedSite : site)));
+    setActiveSite((prev) => (prev?.id === updatedSite.id ? updatedSite : prev));
+  }, []);
 
   const loadSites = useCallback(async () => {
     setLoading(true);
@@ -155,7 +162,7 @@ export default function AdminDashboardPage({ user }) {
       {/* Tab Content */}
       <Suspense fallback={fallback}>
         {activeTab === "overview" && (
-          <OverviewTab siteId={activeSite.id} site={activeSite} />
+          <OverviewTab siteId={activeSite.id} site={activeSite} onSiteUpdated={handleSiteUpdated} />
         )}
         {activeTab === "website" && (
           <WebsiteTab siteId={activeSite.id} site={activeSite} user={user} />
@@ -164,6 +171,7 @@ export default function AdminDashboardPage({ user }) {
         {activeTab === "calendar" && <CalendarTab siteId={activeSite.id} />}
         {activeTab === "customers" && <CustomersTab siteId={activeSite.id} />}
         {activeTab === "services" && <ServicesTab siteId={activeSite.id} />}
+        {activeTab === "payments" && <PaymentsTab siteId={activeSite.id} site={activeSite} onSiteUpdated={handleSiteUpdated} />}
         {activeTab === "analytics" && <AnalyticsTab siteId={activeSite.id} />}
       </Suspense>
     </main>
