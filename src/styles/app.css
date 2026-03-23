@@ -3844,6 +3844,34 @@ input, textarea, select { font: inherit; }
 .payment-processor-note {
   margin: 0;
 }
+.payment-provider-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.payment-provider-card {
+  display: grid;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+.payment-provider-card.provider-connected {
+  border-color: var(--primary);
+}
+.payment-provider-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.payment-provider-card-header h4 {
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.payment-provider-card-header .muted {
+  font-size: 0.82rem;
+}
 .payment-amount {
   font-size: 1.1rem;
   font-weight: 700;
@@ -3942,6 +3970,12 @@ input, textarea, select { font: inherit; }
     flex-direction: column;
   }
   .payment-processor-header {
+    flex-direction: column;
+  }
+  .payment-provider-options {
+    grid-template-columns: 1fr;
+  }
+  .payment-provider-card-header {
     flex-direction: column;
   }
   .booking-page-header,

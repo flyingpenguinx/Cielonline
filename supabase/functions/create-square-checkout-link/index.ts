@@ -1,4 +1,4 @@
-import { corsHeaders, loadPublishedSite } from "../_shared/site-access.ts";
+import { corsHeaders, loadOwnedSite } from "../_shared/site-access.ts";
 
 const squareEnvironment = Deno.env.get("SQUARE_ENVIRONMENT") ?? "sandbox";
 
@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
 
   try {
     const { siteId, paymentId, successUrl, cancelUrl } = await req.json();
-    const { serviceClient, site } = await loadPublishedSite(siteId);
+    const { serviceClient, site } = await loadOwnedSite(req, siteId);
 
     const accessToken = site.settings?.square_access_token;
     const locationId = site.settings?.square_location_id;
@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       throw new Error("Square is not connected for this site.");
     }
 
+    // Load the payment record
     const { data: payment, error } = await serviceClient
       .from("payments")
       .select("*, customers(email, first_name, last_name)")
@@ -38,6 +39,7 @@ Deno.serve(async (req) => {
     const amountCents = Math.round(Number(payment.amount || 0) * 100);
     const baseUrl = getSquareBaseUrl();
 
+    // Create Square payment link
     const response = await fetch(`${baseUrl}/v2/online-checkout/payment-links`, {
       method: "POST",
       headers: {
@@ -59,6 +61,7 @@ Deno.serve(async (req) => {
           redirect_url: successUrl,
           allow_tipping: false,
         },
+        payment_note: payment.notes || undefined,
         pre_populated_data: payment.customers?.email
           ? { buyer_email: payment.customers.email }
           : undefined,
@@ -73,18 +76,24 @@ Deno.serve(async (req) => {
     }
 
     const checkoutUrl = result.payment_link.url;
+    const orderId = result.payment_link.order_id;
 
-    await serviceClient
+    // Update payment record with checkout link
+    const { data: updatedPayment, error: updateError } = await serviceClient
       .from("payments")
       .update({
         checkout_url: checkoutUrl,
-        external_reference: result.payment_link.order_id,
+        external_reference: orderId,
         status: "payment_link_sent",
         payment_method: "square_checkout",
       })
-      .eq("id", payment.id);
+      .eq("id", payment.id)
+      .select("*, customers(id, first_name, last_name, email), appointments(id, title, scheduled_at)")
+      .single();
 
-    return new Response(JSON.stringify({ url: checkoutUrl }), {
+    if (updateError) throw updateError;
+
+    return new Response(JSON.stringify({ url: checkoutUrl, payment: updatedPayment }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

@@ -26,7 +26,7 @@ For long-term multi-site operations, prefer **Vercel** over GitHub Pages for cli
 | Backend / DB | Supabase (Postgres + Auth + RLS) |
 | Hosting | Vercel |
 | Email | Resend (via Supabase Edge Functions) |
-| Payments | Stripe Connect Standard |
+| Payments | Square |
 | Domain | cielonline.com |
 
 ---
@@ -427,74 +427,87 @@ CREATE INDEX IF NOT EXISTS idx_customer_notes_customer ON public.customer_notes(
 CREATE INDEX IF NOT EXISTS idx_site_blocks_site ON public.site_blocks(site_id);
 ```
 
-### 5. Configure Stripe Connect For Client-Owned Payments
+### 5. Configure Payment Processing (Square + Stripe)
 
-This is the recommended production payment architecture for client businesses like Vivid.
+Cielonline supports two payment providers. Square is the recommended primary option, with Stripe available as an alternative. Clients connect by clicking a button and logging in — no manual database work.
 
-Use Stripe Connect Standard.
+**How it works for clients:** In the admin Payments tab, the client clicks "Connect Square" or "Connect Stripe". A login window opens. They sign into their own account. Credentials are saved automatically. Done.
 
-Why this is the right model:
-1. Your client owns their Stripe account.
-2. Their payouts go to their bank account directly.
-3. Their taxes, disputes, and compliance stay attached to their own business account.
-4. Cielonline acts as the platform CRM and payment-link generator, not the merchant of record.
+#### 5a. Square (Primary — Recommended)
 
-Create one platform Stripe account for Cielonline, then let each client connect their own Stripe account through onboarding.
+Create one Square Application for Cielonline in the [Square Developer Dashboard](https://developer.squareup.com).
 
-Required Supabase Edge Function secrets:
+Required Supabase secrets for Square:
+
+1. `SQUARE_APPLICATION_ID`
+2. `SQUARE_APPLICATION_SECRET`
+3. `SQUARE_ENVIRONMENT` (`sandbox` for testing, `production` for live)
+4. `SQUARE_WEBHOOK_SIGNATURE_KEY`
+5. `FRONTEND_ORIGIN` (e.g. `https://cielonline.com`)
+
+Deploy Square edge functions:
+
+```bash
+supabase functions deploy create-square-oauth-link
+supabase functions deploy square-oauth-callback
+supabase functions deploy create-square-checkout-link
+supabase functions deploy square-webhook
+```
+
+In the Square Developer Dashboard, configure:
+
+1. **OAuth Redirect URL**: `https://YOUR_PROJECT_ID.supabase.co/functions/v1/square-oauth-callback`
+2. **Webhook URL**: `https://YOUR_PROJECT_ID.supabase.co/functions/v1/square-webhook`
+
+Subscribe the webhook to: `payment.completed`, `payment.updated`, `refund.created`, `refund.updated`, `oauth.authorization.revoked`
+
+#### 5b. Stripe (Alternative Option)
+
+Create one platform Stripe account for Cielonline using [Stripe Connect Standard](https://stripe.com/connect).
+
+Required Supabase secrets for Stripe:
+
+1. `STRIPE_SECRET_KEY`
+2. `STRIPE_WEBHOOK_SECRET`
+
+Deploy Stripe edge functions:
+
+```bash
+supabase functions deploy create-stripe-account-link
+supabase functions deploy create-stripe-checkout-link
+supabase functions deploy stripe-webhook
+```
+
+In the Stripe Dashboard, add a webhook endpoint:
+
+```text
+https://YOUR_PROJECT_ID.supabase.co/functions/v1/stripe-webhook
+```
+
+Subscribe to: `checkout.session.completed`, `payment_intent.payment_failed`, `account.updated`
+
+#### Shared edge functions (deploy regardless of provider):
+
+```bash
+supabase functions deploy notify-admin
+supabase functions deploy create-public-booking-checkout
+```
+
+#### Required Supabase secrets (always needed):
 
 1. `SUPABASE_URL`
 2. `SUPABASE_ANON_KEY`
 3. `SUPABASE_SERVICE_ROLE_KEY`
-4. `STRIPE_SECRET_KEY`
-5. `STRIPE_WEBHOOK_SECRET`
-6. `RESEND_API_KEY` if using email notifications
-7. `ADMIN_NOTIFICATION_EMAIL` if using email notifications
+4. `RESEND_API_KEY` (email notifications)
+5. `ADMIN_NOTIFICATION_EMAIL` (email notifications)
 
-Deploy these edge functions:
+#### How automatic connection works:
 
-1. `notify-admin`
-2. `create-stripe-account-link`
-3. `create-stripe-checkout-link`
-4. `create-public-booking-checkout`
-5. `stripe-webhook`
-
-Example commands:
-
-```bash
-supabase functions deploy notify-admin
-supabase functions deploy create-stripe-account-link
-supabase functions deploy create-stripe-checkout-link
-supabase functions deploy create-public-booking-checkout
-supabase functions deploy stripe-webhook
-```
-
-In Stripe dashboard, add a webhook endpoint pointing to your deployed Supabase function:
-
-```text
-https://YOUR_PROJECT_ID.functions.supabase.co/stripe-webhook
-```
-
-Subscribe it to at least:
-
-1. `checkout.session.completed`
-2. `payment_intent.payment_failed`
-3. `account.updated`
-
-Automatic behavior after this is deployed:
-
-1. When you click `Connect Stripe`, Cielonline creates or reuses the client's connected account and stores the Stripe account ID in Supabase automatically.
-2. When the client finishes onboarding in Stripe, Stripe sends `account.updated` events.
-3. The webhook updates the client's `client_sites.settings` record automatically.
-4. You do not manually paste the Stripe account ID into Supabase.
-
-After deployment:
-1. open the Payments tab for a client site
-2. click `Connect Stripe`
-3. complete onboarding as that client business
-4. create a payment record
-5. click `Generate Checkout`
-6. send the checkout URL to the customer or let the booking flow use it for deposits
+1. Client clicks "Connect Square" or "Connect Stripe" in the Payments tab.
+2. An OAuth/onboarding window opens — the client logs into their own account.
+3. Credentials are saved to `client_sites.settings` automatically by the callback.
+4. **Nothing is manually entered into the database.**
+5. When both Square and Stripe are connected, Square is used as the default for checkout links.
 
 ### 6. Vercel Move For Vivid
 

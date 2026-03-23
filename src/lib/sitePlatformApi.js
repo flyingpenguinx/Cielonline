@@ -280,6 +280,26 @@ export async function deletePayment(id) {
   if (error) throw error;
 }
 
+export async function createSquareOAuthLink(siteId) {
+  guard();
+  const { data, error } = await supabase.functions.invoke("create-square-oauth-link", {
+    body: { siteId },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createSquareCheckoutLink(siteId, paymentId, { successUrl, cancelUrl }) {
+  guard();
+  const { data, error } = await supabase.functions.invoke("create-square-checkout-link", {
+    body: { siteId, paymentId, successUrl, cancelUrl },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 export async function createStripeConnectOnboardingLink(siteId, { refreshUrl, returnUrl }) {
   guard();
   const { data, error } = await supabase.functions.invoke("create-stripe-account-link", {
@@ -300,9 +320,13 @@ export async function createStripeCheckoutLink(siteId, paymentId, { successUrl, 
   return data;
 }
 
-export async function createPublicBookingCheckoutLink(siteId, paymentId, { successUrl, cancelUrl }) {
+export async function createPublicBookingCheckoutLink(siteId, paymentId, provider, { successUrl, cancelUrl }) {
   guard();
-  const { data, error } = await supabase.functions.invoke("create-public-booking-checkout", {
+  const functionName = provider === "stripe"
+    ? "create-stripe-checkout-link"
+    : "create-square-checkout-link";
+
+  const { data, error } = await supabase.functions.invoke(functionName, {
     body: { siteId, paymentId, successUrl, cancelUrl },
   });
 

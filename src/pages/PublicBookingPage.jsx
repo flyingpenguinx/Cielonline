@@ -124,9 +124,11 @@ export default function PublicBookingPage() {
       });
 
       let checkoutUrl = null;
-      if (result.payment && site.settings?.stripe_account_id) {
+      const hasPaymentProvider = site.settings?.square_connected || site.settings?.stripe_account_id;
+      if (result.payment && hasPaymentProvider) {
+        const provider = site.settings?.square_connected ? "square" : "stripe";
         try {
-          const checkout = await createPublicBookingCheckoutLink(site.id, result.payment.id, {
+          const checkout = await createPublicBookingCheckoutLink(site.id, result.payment.id, provider, {
             successUrl: `${window.location.origin}/book/${slug}?payment=success`,
             cancelUrl: `${window.location.origin}/book/${slug}?payment=cancelled`,
           });

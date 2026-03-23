@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchAppointments, fetchCustomers } from "../../lib/adminApi";
 import {
+  createSquareCheckoutLink,
+  createSquareOAuthLink,
   createStripeCheckoutLink,
   createStripeConnectOnboardingLink,
   createPayment,
@@ -70,6 +72,7 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentSite, setPaymentSite] = useState(site);
+  const [connectingSquare, setConnectingSquare] = useState(false);
   const [connectingStripe, setConnectingStripe] = useState(false);
   const [creatingCheckoutFor, setCreatingCheckoutFor] = useState(null);
 
@@ -77,9 +80,18 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
     setPaymentSite(site);
   }, [site]);
 
-  const stripeSettings = paymentSite?.settings || {};
-  const stripeConnected = Boolean(stripeSettings.stripe_account_id);
-  const stripeReady = stripeConnected && stripeSettings.stripe_charges_enabled !== false;
+  const siteSettings = paymentSite?.settings || {};
+
+  // Square status
+  const squareConnected = Boolean(siteSettings.square_merchant_id && siteSettings.square_connected);
+  const squareReady = squareConnected && Boolean(siteSettings.square_location_id);
+
+  // Stripe status
+  const stripeConnected = Boolean(siteSettings.stripe_account_id);
+  const stripeReady = stripeConnected && siteSettings.stripe_charges_enabled !== false;
+
+  // Active provider: whichever is connected (Square preferred)
+  const activeProvider = squareReady ? "square" : stripeReady ? "stripe" : null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -206,6 +218,18 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
     }
   };
 
+  const handleConnectSquare = async () => {
+    setConnectingSquare(true);
+    try {
+      const result = await createSquareOAuthLink(siteId);
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setConnectingSquare(false);
+    }
+  };
+
   const handleConnectStripe = async () => {
     setConnectingStripe(true);
     try {
@@ -235,13 +259,30 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
     }
   };
 
+  // Check for Square OAuth callback result
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const squareResult = params.get("square");
+    if (squareResult === "success") {
+      load();
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [load]);
+
   const handleGenerateCheckout = async (payment) => {
     setCreatingCheckoutFor(payment.id);
     try {
-      const result = await createStripeCheckoutLink(siteId, payment.id, {
+      const urls = {
         successUrl: `${window.location.origin}/book/${paymentSite?.slug || "site"}?payment=success`,
         cancelUrl: `${window.location.origin}/book/${paymentSite?.slug || "site"}?payment=cancelled`,
-      });
+      };
+
+      let result;
+      if (activeProvider === "stripe") {
+        result = await createStripeCheckoutLink(siteId, payment.id, urls);
+      } else {
+        result = await createSquareCheckoutLink(siteId, payment.id, urls);
+      }
 
       setPayments((prev) => prev.map((row) => (row.id === payment.id ? { ...row, ...result.payment } : row)));
     } catch (error) {
@@ -349,7 +390,7 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
                 type="text"
                 value={form.payment_method}
                 onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-                placeholder="card, cash, zelle, stripe"
+                placeholder="card, cash, zelle, square"
               />
             </label>
             <label className="field">
@@ -435,38 +476,79 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
       <section className="panel payment-processor-panel">
         <div className="payment-processor-header">
           <div>
-            <h3>Client Payment Processing</h3>
-            <p className="muted">Use Stripe Connect Standard so each client owns their payouts, tax handling, and banking details while Cielonline stays the platform layer.</p>
-          </div>
-          <div className="payment-processor-actions">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={handleConnectStripe} disabled={connectingStripe}>
-              {connectingStripe ? "Opening Stripe..." : stripeConnected ? "Review Stripe Setup" : "Connect Stripe"}
-            </button>
+            <h3>Payment Processing</h3>
+            <p className="muted">Connect a payment account so your client can accept payments directly. Just click a button — no manual setup needed.</p>
           </div>
         </div>
 
-        <div className="payment-processor-grid">
-          <div className="payment-processor-card">
-            <span className="detail-label">Provider</span>
-            <strong>{stripeConnected ? "Stripe Connect Standard" : "Not connected"}</strong>
+        <div className="payment-provider-options">
+          <div className={`payment-provider-card panel ${squareConnected ? "provider-connected" : ""}`}>
+            <div className="payment-provider-card-header">
+              <div>
+                <h4>Square {squareReady && <span className="status-badge payment-status-paid">Active</span>}</h4>
+                <p className="muted">Recommended — fast setup, great for service businesses.</p>
+              </div>
+              <button type="button" className="btn btn-primary btn-sm" onClick={handleConnectSquare} disabled={connectingSquare}>
+                {connectingSquare ? "Opening..." : squareConnected ? "Reconnect" : "Connect Square"}
+              </button>
+            </div>
+            {squareConnected && (
+              <div className="payment-processor-grid">
+                <div className="payment-processor-card">
+                  <span className="detail-label">Merchant</span>
+                  <strong>{siteSettings.square_merchant_id}</strong>
+                </div>
+                <div className="payment-processor-card">
+                  <span className="detail-label">Location</span>
+                  <strong>{siteSettings.square_location_id || "Pending"}</strong>
+                </div>
+                <div className="payment-processor-card">
+                  <span className="detail-label">Ready</span>
+                  <strong>{squareReady ? "Yes" : "No"}</strong>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="payment-processor-card">
-            <span className="detail-label">Connected account</span>
-            <strong>{stripeSettings.stripe_account_id || "Pending"}</strong>
-          </div>
-          <div className="payment-processor-card">
-            <span className="detail-label">Charges enabled</span>
-            <strong>{stripeReady ? "Yes" : "No"}</strong>
-          </div>
-          <div className="payment-processor-card">
-            <span className="detail-label">Details submitted</span>
-            <strong>{stripeSettings.stripe_details_submitted ? "Yes" : "No"}</strong>
+
+          <div className={`payment-provider-card panel ${stripeConnected ? "provider-connected" : ""}`}>
+            <div className="payment-provider-card-header">
+              <div>
+                <h4>Stripe {stripeReady && <span className="status-badge payment-status-paid">Active</span>}</h4>
+                <p className="muted">Alternative option — connect if you already use Stripe.</p>
+              </div>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={handleConnectStripe} disabled={connectingStripe}>
+                {connectingStripe ? "Opening..." : stripeConnected ? "Review Setup" : "Connect Stripe"}
+              </button>
+            </div>
+            {stripeConnected && (
+              <div className="payment-processor-grid">
+                <div className="payment-processor-card">
+                  <span className="detail-label">Account</span>
+                  <strong>{siteSettings.stripe_account_id}</strong>
+                </div>
+                <div className="payment-processor-card">
+                  <span className="detail-label">Charges</span>
+                  <strong>{stripeReady ? "Enabled" : "Pending"}</strong>
+                </div>
+                <div className="payment-processor-card">
+                  <span className="detail-label">Details</span>
+                  <strong>{siteSettings.stripe_details_submitted ? "Submitted" : "Pending"}</strong>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        <p className="muted payment-processor-note">
-          This is the correct setup for client businesses like Vivid. Your platform can initiate onboarding, but the client connects their own Stripe account and receives their own money directly.
-        </p>
+        {activeProvider && (
+          <p className="muted payment-processor-note">
+            Currently using <strong>{activeProvider === "square" ? "Square" : "Stripe"}</strong> for checkout links. {squareReady && stripeReady ? "Square is preferred when both are connected." : ""}
+          </p>
+        )}
+        {!activeProvider && (
+          <p className="muted payment-processor-note">
+            Connect Square or Stripe above to start generating checkout links. Your client signs into their own account — money goes directly to them.
+          </p>
+        )}
       </section>
 
       <div className="analytics-summary payment-summary-grid">
@@ -567,7 +649,7 @@ export default function PaymentsTab({ siteId, site, onSiteUpdated }) {
                   type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => handleGenerateCheckout(payment)}
-                  disabled={!stripeReady || creatingCheckoutFor === payment.id}
+                  disabled={!activeProvider || creatingCheckoutFor === payment.id}
                 >
                   {creatingCheckoutFor === payment.id ? "Generating..." : payment.checkout_url ? "Regenerate Checkout" : "Generate Checkout"}
                 </button>
