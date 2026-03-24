@@ -19,6 +19,7 @@ export default function SiteEditorPage({ user }) {
     updateBlock,
     deleteBlock,
     moveBlock,
+    reorderBlocks,
     saveBlocks,
     setSelectedBlockId,
   } = useSiteEditor(user);
@@ -148,6 +149,7 @@ export default function SiteEditorPage({ user }) {
             onUpdateBlock={updateBlock}
             onDeleteBlock={deleteBlock}
             onMoveBlock={moveBlock}
+            onReorderBlocks={reorderBlocks}
             onAddBlock={addBlock}
           />
         </div>

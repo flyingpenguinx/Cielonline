@@ -12,8 +12,59 @@ function getMonthKey(iso) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function getDayKey(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function getWeekdayName(iso) {
   return new Date(iso).toLocaleDateString("en-US", { weekday: "short" });
+}
+
+function formatDayLabel(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/* ── Parse user agent into device category ── */
+function parseDevice(ua) {
+  if (!ua) return "Unknown";
+  const lower = ua.toLowerCase();
+  if (/mobile|android|iphone|ipod/.test(lower)) return "Mobile";
+  if (/tablet|ipad/.test(lower)) return "Tablet";
+  return "Desktop";
+}
+
+/* ── Parse browser from user agent ── */
+function parseBrowser(ua) {
+  if (!ua) return "Unknown";
+  if (/edg\//i.test(ua)) return "Edge";
+  if (/chrome/i.test(ua) && !/edg/i.test(ua)) return "Chrome";
+  if (/firefox/i.test(ua)) return "Firefox";
+  if (/safari/i.test(ua) && !/chrome/i.test(ua)) return "Safari";
+  if (/opera|opr/i.test(ua)) return "Opera";
+  return "Other";
+}
+
+/* ── Parse referrer into a source category ── */
+function parseReferrerSource(ref) {
+  if (!ref) return "Direct";
+  const lower = ref.toLowerCase();
+  if (/google\.|bing\.|yahoo\.|duckduckgo\.|baidu\./.test(lower)) return "Search";
+  if (/facebook\.|instagram\.|twitter\.|x\.com|linkedin\.|tiktok\.|youtube\./.test(lower)) return "Social";
+  if (/t\.co\//.test(lower)) return "Social";
+  if (lower.includes(window.location.hostname)) return "Internal";
+  return "Referral";
+}
+
+/* ── Extract referrer domain ── */
+function parseReferrerDomain(ref) {
+  if (!ref) return "direct";
+  try {
+    return new URL(ref).hostname.replace(/^www\./, "");
+  } catch {
+    return ref.slice(0, 40);
+  }
 }
 
 function BarChart({ data, label, color }) {
@@ -42,6 +93,34 @@ function BarChart({ data, label, color }) {
   );
 }
 
+/* ── Horizontal list chart for ranked items ── */
+function RankedList({ data, label, color }) {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return (
+    <div className="analytics-chart">
+      <h4>{label}</h4>
+      <div className="ranked-list">
+        {data.map((d, i) => (
+          <div key={i} className="ranked-row">
+            <span className="ranked-label">{d.label}</span>
+            <div className="ranked-bar-track">
+              <div className="ranked-bar-fill" style={{ width: `${(d.value / max) * 100}%`, background: color }} />
+            </div>
+            <span className="ranked-value">{d.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Tabs for switching analytics sections ── */
+const ANALYTICS_SECTIONS = [
+  { key: "overview", label: "Overview", icon: "📊" },
+  { key: "traffic", label: "Traffic", icon: "🌐" },
+  { key: "business", label: "Business", icon: "💼" },
+];
+
 export default function AnalyticsTab({ siteId }) {
   const [inquiries, setInquiries] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -49,6 +128,7 @@ export default function AnalyticsTab({ siteId }) {
   const [payments, setPayments] = useState([]);
   const [siteEvents, setSiteEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [section, setSection] = useState("overview");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,96 +156,162 @@ export default function AnalyticsTab({ siteId }) {
     load();
   }, [load]);
 
-  // ── Computed Analytics ──
+  // ══════════════════════════════════════════════
+  //  BUSINESS METRICS (existing)
+  // ══════════════════════════════════════════════
   const inquiryByMonth = useMemo(() => {
     const map = {};
-    inquiries.forEach((i) => {
-      const key = getMonthKey(i.created_at);
-      map[key] = (map[key] || 0) + 1;
-    });
+    inquiries.forEach((i) => { const key = getMonthKey(i.created_at); map[key] = (map[key] || 0) + 1; });
     const sorted = Object.keys(map).sort();
     return sorted.slice(-6).map((k) => ({ label: formatMonthLabel(k), value: map[k] }));
   }, [inquiries]);
 
   const apptByMonth = useMemo(() => {
     const map = {};
-    appointments.forEach((a) => {
-      const key = getMonthKey(a.scheduled_at);
-      map[key] = (map[key] || 0) + 1;
-    });
+    appointments.forEach((a) => { const key = getMonthKey(a.scheduled_at); map[key] = (map[key] || 0) + 1; });
     const sorted = Object.keys(map).sort();
     return sorted.slice(-6).map((k) => ({ label: formatMonthLabel(k), value: map[k] }));
   }, [appointments]);
 
   const inquiryByStatus = useMemo(() => {
     const map = {};
-    inquiries.forEach((i) => {
-      const s = i.status || "unknown";
-      map[s] = (map[s] || 0) + 1;
-    });
+    inquiries.forEach((i) => { const s = i.status || "unknown"; map[s] = (map[s] || 0) + 1; });
     return Object.entries(map).map(([k, v]) => ({ label: k, value: v }));
   }, [inquiries]);
 
   const apptByStatus = useMemo(() => {
     const map = {};
-    appointments.forEach((a) => {
-      const s = (a.status || "unknown").replace(/_/g, " ");
-      map[s] = (map[s] || 0) + 1;
-    });
+    appointments.forEach((a) => { const s = (a.status || "unknown").replace(/_/g, " "); map[s] = (map[s] || 0) + 1; });
     return Object.entries(map).map(([k, v]) => ({ label: k, value: v }));
   }, [appointments]);
 
   const customersByMonth = useMemo(() => {
     const map = {};
-    customers.forEach((c) => {
-      const key = getMonthKey(c.created_at);
-      map[key] = (map[key] || 0) + 1;
-    });
+    customers.forEach((c) => { const key = getMonthKey(c.created_at); map[key] = (map[key] || 0) + 1; });
     const sorted = Object.keys(map).sort();
     return sorted.slice(-6).map((k) => ({ label: formatMonthLabel(k), value: map[k] }));
   }, [customers]);
 
   const customersBySource = useMemo(() => {
     const map = {};
-    customers.forEach((c) => {
-      const s = c.source || "unknown";
-      map[s] = (map[s] || 0) + 1;
-    });
+    customers.forEach((c) => { const s = c.source || "unknown"; map[s] = (map[s] || 0) + 1; });
     return Object.entries(map).map(([k, v]) => ({ label: k.replace(/_/g, " "), value: v }));
   }, [customers]);
 
   const revenueByMonth = useMemo(() => {
     const map = {};
-    payments
-      .filter((payment) => payment.status === "paid")
-      .forEach((payment) => {
-        const key = getMonthKey(payment.paid_at || payment.created_at);
-        map[key] = (map[key] || 0) + Number(payment.amount || 0);
-      });
+    payments.filter((p) => p.status === "paid").forEach((p) => {
+      const key = getMonthKey(p.paid_at || p.created_at);
+      map[key] = (map[key] || 0) + Number(p.amount || 0);
+    });
     const sorted = Object.keys(map).sort();
     return sorted.slice(-6).map((k) => ({ label: formatMonthLabel(k), value: Number(map[k].toFixed(2)) }));
   }, [payments]);
 
   const topEvents = useMemo(() => {
     const map = {};
-    siteEvents.forEach((event) => {
-      const key = event.event_name || event.event_type || "unknown";
-      map[key] = (map[key] || 0) + 1;
-    });
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([label, value]) => ({ label: label.replace(/_/g, " "), value }));
+    siteEvents.forEach((e) => { const key = e.event_name || e.event_type || "unknown"; map[key] = (map[key] || 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, value]) => ({ label: label.replace(/_/g, " "), value }));
   }, [siteEvents]);
 
   const busiestDays = useMemo(() => {
     const map = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
-    appointments.forEach((a) => {
-      const day = getWeekdayName(a.scheduled_at);
-      map[day] = (map[day] || 0) + 1;
-    });
+    appointments.forEach((a) => { const day = getWeekdayName(a.scheduled_at); map[day] = (map[day] || 0) + 1; });
     return Object.entries(map).map(([k, v]) => ({ label: k, value: v }));
   }, [appointments]);
+
+  // ══════════════════════════════════════════════
+  //  TRAFFIC ANALYTICS (new)
+  // ══════════════════════════════════════════════
+  const pageViewEvents = useMemo(() => siteEvents.filter((e) => e.event_type === "page_view"), [siteEvents]);
+
+  // Page views by day (last 14 days)
+  const viewsByDay = useMemo(() => {
+    const map = {};
+    pageViewEvents.forEach((e) => { const key = getDayKey(e.created_at); map[key] = (map[key] || 0) + 1; });
+    const sorted = Object.keys(map).sort();
+    return sorted.slice(-14).map((k) => ({ label: formatDayLabel(k), value: map[k] }));
+  }, [pageViewEvents]);
+
+  // Unique visitors (by visitor_id) by day
+  const uniqueVisitorsByDay = useMemo(() => {
+    const dayMap = {};
+    pageViewEvents.forEach((e) => {
+      const key = getDayKey(e.created_at);
+      if (!dayMap[key]) dayMap[key] = new Set();
+      dayMap[key].add(e.visitor_id || e.id);
+    });
+    const sorted = Object.keys(dayMap).sort();
+    return sorted.slice(-14).map((k) => ({ label: formatDayLabel(k), value: dayMap[k].size }));
+  }, [pageViewEvents]);
+
+  // Total unique visitors
+  const uniqueVisitors = useMemo(() => {
+    const set = new Set();
+    pageViewEvents.forEach((e) => set.add(e.visitor_id || e.id));
+    return set.size;
+  }, [pageViewEvents]);
+
+  // Referrer sources breakdown
+  const referrerSources = useMemo(() => {
+    const map = {};
+    pageViewEvents.forEach((e) => {
+      const src = parseReferrerSource(e.referrer);
+      map[src] = (map[src] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }));
+  }, [pageViewEvents]);
+
+  // Top referrer domains
+  const topReferrers = useMemo(() => {
+    const map = {};
+    pageViewEvents.forEach((e) => {
+      const domain = parseReferrerDomain(e.referrer);
+      map[domain] = (map[domain] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, value]) => ({ label, value }));
+  }, [pageViewEvents]);
+
+  // Top pages
+  const topPages = useMemo(() => {
+    const map = {};
+    pageViewEvents.forEach((e) => {
+      const page = e.page_path || "/";
+      map[page] = (map[page] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, value]) => ({ label, value }));
+  }, [pageViewEvents]);
+
+  // Device breakdown
+  const deviceBreakdown = useMemo(() => {
+    const map = {};
+    pageViewEvents.forEach((e) => {
+      const dev = parseDevice(e.user_agent);
+      map[dev] = (map[dev] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }));
+  }, [pageViewEvents]);
+
+  // Browser breakdown
+  const browserBreakdown = useMemo(() => {
+    const map = {};
+    pageViewEvents.forEach((e) => {
+      const br = parseBrowser(e.user_agent);
+      map[br] = (map[br] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }));
+  }, [pageViewEvents]);
+
+  // Views by hour of day
+  const viewsByHour = useMemo(() => {
+    const map = {};
+    for (let h = 0; h < 24; h++) map[h] = 0;
+    pageViewEvents.forEach((e) => {
+      const h = new Date(e.created_at).getHours();
+      map[h] = (map[h] || 0) + 1;
+    });
+    return Object.entries(map).map(([h, v]) => ({ label: `${String(h).padStart(2, "0")}:00`, value: v }));
+  }, [pageViewEvents]);
 
   // Quick stats
   const conversionRate = inquiries.length > 0
@@ -178,11 +324,31 @@ export default function AnalyticsTab({ siteId }) {
     : 0;
 
   const totalRevenue = payments
-    .filter((payment) => payment.status === "paid")
-    .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+    .filter((p) => p.status === "paid")
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0)
     .toFixed(2);
 
-  const pageViews = siteEvents.filter((event) => event.event_type === "page_view").length;
+  const totalPageViews = pageViewEvents.length;
+
+  // Avg views per day
+  const avgViewsPerDay = useMemo(() => {
+    if (viewsByDay.length === 0) return 0;
+    const total = viewsByDay.reduce((s, d) => s + d.value, 0);
+    return (total / viewsByDay.length).toFixed(1);
+  }, [viewsByDay]);
+
+  // Bounce rate approximation (visitors with only 1 page view)
+  const bounceRate = useMemo(() => {
+    const visitorPageCounts = {};
+    pageViewEvents.forEach((e) => {
+      const vid = e.visitor_id || e.id;
+      visitorPageCounts[vid] = (visitorPageCounts[vid] || 0) + 1;
+    });
+    const visitors = Object.keys(visitorPageCounts);
+    if (visitors.length === 0) return "0";
+    const singlePage = visitors.filter((v) => visitorPageCounts[v] === 1).length;
+    return ((singlePage / visitors.length) * 100).toFixed(1);
+  }, [pageViewEvents]);
 
   if (loading) {
     return (
@@ -198,101 +364,235 @@ export default function AnalyticsTab({ siteId }) {
       <div className="admin-section-header">
         <div>
           <h2>Analytics & Insights</h2>
-          <p className="muted">Business performance overview</p>
+          <p className="muted">Business performance and website traffic</p>
         </div>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
-          ↻ Refresh
-        </button>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="analytics-summary">
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">{inquiries.length}</div>
-          <div className="analytics-stat-label">Total Inquiries</div>
-        </div>
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">{appointments.length}</div>
-          <div className="analytics-stat-label">Total Appointments</div>
-        </div>
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">{customers.length}</div>
-          <div className="analytics-stat-label">Total Customers</div>
-        </div>
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">{conversionRate}%</div>
-          <div className="analytics-stat-label">Inquiry → Booked</div>
-        </div>
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">{completionRate}%</div>
-          <div className="analytics-stat-label">Completion Rate</div>
-        </div>
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">{pageViews}</div>
-          <div className="analytics-stat-label">Tracked Page Views</div>
-        </div>
-        <div className="analytics-stat">
-          <div className="analytics-stat-value">${totalRevenue}</div>
-          <div className="analytics-stat-label">Revenue Collected</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={load}>↻ Refresh</button>
         </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="analytics-charts-grid">
-        {inquiryByMonth.length > 0 && (
-          <div className="panel">
-            <BarChart data={inquiryByMonth} label="Inquiries by Month" color="#2563eb" />
-          </div>
-        )}
-        {apptByMonth.length > 0 && (
-          <div className="panel">
-            <BarChart data={apptByMonth} label="Appointments by Month" color="#10b981" />
-          </div>
-        )}
-        {customersByMonth.length > 0 && (
-          <div className="panel">
-            <BarChart data={customersByMonth} label="New Customers by Month" color="#8b5cf6" />
-          </div>
-        )}
-        {revenueByMonth.length > 0 && (
-          <div className="panel">
-            <BarChart data={revenueByMonth} label="Revenue by Month" color="#0f766e" />
-          </div>
-        )}
-        <div className="panel">
-          <BarChart data={busiestDays} label="Busiest Days of Week" color="#f59e0b" />
-        </div>
-        {inquiryByStatus.length > 0 && (
-          <div className="panel">
-            <BarChart data={inquiryByStatus} label="Inquiries by Status" color="#2563eb" />
-          </div>
-        )}
-        {apptByStatus.length > 0 && (
-          <div className="panel">
-            <BarChart data={apptByStatus} label="Appointments by Status" color="#10b981" />
-          </div>
-        )}
-        {customersBySource.length > 0 && (
-          <div className="panel">
-            <BarChart data={customersBySource} label="Customers by Source" color="#8b5cf6" />
-          </div>
-        )}
-        {topEvents.length > 0 && (
-          <div className="panel">
-            <BarChart data={topEvents} label="Top Website Events" color="#0f172a" />
-          </div>
-        )}
+      {/* Section tabs */}
+      <div className="analytics-tabs">
+        {ANALYTICS_SECTIONS.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            className={`analytics-tab-btn ${section === s.key ? "active" : ""}`}
+            onClick={() => setSection(s.key)}
+          >
+            <span>{s.icon}</span> {s.label}
+          </button>
+        ))}
       </div>
 
-      {/* Empty state */}
-      {inquiries.length === 0 && appointments.length === 0 && customers.length === 0 && payments.length === 0 && siteEvents.length === 0 && (
-        <div className="admin-empty">
-          <span className="admin-empty-icon">📊</span>
-          <h3>No data yet</h3>
-          <p className="muted">
-            Analytics will populate as inquiries, appointments, customers, payments, and site activity are added.
-          </p>
-        </div>
+      {/* ═══════════════ OVERVIEW SECTION ═══════════════ */}
+      {section === "overview" && (
+        <>
+          <div className="analytics-summary">
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{totalPageViews}</div>
+              <div className="analytics-stat-label">Page Views</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{uniqueVisitors}</div>
+              <div className="analytics-stat-label">Unique Visitors</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{inquiries.length}</div>
+              <div className="analytics-stat-label">Inquiries</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{appointments.length}</div>
+              <div className="analytics-stat-label">Appointments</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{customers.length}</div>
+              <div className="analytics-stat-label">Customers</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{conversionRate}%</div>
+              <div className="analytics-stat-label">Conversion</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">${totalRevenue}</div>
+              <div className="analytics-stat-label">Revenue</div>
+            </div>
+          </div>
+
+          <div className="analytics-charts-grid">
+            {viewsByDay.length > 0 && (
+              <div className="panel analytics-chart-wide">
+                <BarChart data={viewsByDay} label="Page Views (Last 14 Days)" color="#2563eb" />
+              </div>
+            )}
+            {topEvents.length > 0 && (
+              <div className="panel">
+                <RankedList data={topEvents} label="Top Website Events" color="#0f172a" />
+              </div>
+            )}
+            {referrerSources.length > 0 && (
+              <div className="panel">
+                <BarChart data={referrerSources} label="Traffic Sources" color="#8b5cf6" />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════ TRAFFIC SECTION ═══════════════ */}
+      {section === "traffic" && (
+        <>
+          <div className="analytics-summary">
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{totalPageViews}</div>
+              <div className="analytics-stat-label">Total Page Views</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{uniqueVisitors}</div>
+              <div className="analytics-stat-label">Unique Visitors</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{avgViewsPerDay}</div>
+              <div className="analytics-stat-label">Avg Views / Day</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{bounceRate}%</div>
+              <div className="analytics-stat-label">Bounce Rate</div>
+            </div>
+          </div>
+
+          <div className="analytics-charts-grid">
+            {viewsByDay.length > 0 && (
+              <div className="panel analytics-chart-wide">
+                <BarChart data={viewsByDay} label="Page Views by Day" color="#2563eb" />
+              </div>
+            )}
+            {uniqueVisitorsByDay.length > 0 && (
+              <div className="panel analytics-chart-wide">
+                <BarChart data={uniqueVisitorsByDay} label="Unique Visitors by Day" color="#10b981" />
+              </div>
+            )}
+            {referrerSources.length > 0 && (
+              <div className="panel">
+                <BarChart data={referrerSources} label="How They Found You" color="#8b5cf6" />
+              </div>
+            )}
+            {topReferrers.length > 0 && (
+              <div className="panel">
+                <RankedList data={topReferrers} label="Top Referrer Domains" color="#0891b2" />
+              </div>
+            )}
+            {topPages.length > 0 && (
+              <div className="panel">
+                <RankedList data={topPages} label="Most Visited Pages" color="#2563eb" />
+              </div>
+            )}
+            {deviceBreakdown.length > 0 && (
+              <div className="panel">
+                <BarChart data={deviceBreakdown} label="Device Type" color="#ea580c" />
+              </div>
+            )}
+            {browserBreakdown.length > 0 && (
+              <div className="panel">
+                <BarChart data={browserBreakdown} label="Browser" color="#7c3aed" />
+              </div>
+            )}
+            {viewsByHour.length > 0 && (
+              <div className="panel analytics-chart-wide">
+                <BarChart data={viewsByHour} label="Traffic by Hour of Day" color="#0f766e" />
+              </div>
+            )}
+          </div>
+
+          {pageViewEvents.length === 0 && (
+            <div className="admin-empty">
+              <span className="admin-empty-icon">🌐</span>
+              <h3>No traffic data yet</h3>
+              <p className="muted">Traffic analytics will appear once visitors start viewing your site. Page views, referrer sources, device types, and more will be tracked automatically.</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ═══════════════ BUSINESS SECTION ═══════════════ */}
+      {section === "business" && (
+        <>
+          <div className="analytics-summary">
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{inquiries.length}</div>
+              <div className="analytics-stat-label">Total Inquiries</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{appointments.length}</div>
+              <div className="analytics-stat-label">Total Appointments</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{customers.length}</div>
+              <div className="analytics-stat-label">Total Customers</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{conversionRate}%</div>
+              <div className="analytics-stat-label">Inquiry → Booked</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">{completionRate}%</div>
+              <div className="analytics-stat-label">Completion Rate</div>
+            </div>
+            <div className="analytics-stat">
+              <div className="analytics-stat-value">${totalRevenue}</div>
+              <div className="analytics-stat-label">Revenue Collected</div>
+            </div>
+          </div>
+
+          <div className="analytics-charts-grid">
+            {inquiryByMonth.length > 0 && (
+              <div className="panel">
+                <BarChart data={inquiryByMonth} label="Inquiries by Month" color="#2563eb" />
+              </div>
+            )}
+            {apptByMonth.length > 0 && (
+              <div className="panel">
+                <BarChart data={apptByMonth} label="Appointments by Month" color="#10b981" />
+              </div>
+            )}
+            {customersByMonth.length > 0 && (
+              <div className="panel">
+                <BarChart data={customersByMonth} label="New Customers by Month" color="#8b5cf6" />
+              </div>
+            )}
+            {revenueByMonth.length > 0 && (
+              <div className="panel">
+                <BarChart data={revenueByMonth} label="Revenue by Month" color="#0f766e" />
+              </div>
+            )}
+            <div className="panel">
+              <BarChart data={busiestDays} label="Busiest Days of Week" color="#f59e0b" />
+            </div>
+            {inquiryByStatus.length > 0 && (
+              <div className="panel">
+                <BarChart data={inquiryByStatus} label="Inquiries by Status" color="#2563eb" />
+              </div>
+            )}
+            {apptByStatus.length > 0 && (
+              <div className="panel">
+                <BarChart data={apptByStatus} label="Appointments by Status" color="#10b981" />
+              </div>
+            )}
+            {customersBySource.length > 0 && (
+              <div className="panel">
+                <BarChart data={customersBySource} label="Customers by Source" color="#8b5cf6" />
+              </div>
+            )}
+          </div>
+
+          {inquiries.length === 0 && appointments.length === 0 && customers.length === 0 && payments.length === 0 && (
+            <div className="admin-empty">
+              <span className="admin-empty-icon">💼</span>
+              <h3>No business data yet</h3>
+              <p className="muted">Analytics will populate as inquiries, appointments, customers, and payments come in.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

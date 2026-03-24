@@ -189,7 +189,12 @@ function VisualCanvasPanel({ site, siteId, viewport, zoom, iframeKey, iframeRef,
         <div className="canvas-frame-wrapper canvas-frame-wrapper-tight">
           <div
             className={`canvas-device-frame canvas-device-${viewport}`}
-            style={{
+            style={viewport === "desktop" ? {
+              width: "1440px",
+              maxWidth: "none",
+              transform: `scale(${(zoom * 0.45) / 100})`,
+              transformOrigin: "top left",
+            } : {
               width: currentViewport.width,
               maxWidth: currentViewport.maxWidth,
               transform: `scale(${zoom / 100})`,

@@ -203,7 +203,7 @@ export async function upsertSiteContentEntries(siteId, entries) {
   return data ?? [];
 }
 
-export async function fetchSiteEvents(siteId, limit = 500) {
+export async function fetchSiteEvents(siteId, limit = 2000) {
   guard();
   const { data, error } = await supabase
     .from("site_events")

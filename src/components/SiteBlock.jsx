@@ -481,13 +481,13 @@ const RENDERERS = {
   map: MapBlock,
 };
 
-export default function SiteBlock({ block, selected, editing, onSelect, onChange, onDelete, onMove, totalBlocks, index, onDragStart, onDragEnd }) {
+export default function SiteBlock({ block, selected, editing, highlighted, onSelect, onChange, onDelete, onMove, totalBlocks, index, onDragStart, onDragEnd }) {
   const Renderer = RENDERERS[block.block_type];
   if (!Renderer) return null;
 
   return (
     <div
-      className={`site-block-wrapper ${selected ? "selected" : ""}`}
+      className={`site-block-wrapper ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(block.id);
