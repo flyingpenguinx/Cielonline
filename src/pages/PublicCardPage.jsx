@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import CardPreview from "../components/CardPreview";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
 import { downloadVCard } from "../utils/vcard";
+import { trackSiteEvent } from "../lib/sitePlatformApi";
 
 export default function PublicCardPage() {
   const { slug } = useParams();
@@ -36,6 +37,21 @@ export default function PublicCardPage() {
 
       setCard(data);
       setLoading(false);
+
+      // Track card view for analytics
+      if (data.site_id) {
+        try {
+          await trackSiteEvent({
+            site_id: data.site_id,
+            event_type: "page_view",
+            event_name: "card_page_view",
+            page_path: `/c/${slug}`,
+            metadata: { slug, card_name: data.full_name },
+          });
+        } catch (e) {
+          // tracking is best-effort
+        }
+      }
     };
 
     load();

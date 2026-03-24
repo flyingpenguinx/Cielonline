@@ -502,6 +502,8 @@ export default function SiteBlock({ block, selected, editing, highlighted, onSel
               className="block-action-btn block-drag-handle"
               draggable
               onDragStart={(event) => {
+                event.dataTransfer.setData("text/plain", block.id);
+                event.dataTransfer.effectAllowed = "move";
                 event.stopPropagation();
                 onDragStart?.();
               }}

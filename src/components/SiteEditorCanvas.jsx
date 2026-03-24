@@ -67,7 +67,9 @@ export default function SiteEditorCanvas({
     onSelectBlock(blockId);
   };
 
-  const handleLayerDragStart = (idx) => {
+  const handleLayerDragStart = (e, idx) => {
+    e.dataTransfer.setData("text/plain", String(idx));
+    e.dataTransfer.effectAllowed = "move";
     setLayerDragIdx(idx);
   };
 
@@ -90,12 +92,14 @@ export default function SiteEditorCanvas({
   const renderDropZone = (index) => (
     <div
       key={`drop-zone-${index}`}
-      className={`site-block-drop-zone ${dragTargetIndex === index ? "active" : ""}`}
+      className={`site-block-drop-zone ${dragTargetIndex === index ? "active" : ""} ${draggedBlockId ? "drag-active" : ""}`}
       onDragOver={(event) => {
         event.preventDefault();
-        if (draggedBlockId) {
-          setDragTargetIndex(index);
-        }
+        event.dataTransfer.dropEffect = "move";
+        setDragTargetIndex(index);
+      }}
+      onDragLeave={() => {
+        setDragTargetIndex((prev) => (prev === index ? null : prev));
       }}
       onDrop={(event) => {
         event.preventDefault();
@@ -130,7 +134,7 @@ export default function SiteEditorCanvas({
               onMouseEnter={() => setHoveredBlockId(block.id)}
               onMouseLeave={() => setHoveredBlockId(null)}
               draggable
-              onDragStart={() => handleLayerDragStart(i)}
+              onDragStart={(e) => handleLayerDragStart(e, i)}
               onDragOver={(e) => handleLayerDragOver(e, i)}
               onDrop={() => handleLayerDrop(i)}
               onDragEnd={() => { setLayerDragIdx(null); setLayerDragOverIdx(null); }}
@@ -207,6 +211,7 @@ export default function SiteEditorCanvas({
                   onSelectBlock(block.id);
                 }}
                 onDragEnd={resetDragState}
+                onDragOver={(e) => e.preventDefault()}
               />
               {renderDropZone(i + 1)}
             </div>

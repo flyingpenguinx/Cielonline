@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
+import { trackSiteEvent } from "../lib/sitePlatformApi";
 
 /* ── Static block renderer (hero, heading, text, image, etc.) ── */
 function renderStaticBlock(block) {
@@ -356,6 +357,19 @@ export default function PublicSitePage() {
       setBlocks(blocksRes.data ?? []);
       setServices(servicesRes.data ?? []);
       setLoading(false);
+
+      // Track page view for analytics
+      try {
+        await trackSiteEvent({
+          site_id: siteData.id,
+          event_type: "page_view",
+          event_name: "site_page_view",
+          page_path: `/s/${slug}`,
+          metadata: { slug },
+        });
+      } catch (e) {
+        // tracking is best-effort, don't block rendering
+      }
     })();
   }, [slug]);
 

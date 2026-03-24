@@ -58,6 +58,8 @@ function VisualCanvasPanel({ site, siteId, viewport, zoom, iframeKey, iframeRef,
   const [status, setStatus] = useState("");
   const [pageFilter, setPageFilter] = useState("all");
   const [selectedSectionKey, setSelectedSectionKey] = useState(null);
+  const frameWrapperRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(800);
 
   const loadEntries = useCallback(async () => {
     setLoading(true);
@@ -94,6 +96,19 @@ function VisualCanvasPanel({ site, siteId, viewport, zoom, iframeKey, iframeRef,
   useEffect(() => {
     loadEntries();
   }, [loadEntries]);
+
+  // Measure the preview panel width for responsive iframe scaling
+  useEffect(() => {
+    const el = frameWrapperRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((observed) => {
+      for (const entry of observed) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const sections = buildCanvasSections(entries).filter((section) => (
     pageFilter === "all" ? true : section.page === pageFilter
@@ -186,38 +201,92 @@ function VisualCanvasPanel({ site, siteId, viewport, zoom, iframeKey, iframeRef,
           </div>
         </div>
 
-        <div className="canvas-frame-wrapper canvas-frame-wrapper-tight">
-          <div
-            className={`canvas-device-frame canvas-device-${viewport}`}
-            style={viewport === "desktop" ? {
-              width: "1440px",
-              maxWidth: "none",
-              transform: `scale(${(zoom * 0.45) / 100})`,
-              transformOrigin: "top left",
-            } : {
-              width: currentViewport.width,
-              maxWidth: currentViewport.maxWidth,
-              transform: `scale(${zoom / 100})`,
-              transformOrigin: "top center",
-            }}
-          >
-            {siteUrl ? (
-              <iframe
-                key={iframeKey}
-                ref={iframeRef}
-                src={siteUrl}
-                className="canvas-iframe"
-                title={`${site.site_name} — Visual Canvas Preview`}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              />
-            ) : (
-              <div className="canvas-no-url">
-                <span className="canvas-no-url-icon">🌐</span>
-                <h3>No website URL configured</h3>
-                <p className="muted">Add a public site URL to preview this client website in the canvas.</p>
+        <div className="canvas-frame-wrapper canvas-frame-wrapper-tight" ref={frameWrapperRef}>
+          {(() => {
+            const DESKTOP_WIDTH = 1440;
+            const DESKTOP_HEIGHT = 900;
+            const padding = 32;
+            const availableWidth = Math.max(containerWidth - padding, 300);
+            const baseScale = Math.min(1, availableWidth / DESKTOP_WIDTH);
+            const desktopScale = baseScale * (zoom / 100);
+
+            if (viewport === "desktop") {
+              return (
+                <div
+                  className="canvas-desktop-scaler"
+                  style={{
+                    width: `${DESKTOP_WIDTH * desktopScale}px`,
+                    height: `${DESKTOP_HEIGHT * desktopScale}px`,
+                    overflow: "hidden",
+                    position: "relative",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div
+                    className="canvas-device-frame canvas-device-desktop"
+                    style={{
+                      width: `${DESKTOP_WIDTH}px`,
+                      height: `${DESKTOP_HEIGHT}px`,
+                      transform: `scale(${desktopScale})`,
+                      transformOrigin: "top left",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      borderRadius: 0,
+                      boxShadow: "none",
+                    }}
+                  >
+                    {siteUrl ? (
+                      <iframe
+                        key={iframeKey}
+                        ref={iframeRef}
+                        src={siteUrl}
+                        className="canvas-iframe"
+                        title={`${site.site_name} — Visual Canvas Preview`}
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                      />
+                    ) : (
+                      <div className="canvas-no-url">
+                        <span className="canvas-no-url-icon">🌐</span>
+                        <h3>No website URL configured</h3>
+                        <p className="muted">Add a public site URL to preview this client website in the canvas.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                className={`canvas-device-frame canvas-device-${viewport}`}
+                style={{
+                  width: currentViewport.width,
+                  maxWidth: currentViewport.maxWidth,
+                  transform: `scale(${zoom / 100})`,
+                  transformOrigin: "top center",
+                }}
+              >
+                {siteUrl ? (
+                  <iframe
+                    key={iframeKey}
+                    ref={iframeRef}
+                    src={siteUrl}
+                    className="canvas-iframe"
+                    title={`${site.site_name} — Visual Canvas Preview`}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  />
+                ) : (
+                  <div className="canvas-no-url">
+                    <span className="canvas-no-url-icon">🌐</span>
+                    <h3>No website URL configured</h3>
+                    <p className="muted">Add a public site URL to preview this client website in the canvas.</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
         </div>
       </section>
 
