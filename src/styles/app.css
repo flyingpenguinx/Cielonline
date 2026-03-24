@@ -4313,8 +4313,6 @@ input, textarea, select { font: inherit; }
 .canvas-inspector-panel .btn-primary:hover {
   background: #4f46e5;
 }
-  margin-bottom: 6px;
-}
 .canvas-hosting-note {
   border: 1px solid rgba(99,102,241,0.15);
   background: rgba(99,102,241,0.06);
