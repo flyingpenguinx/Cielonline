@@ -177,7 +177,24 @@ export default function SiteEditorCanvas({
       </aside>
 
       {/* ── Right: Live Preview Canvas ── */}
-      <div className="editor-canvas-area">
+      <div
+        className="editor-canvas-area"
+        onDragOver={(e) => {
+          // Allow drops only within the canvas area
+          if (draggedBlockId) e.preventDefault();
+        }}
+        onDragLeave={(e) => {
+          // If leaving the canvas area entirely, clear target
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            setDragTargetIndex(null);
+          }
+        }}
+        onDrop={(e) => {
+          // Catch drops that miss a drop zone — cancel the reorder
+          e.preventDefault();
+          resetDragState();
+        }}
+      >
         <div className="site-editor-canvas" onClick={() => onSelectBlock(null)}>
           {blocks.length === 0 && (
             <div className="canvas-empty">

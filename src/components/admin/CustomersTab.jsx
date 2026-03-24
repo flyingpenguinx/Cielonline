@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchCustomers,
   createCustomer,
@@ -51,6 +51,100 @@ export default function CustomersTab({ siteId }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
+
+  // Bulk import
+  const [showImport, setShowImport] = useState(false);
+  const [importRows, setImportRows] = useState([]);
+  const [importStatus, setImportStatus] = useState("");
+  const [importing, setImporting] = useState(false);
+  const importFileRef = useRef(null);
+
+  // ── CSV/Excel file parsing ──
+  const parseCSVText = (text) => {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/[\s_]+/g, "_"));
+    const FIELD_MAP = {
+      first_name: "first_name", first: "first_name", firstname: "first_name",
+      last_name: "last_name", last: "last_name", lastname: "last_name",
+      email: "email", email_address: "email",
+      phone: "phone", phone_number: "phone", telephone: "phone",
+      address: "address",
+      vehicle_make: "vehicle_make", make: "vehicle_make",
+      vehicle_model: "vehicle_model", model: "vehicle_model",
+      vehicle_year: "vehicle_year", year: "vehicle_year",
+      vehicle_color: "vehicle_color", color: "vehicle_color",
+      license_plate: "license_plate", plate: "license_plate", license: "license_plate",
+      tags: "tags",
+      source: "source",
+    };
+    return lines.slice(1).map((line) => {
+      const values = line.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
+      const row = { ...EMPTY_FORM };
+      headers.forEach((h, i) => {
+        const field = FIELD_MAP[h];
+        if (field && values[i]) row[field] = values[i];
+      });
+      return row;
+    }).filter((r) => r.first_name && r.last_name);
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportStatus("");
+
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".csv") || name.endsWith(".txt")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const rows = parseCSVText(ev.target.result);
+        setImportRows(rows);
+        setImportStatus(rows.length > 0 ? `${rows.length} customers found` : "No valid rows found. Ensure columns: first_name, last_name, email, phone");
+      };
+      reader.readAsText(file);
+    } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
+      // For Excel we read as CSV-like text from pasted data
+      setImportStatus("Excel files: please save as CSV first, then import the CSV file.");
+    } else {
+      setImportStatus("Supported formats: CSV, TXT (comma-separated). For Excel/Sheets, export as CSV first.");
+    }
+  };
+
+  const handleImportSubmit = async () => {
+    if (importRows.length === 0) return;
+    setImporting(true);
+    setImportStatus("Importing...");
+    let success = 0;
+    let failed = 0;
+    for (const row of importRows) {
+      try {
+        const payload = {
+          site_id: siteId,
+          first_name: row.first_name,
+          last_name: row.last_name,
+          email: row.email || null,
+          phone: row.phone || null,
+          vehicle_make: row.vehicle_make || null,
+          vehicle_model: row.vehicle_model || null,
+          vehicle_year: row.vehicle_year ? parseInt(row.vehicle_year) : null,
+          vehicle_color: row.vehicle_color || null,
+          license_plate: row.license_plate || null,
+          address: row.address || null,
+          tags: row.tags ? row.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+          source: row.source || "import",
+        };
+        await createCustomer(payload);
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    setImportStatus(`Imported ${success} customer${success !== 1 ? "s" : ""}${failed > 0 ? `, ${failed} failed` : ""}.`);
+    setImporting(false);
+    setImportRows([]);
+    load();
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -575,18 +669,78 @@ export default function CustomersTab({ siteId }) {
           <h2>Customers (CRM)</h2>
           <p className="muted">{customers.length} total customers</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          onClick={() => {
-            setForm({ ...EMPTY_FORM });
-            setEditingId(null);
-            setShowForm(true);
-          }}
-        >
-          + Add Customer
-        </button>
+        <div className="admin-header-actions">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setShowImport(!showImport)}
+          >
+            📥 Import
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => {
+              setForm({ ...EMPTY_FORM });
+              setEditingId(null);
+              setShowForm(true);
+            }}
+          >
+            + Add Customer
+          </button>
+        </div>
       </div>
+
+      {/* Bulk Import Panel */}
+      {showImport && (
+        <section className="panel import-panel">
+          <h3>📥 Bulk Import Customers</h3>
+          <p className="muted">Upload a CSV file with columns: first_name, last_name, email, phone, address, vehicle_make, vehicle_model, vehicle_year, vehicle_color, license_plate, tags, source.</p>
+          <p className="muted" style={{ marginTop: 4 }}>For Excel or Google Sheets, export as CSV first (File → Download → CSV).</p>
+          <div className="import-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => importFileRef.current?.click()}
+            >
+              Choose CSV File
+            </button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".csv,.txt,.xls,.xlsx"
+              onChange={handleImportFile}
+              style={{ display: "none" }}
+            />
+            {importRows.length > 0 && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleImportSubmit}
+                disabled={importing}
+              >
+                {importing ? "Importing..." : `Import ${importRows.length} Customers`}
+              </button>
+            )}
+          </div>
+          {importStatus && <p className="import-status">{importStatus}</p>}
+          {importRows.length > 0 && (
+            <div className="import-preview">
+              <strong>Preview (first 5 rows):</strong>
+              <div className="import-preview-list">
+                {importRows.slice(0, 5).map((r, i) => (
+                  <div key={i} className="import-preview-row">
+                    <span>{r.first_name} {r.last_name}</span>
+                    <span className="muted">{r.email || "—"}</span>
+                    <span className="muted">{r.phone || "—"}</span>
+                  </div>
+                ))}
+                {importRows.length > 5 && <p className="muted">...and {importRows.length - 5} more</p>}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="customer-search">
         <input

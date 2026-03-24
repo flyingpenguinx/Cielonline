@@ -1,3 +1,5 @@
+import ImageUploadField from "./ImageUploadField";
+
 const BLOCK_LABELS = {
   hero: "Hero Banner",
   heading: "Heading",
@@ -92,11 +94,12 @@ function ImageBlock({ content, editing, onChange }) {
       )}
       {editing && (
         <div className="image-edit-fields">
-          <input
-            className="inline-edit"
+          <ImageUploadField
             value={content.src || ""}
-            onChange={(e) => onChange({ src: e.target.value })}
-            placeholder="Image URL (paste link)"
+            onChange={(val) => onChange({ src: val })}
+            label=""
+            placeholder="Paste image URL or upload"
+            compact
           />
           <input
             className="inline-edit"
@@ -246,16 +249,12 @@ function GalleryBlock({ content, editing, onChange }) {
         <div className="gallery-grid" style={{ gridTemplateColumns: `repeat(${content.columns || 3}, 1fr)` }}>
           {images.map((img, i) => (
             <div key={i} className="gallery-item-edit">
-              {img.src ? (
-                <img src={img.src} alt={img.alt || ""} />
-              ) : (
-                <div className="image-placeholder small"><span>🖼</span></div>
-              )}
-              <input
-                className="inline-edit"
+              <ImageUploadField
                 value={img.src || ""}
-                onChange={(e) => updateImage(i, "src", e.target.value)}
+                onChange={(val) => updateImage(i, "src", val)}
+                label=""
                 placeholder="Image URL"
+                compact
               />
               <input
                 className="inline-edit"
@@ -504,6 +503,13 @@ export default function SiteBlock({ block, selected, editing, highlighted, onSel
               onDragStart={(event) => {
                 event.dataTransfer.setData("text/plain", block.id);
                 event.dataTransfer.effectAllowed = "move";
+                // Use a small drag ghost so it doesn't feel like the whole block is being ripped out
+                const ghost = document.createElement("div");
+                ghost.textContent = BLOCK_LABELS[block.block_type] || block.block_type;
+                ghost.style.cssText = "position:absolute;top:-9999px;padding:6px 12px;background:#2563eb;color:#fff;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;";
+                document.body.appendChild(ghost);
+                event.dataTransfer.setDragImage(ghost, 0, 0);
+                setTimeout(() => document.body.removeChild(ghost), 0);
                 event.stopPropagation();
                 onDragStart?.();
               }}

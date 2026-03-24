@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ImageUploadField from "./ImageUploadField";
 
 /* ── Tooltip helper ── */
 function HelpTip({ text }) {
@@ -198,7 +199,12 @@ export default function BlockPropertiesPanel({ block, onChange }) {
             {renderColorField("Text Color", "textColor", "#ffffff", "Color of all text in the hero.")}
           </PropSection>
           <PropSection title="Background Image" helpText="Add a background image behind the hero text." defaultOpen={false}>
-            {renderTextField("Image URL", "backgroundImage", "https://example.com/hero.jpg", "URL to a background image.")}
+            <ImageUploadField
+              value={content.backgroundImage || ""}
+              onChange={(val) => update({ backgroundImage: val })}
+              label="Background Image"
+              placeholder="https://example.com/hero.jpg"
+            />
             {renderRangeField("Overlay Opacity", "overlayOpacity", 0, 100, 50, "%", "Darken the image so text stays readable.")}
           </PropSection>
         </>
@@ -264,8 +270,13 @@ export default function BlockPropertiesPanel({ block, onChange }) {
       {/* ═══ IMAGE ═══ */}
       {type === "image" && (
         <>
-          <PropSection title="Image Source" helpText="Set the image URL and alt text for accessibility.">
-            {renderTextField("Image URL", "src", "https://example.com/image.jpg", "Direct URL to the image.")}
+          <PropSection title="Image Source" helpText="Upload an image or paste a URL. Alt text helps accessibility.">
+            <ImageUploadField
+              value={content.src || ""}
+              onChange={(val) => update({ src: val })}
+              label="Image"
+              placeholder="https://example.com/image.jpg"
+            />
             {renderTextField("Alt Text", "alt", "Describe the image", "Accessibility description — helps screen readers and SEO.")}
             {renderTextField("Caption", "caption", "Optional caption", "Text displayed below the image.")}
           </PropSection>
@@ -461,7 +472,7 @@ export default function BlockPropertiesPanel({ block, onChange }) {
             {renderRangeField("Gap", "gap", 0, 24, 8, "px", "Space between images.")}
             {renderRangeField("Border Radius", "imageRadius", 0, 24, 0, "px", "Round the corners of gallery images.")}
           </PropSection>
-          <PropSection title="Images" helpText="Add, remove, and reorder images. Paste direct image URLs.">
+          <PropSection title="Images" helpText="Upload images or paste URLs. Drag and drop supported.">
             {(content.images || []).map((img, i) => (
               <div key={i} className="prop-gallery-item">
                 <div className="prop-gallery-item-header">
@@ -472,16 +483,16 @@ export default function BlockPropertiesPanel({ block, onChange }) {
                     onClick={() => update({ images: (content.images || []).filter((_, idx) => idx !== i) })}
                   >✕</button>
                 </div>
-                <input
-                  type="text"
+                <ImageUploadField
                   value={img.src || ""}
-                  onChange={(e) => {
+                  onChange={(val) => {
                     const next = [...(content.images || [])];
-                    next[i] = { ...next[i], src: e.target.value };
+                    next[i] = { ...next[i], src: val };
                     update({ images: next });
                   }}
+                  label=""
                   placeholder="Image URL"
-                  className="prop-column-input"
+                  compact
                 />
                 <input
                   type="text"

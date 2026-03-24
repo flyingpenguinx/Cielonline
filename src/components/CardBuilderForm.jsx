@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { presetColors, cardStyleOptions } from "../hooks/useCardForm";
 import TemplatePicker from "./TemplatePicker";
+import ImageUploadField from "./ImageUploadField";
 
 /* ── Layer definitions ── */
 const CARD_LAYERS = [
@@ -95,15 +96,13 @@ function IdentityProps({ card, onChange }) {
 
 function AvatarProps({ card, onChange }) {
   return (
-    <PropSection title="Profile Image" help="URL to a photo. If empty, initials are shown instead.">
-      <label className="prop-field"><span className="prop-label">Avatar URL</span>
-        <input value={card.avatar_url ?? ""} placeholder="https://example.com/photo.jpg" onChange={(e) => onChange("avatar_url", e.target.value)} />
-      </label>
-      {card.avatar_url && (
-        <div style={{ textAlign: "center", padding: "8px 0" }}>
-          <img src={card.avatar_url} alt="preview" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)" }} />
-        </div>
-      )}
+    <PropSection title="Profile Image" help="Upload a photo or paste a URL. If empty, initials are shown instead.">
+      <ImageUploadField
+        value={card.avatar_url ?? ""}
+        onChange={(val) => onChange("avatar_url", val)}
+        label="Profile Photo"
+        placeholder="https://example.com/photo.jpg"
+      />
     </PropSection>
   );
 }
@@ -163,9 +162,13 @@ function BrandingProps({ card, onChange }) {
     <PropSection title="Branding" help="Logo and QR code display options.">
       <label className="prop-checkbox"><input type="checkbox" checked={card.show_logo || false} onChange={(e) => onChange("show_logo", e.target.checked)} /><span>Show company logo</span></label>
       {card.show_logo && (
-        <label className="prop-field"><span className="prop-label">Logo URL</span>
-          <input value={card.logo_url ?? ""} placeholder="https://example.com/logo.png" onChange={(e) => onChange("logo_url", e.target.value)} />
-        </label>
+        <ImageUploadField
+          value={card.logo_url ?? ""}
+          onChange={(val) => onChange("logo_url", val)}
+          label="Logo"
+          placeholder="https://example.com/logo.png"
+          compact
+        />
       )}
       <label className="prop-checkbox"><input type="checkbox" checked={card.show_qr_on_card || false} onChange={(e) => onChange("show_qr_on_card", e.target.checked)} /><span>Show QR code on card</span></label>
     </PropSection>

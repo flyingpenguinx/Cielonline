@@ -204,7 +204,7 @@ function VisualCanvasPanel({ site, siteId, viewport, zoom, iframeKey, iframeRef,
         <div className="canvas-frame-wrapper canvas-frame-wrapper-tight" ref={frameWrapperRef}>
           {(() => {
             const DESKTOP_WIDTH = 1440;
-            const DESKTOP_HEIGHT = 900;
+            const DESKTOP_HEIGHT = 1200;
             const padding = 32;
             const availableWidth = Math.max(containerWidth - padding, 300);
             const baseScale = Math.min(1, availableWidth / DESKTOP_WIDTH);

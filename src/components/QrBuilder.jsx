@@ -34,7 +34,7 @@ export default function QrBuilder({ cards, onSaveQr }) {
       return;
     }
 
-    QRCode.toDataURL(payload, { width: 300, margin: 2, color: { dark: "#0f172a" } })
+    QRCode.toDataURL(payload, { width: 600, margin: 3, color: { dark: "#0f172a" } })
       .then(setDataUrl)
       .catch(() => setDataUrl(""));
   }, [payload]);
@@ -64,8 +64,15 @@ export default function QrBuilder({ cards, onSaveQr }) {
   return (
     <section className="builder-panel qr-builder-panel">
       <div className="qr-header">
-        <h2>QR Code Workshop</h2>
-        <p className="muted">Create branded QR codes for your cards, links, or Wi-Fi networks.</p>
+        <div className="qr-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="28" height="28">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+          </svg>
+        </div>
+        <div>
+          <h2>QR Code Workshop</h2>
+          <p className="muted">Design professional QR codes for your cards, links, or Wi-Fi networks.</p>
+        </div>
       </div>
 
       <div className="qr-builder-grid">
@@ -90,6 +97,9 @@ export default function QrBuilder({ cards, onSaveQr }) {
                     <strong>{qt.label}</strong>
                     <span>{qt.desc}</span>
                   </div>
+                  {type === qt.value && (
+                    <span className="qr-type-check">✓</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -171,31 +181,48 @@ export default function QrBuilder({ cards, onSaveQr }) {
               <span>QR slug</span>
               <input value={values.qrSlug} onChange={(event) => setField("qrSlug", event.target.value)} placeholder="e.g. my-card-qr" />
             </label>
-            <button type="button" className="btn btn-primary" onClick={handleSave} disabled={!payload || !values.qrSlug}>
-              Save QR configuration
+            <button type="button" className="btn btn-primary btn-lg qr-save-btn" onClick={handleSave} disabled={!payload || !values.qrSlug}>
+              Save QR Configuration
             </button>
           </section>
         </div>
 
-        {/* Right column — preview */}
+        {/* Right column — premium preview */}
         <aside className="qr-output">
-          <h3>Live Preview</h3>
-          <div className="qr-preview-box">
-            {dataUrl ? (
-              <>
-                <img className="qr-image" src={dataUrl} alt="Generated QR code" />
-                <button type="button" className="btn btn-secondary btn-sm" onClick={handleDownload}>
-                  <DownloadIcon /> Download PNG
-                </button>
-              </>
-            ) : (
-              <div className="qr-empty-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="40" height="40" opacity=".3">
-                  <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
-                </svg>
-                <p className="muted">Fill in the details to preview your QR code</p>
-              </div>
-            )}
+          <div className="qr-output-header">
+            <h3>Live Preview</h3>
+            <span className="qr-output-badge">{qrTypes.find(q => q.value === type)?.label || "QR Code"}</span>
+          </div>
+
+          <div className="qr-preview-stage">
+            <div className="qr-preview-card">
+              {dataUrl ? (
+                <>
+                  <div className="qr-preview-image-wrap">
+                    <img className="qr-image" src={dataUrl} alt="Generated QR code" />
+                  </div>
+                  <div className="qr-preview-meta">
+                    <span className="qr-preview-type-label">{qrTypes.find(q => q.value === type)?.label}</span>
+                    {values.qrSlug && <span className="qr-preview-slug">/{values.qrSlug}</span>}
+                  </div>
+                  <div className="qr-preview-actions">
+                    <button type="button" className="btn btn-primary btn-sm qr-download-btn" onClick={handleDownload}>
+                      <DownloadIcon /> Download PNG
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="qr-empty-state">
+                  <div className="qr-empty-icon-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+                    </svg>
+                  </div>
+                  <p className="qr-empty-title">Your QR code will appear here</p>
+                  <p className="muted">Fill in the details on the left to generate a preview.</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {payload && (
