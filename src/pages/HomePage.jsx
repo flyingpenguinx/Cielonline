@@ -162,21 +162,26 @@ export default function HomePage({ session }) {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {slides.map((slide, i) => (
-              <article
-                key={slide.label}
-                className={`showcase-card ${i === activeIndex ? "showcase-card-active" : "showcase-card-inactive"}`}
-                style={{
-                  transform: `translateX(${(i - activeIndex) * 100}%)`,
-                  opacity: i === activeIndex ? 1 : 0,
-                  position: i === activeIndex ? "relative" : "absolute",
-                  pointerEvents: i === activeIndex ? "auto" : "none",
-                }}
-              >
-                <h3>{slide.label} <span className="card-badge">QR</span></h3>
-                {slide.content}
-              </article>
-            ))}
+            {slides.map((slide, i) => {
+              // Compute offset: -1 = left, 0 = center, 1 = right
+              let offset = i - activeIndex;
+              if (offset > 1) offset -= totalSlides;
+              if (offset < -1) offset += totalSlides;
+
+              const isActive = offset === 0;
+              const cls = isActive ? "showcase-card-active" : offset < 0 ? "showcase-card-left" : "showcase-card-right";
+
+              return (
+                <article
+                  key={slide.label}
+                  className={`showcase-card ${cls}`}
+                  onClick={() => { if (!isActive) { goTo(i); resetAutoplay(); } }}
+                >
+                  <h3>{slide.label} <span className="card-badge">QR</span></h3>
+                  {slide.content}
+                </article>
+              );
+            })}
           </div>
 
           <div className="showcase-dots">

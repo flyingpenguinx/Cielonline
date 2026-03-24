@@ -383,6 +383,7 @@ input, textarea, select { font: inherit; }
    ================================================================ */
 .showcase-section {
   padding: 48px 0 40px;
+  overflow: hidden;
 }
 .showcase-header {
   text-align: center;
@@ -401,23 +402,51 @@ input, textarea, select { font: inherit; }
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  min-height: 520px;
+  overflow: visible;
+  min-height: 540px;
   padding: 4px 0 16px;
   touch-action: pan-y;
+  perspective: 900px;
 }
 .showcase-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  transition: opacity .4s ease, transform .4s ease;
   width: 280px;
+  position: absolute;
+  transition: transform .55s cubic-bezier(.4,0,.2,1), opacity .55s ease, filter .55s ease;
+  will-change: transform, opacity, filter;
 }
-.showcase-card-inactive {
-  top: 0;
-  left: 50%;
-  margin-left: -140px;
+
+/* Active / center card */
+.showcase-card-active {
+  position: relative;
+  z-index: 3;
+  transform: translateX(0) scale(1) translateZ(0);
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+/* Left card — behind and to the left */
+.showcase-card-left {
+  z-index: 1;
+  transform: translateX(-60%) scale(.78) translateZ(-120px);
+  opacity: .45;
+  filter: blur(2.5px);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Right card — behind and to the right */
+.showcase-card-right {
+  z-index: 1;
+  transform: translateX(60%) scale(.78) translateZ(-120px);
+  opacity: .45;
+  filter: blur(2.5px);
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 /* Dot indicators */
@@ -1520,7 +1549,7 @@ input, textarea, select { font: inherit; }
     gap: 28px;
   }
   .showcase-carousel-wrap {
-    min-height: 520px;
+    min-height: 540px;
   }
   .showcase-card { width: 280px; }
   .qr-type-cards { flex-direction: row; }
@@ -1581,7 +1610,8 @@ input, textarea, select { font: inherit; }
 
   .showcase-card { width: min(260px, 80vw); }
   .showcase-carousel-wrap { min-height: 480px; }
-  .showcase-card-inactive { margin-left: -130px; }
+  .showcase-card-left { transform: translateX(-50%) scale(.72) translateZ(-120px); }
+  .showcase-card-right { transform: translateX(50%) scale(.72) translateZ(-120px); }
 
   .qr-preview-box { min-height: 160px; padding: 16px; }
   .qr-image { max-width: min(100%, 180px); }
