@@ -4,7 +4,6 @@ import { useAuth } from "./hooks/useAuth";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import PublicCardPage from "./pages/PublicCardPage";
-import CloudLogo from "./components/CloudLogo";
 
 const HubPage = lazy(() => import("./pages/HubPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
@@ -60,7 +59,8 @@ function AppHeader({ session, signOut }) {
     <header className="app-header">
       <div className="header-inner">
         <Link className="brand" to="/" aria-label="Go to home page">
-          <CloudLogo />
+          <img className="brand-logo" src="/Logo.svg" alt="Cielonline" />
+          <span className="brand-text">Cielonline</span>
         </Link>
 
         <nav className="app-nav">{navLinks}</nav>
