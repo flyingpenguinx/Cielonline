@@ -102,6 +102,72 @@ input, textarea, select { font: inherit; }
 }
 .brand-text { font-size: 18px; white-space: nowrap; color: var(--text); }
 
+/* --- Animated Cloud Logo --- */
+.cloud-logo {
+  height: 38px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+.cloud-path {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.cloud-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 200;
+  fill: var(--text);
+  opacity: 1;
+}
+
+/* Initial page-load animation */
+.cloud-logo.animate .cloud-path {
+  stroke-dashoffset: 1;
+  animation: drawCloud 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.cloud-logo.animate .cloud-text-iel {
+  opacity: 0;
+  animation: cloudTextReveal 0.5s ease forwards 1.4s;
+}
+
+.cloud-logo.animate .cloud-text-online {
+  opacity: 0;
+  animation: cloudTextReveal 0.5s ease forwards 1.7s;
+}
+
+/* Hover replay */
+.brand:hover .cloud-logo .cloud-path {
+  stroke-dashoffset: 1;
+  animation: drawCloud 1.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.brand:hover .cloud-logo .cloud-text-iel {
+  opacity: 0;
+  animation: cloudTextReveal 0.35s ease forwards 1s;
+}
+
+.brand:hover .cloud-logo .cloud-text-online {
+  opacity: 0;
+  animation: cloudTextReveal 0.35s ease forwards 1.2s;
+}
+
+@keyframes drawCloud {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes cloudTextReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Desktop nav */
 .app-nav {
   display: flex;
@@ -1725,6 +1791,7 @@ input, textarea, select { font: inherit; }
 
   .brand-logo { width: 32px; height: 32px; }
   .brand-text { font-size: 16px; }
+  .cloud-logo { height: 30px; }
 
   .field input, .field textarea, .field select,
   .btn, .tab { font-size: 16px; }

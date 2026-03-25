@@ -158,9 +158,55 @@
             border-color: #eaeaea;
         }
 
+        /* --- ANIMATED CLOUD LOGO --- */
+        .logo-svg {
+            height: 6rem;
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .cloud-draw {
+            fill: none;
+            stroke: var(--text-color);
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1;
+            stroke-dashoffset: 1;
+            animation: drawCloud 2.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes drawCloud {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .logo-text {
+            opacity: 0;
+            font-family: 'Inter', sans-serif;
+            font-weight: 200;
+            fill: var(--text-color);
+        }
+
+        .iel-text {
+            animation: textReveal 0.7s ease forwards;
+            animation-delay: 1.8s;
+        }
+
+        .online-text {
+            animation: textReveal 0.7s ease forwards;
+            animation-delay: 2.2s;
+        }
+
+        @keyframes textReveal {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         @media (max-width: 900px) {
             .nav-container { grid-template-columns: 1fr; }
-            h1 { font-size: 3.5rem; }
+            .logo-svg { height: 4rem; }
         }
     </style>
 </head>
@@ -188,7 +234,25 @@
 
     <div class="main-wrapper">
         <header>
-            <h1>CielOnline</h1>
+            <svg class="logo-svg" viewBox="0 -8 260 80" xmlns="http://www.w3.org/2000/svg" aria-label="CielOnline">
+                <!-- Cloud outline: C shape + bumps + right curve -->
+                <path class="cloud-draw"
+                      d="M 38,64
+                         C 14,64 2,52 2,38
+                         C 2,22 14,10 32,12
+                         C 36,-2 50,-6 64,0
+                         C 76,-8 92,-2 100,8
+                         C 110,-4 126,4 130,14
+                         C 142,8 150,22 148,36
+                         C 146,50 136,62 122,62"
+                      pathLength="1"/>
+                <!-- "iel" text -->
+                <text class="logo-text iel-text" x="44" y="56"
+                      font-size="43" letter-spacing="-1.5">iel</text>
+                <!-- "Online" text -->
+                <text class="logo-text online-text" x="128" y="56"
+                      font-size="43" letter-spacing="-1.5">Online</text>
+            </svg>
             <p class="description">
                 CielOnline is the home for your online needs, with a focus in making all your online needs much simpler.
             </p>
