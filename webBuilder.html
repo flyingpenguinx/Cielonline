@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Layout Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base & Resets */
+        body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #1e1e1e; color: #d4d4d4; }
+        * { box-sizing: border-box; }
+        
+        /* Layout Structure */
+        #app { display: flex; height: 100vh; flex-direction: column; }
+        #toolbar { height: 48px; background: #252526; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; }
+        #workspace { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Tool Panels */
+        .panel { background: #252526; border-left: 1px solid #333; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
+        #left-panel { width: 60px; align-items: center; padding-top: 12px; gap: 12px; }
+        #right-panel { width: 260px; overflow-y: auto; }
+        
+        /* Canvas */
+        #canvas-wrapper { flex: 1; background-color: #1e1e1e; overflow: auto; position: relative; display: flex; align-items: center; justify-content: center; padding: 40px; }
+        #canvas { width: 1200px; height: 800px; background-color: #ffffff; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
+        
+        /* Elements & Selection (The Viewbox sync) */
+        .element { position: absolute; user-select: none; }
+        .element.selected { outline: 2px solid #007fd4; outline-offset: -2px; }
+        .element.locked { opacity: 0.85; }
+        .element.locked.selected { outline: 2px dashed #ff9800; outline-offset: -2px; }
+        .lock-icon { position: absolute; top: 2px; right: 2px; font-size: 10px; background: rgba(0,0,0,0.5); color: #ff9800; border-radius: 3px; padding: 1px 3px; pointer-events: none; }
+        .bottom-badge { position: absolute; bottom: 2px; right: 2px; font-size: 9px; background: rgba(0,0,0,0.5); color: #4fc3f7; border-radius: 3px; padding: 1px 3px; pointer-events: none; }
+        
+        /* Resize Handles */
+        .resize-handle { position: absolute; width: 8px; height: 8px; background: #007fd4; border: 1px solid #fff; display: none; }
+        .element.selected .resize-handle { display: block; }
+        .handle-nw { top: -4px; left: -4px; cursor: nwse-resize; }
+        .handle-ne { top: -4px; right: -4px; cursor: nesw-resize; }
+        .handle-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
+        .handle-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
+        .handle-n { top: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+        .handle-s { bottom: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+        .handle-e { top: calc(50% - 4px); right: -4px; cursor: ew-resize; }
+        .handle-w { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
+
+        /* UI Controls (Premium & Dense) */
+        .tool-btn { width: 36px; height: 36px; background: #333; border: 1px solid #444; color: #ccc; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .tool-btn:hover { background: #444; }
+        
+        /* Accordions */
+        details { border-bottom: 1px solid #333; }
+        summary { padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; cursor: pointer; user-select: none; outline: none; background: #2d2d2d; color: #bbb; display: flex; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: '▸'; margin-right: 8px; transition: transform 0.2s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .details-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* Sliders & Inputs */
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        .control-header { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; }
+        .val-display { color: #fff; font-variant-numeric: tabular-nums; }
+        
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: #444; border-radius: 2px; outline: none; cursor: pointer; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #007fd4; cursor: pointer; }
+        
+        select { background: #3c3c3c; border: 1px solid #555; color: #fff; padding: 4px 6px; border-radius: 4px; font-size: 11px; outline: none; width: 100%; cursor: pointer; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 24px; border-radius: 4px; cursor: pointer; background: transparent; padding: 0; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 1px solid #555; border-radius: 4px; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #666; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="toolbar">
+        <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px;">LAYOUT BUILDER</div>
+        <div style="display: flex; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 11px; color: #aaa;">Canvas BG:</label>
+                <input type="color" id="canvas-bg-color" value="#ffffff" oninput="setCanvasBg(this.value)" style="width: 32px; height: 24px; border: 1px solid #555; border-radius: 4px; cursor: pointer; padding: 0; background: transparent;">
+            </div>
+            <div style="display: flex; gap: 8px;">
+            <button class="tool-btn" style="width: auto; padding: 0 12px;" onclick="clearCanvas()">Clear</button>
+            <button class="tool-btn" style="width: auto; padding: 0 12px; background: #007fd4; color: white; border: none;" onclick="exportCode()">Export HTML/CSS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="workspace">
+        <div id="left-panel" class="panel">
+            <button class="tool-btn" onclick="addElement('box')" title="Add Container">Box</button>
+            <button class="tool-btn" onclick="addElement('text')" title="Add Text">Txt</button>
+        </div>
+
+        <div id="canvas-wrapper" onclick="deselectAll(event)">
+            <div id="canvas"></div>
+        </div>
+
+        <div id="right-panel" class="panel">
+            <div id="empty-state" style="padding: 24px; text-align: center; font-size: 11px; color: #666;">
+                Select an element to edit properties.
+            </div>
+            
+            <div id="properties" style="display: none;">
+                <details open>
+                    <summary>Layout</summary>
+                    <div class="details-content">
+                        <div class="control-group">
+                            <div class="control-header"><span>Display</span></div>
+                            <select id="prop-display" onchange="updateProp('display', this.value)">
+                                <option value="block">Block (Default)</option>
+                                <option value="flex">Flexbox</option>
+                            </select>
+                        </div>
+                        <div id="flex-controls" style="display: none; flex-direction: column; gap: 12px;">
+                            <div class="control-group">
+                                <div class="control-header"><span>Direction</span></div>
+                                <select id="prop-flexDirection" onchange="updateProp('flexDirection', this.value)">
+                                    <option value="row">Row (Horizontal)</option>
+                                    <option value="column">Column (Vertical)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <div class="control-header"><span>Justify (Main Axis)</span></div>
+                                <select id="prop-justifyContent" onchange="updateProp('justifyContent', this.value)">
+                                    <option value="flex-start">Start</option>
+                                    <option value="center">Center</option>
+                                    <option value="flex-end">End</option>
+                                    <option value="space-between">Space Between</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <div class="control-header"><span>Align (Cross Axis)</span></div>
+                                <select id="prop-alignItems" onchange="updateProp('alignItems', this.value)">
+                                    <option value="flex-start">Start</option>
+                                    <option value="center">Center</option>
+                                    <option value="flex-end">End</option>
+                                    <option value="stretch">Stretch</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <div class="control-header"><span>Gap</span> <span class="val-display" id="val-gap">0px</span></div>
+                                <input type="range" id="prop-gap" min="0" max="100" value="0" oninput="updateProp('gap', this.value + 'px'); document.getElementById('val-gap').innerText = this.value + 'px'">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-header"><span>Padding</span> <span class="val-display" id="val-padding">0px</span></div>
+                                <input type="range" id="prop-padding" min="0" max="100" value="0" oninput="updateProp('padding', this.value + 'px'); document.getElementById('val-padding').innerText = this.value + 'px'">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Size & Position</summary>
+                    <div class="details-content">
+                        <div class="control-group">
+                            <div class="control-header"><span>Width</span> <span class="val-display" id="val-w">0px</span></div>
+                            <input type="range" id="prop-w" min="10" max="1200" step="1" oninput="updateTransform('w', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="control-header"><span>Height</span> <span class="val-display" id="val-h">0px</span></div>
+                            <input type="range" id="prop-h" min="10" max="800" step="1" oninput="updateTransform('h', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="control-header"><span>X Position</span> <span class="val-display" id="val-x">0px</span></div>
+                            <input type="range" id="prop-x" min="0" max="1200" step="1" oninput="updateTransform('x', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="control-header"><span>Y Position</span> <span class="val-display" id="val-y">0px</span></div>
+                            <input type="range" id="prop-y" min="0" max="800" step="1" oninput="updateTransform('y', this.value)">
+                        </div>
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Appearance</summary>
+                    <div class="details-content">
+                        <div class="control-group">
+                            <div class="control-header"><span>Background Color</span></div>
+                            <input type="color" id="prop-bg" oninput="updateProp('backgroundColor', this.value)">
+                        </div>
+                        <div class="control-group" id="text-color-group" style="display:none;">
+                            <div class="control-header"><span>Text Color</span></div>
+                            <input type="color" id="prop-color" oninput="updateProp('color', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="control-header"><span>Border Radius</span> <span class="val-display" id="val-radius">0px</span></div>
+                            <input type="range" id="prop-radius" min="0" max="100" step="1" value="0" oninput="updateProp('borderRadius', this.value + 'px'); document.getElementById('val-radius').innerText = this.value + 'px'">
+                        </div>
+                    </div>
+                </details>
+
+                <details open>
+                    <summary>Layer Controls</summary>
+                    <div class="details-content">
+                        <div class="control-group">
+                            <button class="tool-btn" id="btn-lock" style="width: 100%; font-size: 11px;" onclick="toggleLock()">🔒 Lock Position</button>
+                        </div>
+                        <div class="control-group">
+                            <button class="tool-btn" id="btn-bottom-layer" style="width: 100%; font-size: 11px;" onclick="toggleBottomLayer()">⬇ Set as Bottom Layer</button>
+                        </div>
+                    </div>
+                </details>
+
+                <div style="padding: 16px;">
+                    <button class="tool-btn" style="width: 100%; color: #ff6b6b; border-color: #5c2b2b;" onclick="deleteSelected()">Delete Element</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    let elements = [];
+    let selectedEl = null;
+    let counter = 0;
+    let canvasBgColor = '#ffffff';
+
+    function setCanvasBg(color) {
+        canvasBgColor = color;
+        canvas.style.backgroundColor = color;
+    }
+
+    // Interaction State
+    let isDragging = false;
+    let isResizing = false;
+    let resizeDir = '';
+    let startX, startY, startW, startH, startLeft, startTop;
+
+    // --- ELEMENT CREATION ---
+    function addElement(type) {
+        counter++;
+        const el = {
+            id: 'el_' + counter,
+            type: type,
+            x: 50, y: 50,
+            w: type === 'text' ? 150 : 200,
+            h: type === 'text' ? 50 : 200,
+            locked: false,
+            bottomLayer: false,
+            styles: {
+                backgroundColor: type === 'box' ? '#e0e0e0' : 'transparent',
+                borderRadius: '0px',
+                display: 'block',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+                gap: '0px',
+                padding: '0px',
+                color: '#000000'
+            },
+            text: type === 'text' ? 'Double click to edit' : ''
+        };
+        elements.push(el);
+        render();
+        selectElement(el.id);
+    }
+
+    function deleteSelected() {
+        if (!selectedEl) return;
+        elements = elements.filter(e => e.id !== selectedEl.id);
+        selectedEl = null;
+        render();
+        updateInspector();
+    }
+
+    // --- RENDERING ---
+    function render() {
+        // Clear canvas but keep it in memory
+        canvas.innerHTML = '';
+        canvas.style.backgroundColor = canvasBgColor;
+        
+        // Sort: bottom layer elements first, then rest in original order
+        const sorted = [...elements].sort((a, b) => {
+            if (a.bottomLayer && !b.bottomLayer) return -1;
+            if (!a.bottomLayer && b.bottomLayer) return 1;
+            return 0;
+        });
+
+        sorted.forEach((el, index) => {
+            const domNode = document.createElement('div');
+            domNode.id = el.id;
+            let classes = 'element';
+            if (selectedEl && selectedEl.id === el.id) classes += ' selected';
+            if (el.locked) classes += ' locked';
+            domNode.className = classes;
+            
+            // Apply z-index based on sort order
+            domNode.style.zIndex = el.bottomLayer ? 0 : index + 1;
+            if (selectedEl && selectedEl.id === el.id && !el.bottomLayer) domNode.style.zIndex = 1000;
+            
+            // Apply Dimensions
+            domNode.style.left = el.x + 'px';
+            domNode.style.top = el.y + 'px';
+            domNode.style.width = el.w + 'px';
+            domNode.style.height = el.h + 'px';
+            
+            // Apply Styles
+            Object.assign(domNode.style, el.styles);
+
+            // Inner Text
+            if (el.type === 'text') {
+                domNode.innerText = el.text;
+                domNode.style.fontSize = '16px';
+            }
+
+            // Badges
+            if (el.locked) {
+                const badge = document.createElement('span');
+                badge.className = 'lock-icon';
+                badge.textContent = '🔒';
+                domNode.appendChild(badge);
+            }
+            if (el.bottomLayer) {
+                const badge = document.createElement('span');
+                badge.className = 'bottom-badge';
+                badge.textContent = 'BTM';
+                domNode.appendChild(badge);
+            }
+
+            // Events
+            domNode.onmousedown = (e) => handleElementPointerDown(e, el);
+            domNode.ondblclick = (e) => handleDoubleClick(e, el);
+
+            // Add Resize Handles if Selected and NOT locked
+            if (selectedEl && selectedEl.id === el.id && !el.locked) {
+                const handles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
+                handles.forEach(dir => {
+                    const h = document.createElement('div');
+                    h.className = `resize-handle handle-${dir}`;
+                    h.onmousedown = (e) => handleResizePointerDown(e, dir);
+                    domNode.appendChild(h);
+                });
+            }
+
+            canvas.appendChild(domNode);
+        });
+    }
+
+    // --- INTERACTIONS ---
+    function selectElement(id) {
+        selectedEl = elements.find(e => e.id === id);
+        render();
+        updateInspector();
+    }
+
+    function deselectAll(e) {
+        if (e.target.id === 'canvas' || e.target.id === 'canvas-wrapper') {
+            selectedEl = null;
+            render();
+            updateInspector();
+        }
+    }
+
+    function handleElementPointerDown(e, el) {
+        e.stopPropagation();
+        selectElement(el.id);
+        if (el.locked) return; // Don't allow dragging locked elements
+        isDragging = true;
+        
+        const canvasRect = canvas.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = el.x;
+        startTop = el.y;
+
+        window.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', stopInteraction);
+    }
+
+    function onDrag(e) {
+        if (!isDragging || !selectedEl) return;
+        
+        // Math.round enforces whole integers
+        let dx = Math.round(e.clientX - startX);
+        let dy = Math.round(e.clientY - startY);
+        
+        selectedEl.x = startLeft + dx;
+        selectedEl.y = startTop + dy;
+        
+        // Visual DOM update for performance
+        const domNode = document.getElementById(selectedEl.id);
+        domNode.style.left = selectedEl.x + 'px';
+        domNode.style.top = selectedEl.y + 'px';
+        
+        updateInspectorNumbers(); // Sync sidebar sliders
+    }
+
+    function handleResizePointerDown(e, dir) {
+        e.stopPropagation();
+        isResizing = true;
+        resizeDir = dir;
+        
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = selectedEl.w;
+        startH = selectedEl.h;
+        startLeft = selectedEl.x;
+        startTop = selectedEl.y;
+
+        window.addEventListener('mousemove', onResize);
+        window.addEventListener('mouseup', stopInteraction);
+    }
+
+    function onResize(e) {
+        if (!isResizing || !selectedEl) return;
+
+        let dx = Math.round(e.clientX - startX);
+        let dy = Math.round(e.clientY - startY);
+
+        if (resizeDir.includes('e')) selectedEl.w = Math.max(10, startW + dx);
+        if (resizeDir.includes('s')) selectedEl.h = Math.max(10, startH + dy);
+        
+        if (resizeDir.includes('w')) {
+            let newW = Math.max(10, startW - dx);
+            if (newW > 10) {
+                selectedEl.w = newW;
+                selectedEl.x = startLeft + dx;
+            }
+        }
+        if (resizeDir.includes('n')) {
+            let newH = Math.max(10, startH - dy);
+            if (newH > 10) {
+                selectedEl.h = newH;
+                selectedEl.y = startTop + dy;
+            }
+        }
+
+        render(); 
+        updateInspectorNumbers();
+    }
+
+    function stopInteraction() {
+        isDragging = false;
+        isResizing = false;
+        window.removeEventListener('mousemove', onDrag);
+        window.removeEventListener('mousemove', onResize);
+        window.removeEventListener('mouseup', stopInteraction);
+    }
+
+    function handleDoubleClick(e, el) {
+        if (el.type === 'text') {
+            const newText = prompt('Edit Text:', el.text);
+            if (newText !== null) {
+                el.text = newText;
+                render();
+            }
+        }
+    }
+
+    // --- INSPECTOR SYNC ---
+    function updateInspector() {
+        const empty = document.getElementById('empty-state');
+        const props = document.getElementById('properties');
+        
+        if (!selectedEl) {
+            empty.style.display = 'block';
+            props.style.display = 'none';
+            return;
+        }
+
+        empty.style.display = 'none';
+        props.style.display = 'block';
+
+        updateInspectorNumbers();
+
+        // Sync Flexbox visibility
+        const flexControls = document.getElementById('flex-controls');
+        document.getElementById('prop-display').value = selectedEl.styles.display;
+        flexControls.style.display = selectedEl.styles.display === 'flex' ? 'flex' : 'none';
+        
+        if (selectedEl.styles.display === 'flex') {
+            document.getElementById('prop-flexDirection').value = selectedEl.styles.flexDirection;
+            document.getElementById('prop-justifyContent').value = selectedEl.styles.justifyContent;
+            document.getElementById('prop-alignItems').value = selectedEl.styles.alignItems;
+            
+            let gapVal = parseInt(selectedEl.styles.gap) || 0;
+            document.getElementById('prop-gap').value = gapVal;
+            document.getElementById('val-gap').innerText = gapVal + 'px';
+
+            let padVal = parseInt(selectedEl.styles.padding) || 0;
+            document.getElementById('prop-padding').value = padVal;
+            document.getElementById('val-padding').innerText = padVal + 'px';
+        }
+
+        // Sync Appearance
+        document.getElementById('prop-bg').value = selectedEl.styles.backgroundColor !== 'transparent' ? rgbToHex(selectedEl.styles.backgroundColor) : '#ffffff';
+        
+        let radiusVal = parseInt(selectedEl.styles.borderRadius) || 0;
+        document.getElementById('prop-radius').value = radiusVal;
+        document.getElementById('val-radius').innerText = radiusVal + 'px';
+
+        const textColorGroup = document.getElementById('text-color-group');
+        if (selectedEl.type === 'text') {
+            textColorGroup.style.display = 'flex';
+            document.getElementById('prop-color').value = rgbToHex(selectedEl.styles.color);
+        } else {
+            textColorGroup.style.display = 'none';
+        }
+
+        // Sync Layer Controls
+        const lockBtn = document.getElementById('btn-lock');
+        const bottomBtn = document.getElementById('btn-bottom-layer');
+        lockBtn.textContent = selectedEl.locked ? '🔓 Unlock Position' : '🔒 Lock Position';
+        lockBtn.style.borderColor = selectedEl.locked ? '#ff9800' : '#444';
+        bottomBtn.textContent = selectedEl.bottomLayer ? '⬆ Remove Bottom Layer' : '⬇ Set as Bottom Layer';
+        bottomBtn.style.borderColor = selectedEl.bottomLayer ? '#4fc3f7' : '#444';
+    }
+
+    function updateInspectorNumbers() {
+        if (!selectedEl) return;
+        ['x', 'y', 'w', 'h'].forEach(prop => {
+            document.getElementById('prop-' + prop).value = selectedEl[prop];
+            document.getElementById('val-' + prop).innerText = selectedEl[prop] + 'px';
+        });
+    }
+
+    // Called when a slider moves
+    function updateTransform(prop, value) {
+        if (!selectedEl) return;
+        selectedEl[prop] = parseInt(value);
+        document.getElementById('val-' + prop).innerText = value + 'px';
+        
+        const domNode = document.getElementById(selectedEl.id);
+        if (prop === 'w') domNode.style.width = value + 'px';
+        if (prop === 'h') domNode.style.height = value + 'px';
+        if (prop === 'x') domNode.style.left = value + 'px';
+        if (prop === 'y') domNode.style.top = value + 'px';
+    }
+
+    // Called when styling changes
+    function updateProp(prop, value) {
+        if (!selectedEl) return;
+        selectedEl.styles[prop] = value;
+        
+        // Toggle Flex menu logic
+        if (prop === 'display') {
+            document.getElementById('flex-controls').style.display = value === 'flex' ? 'flex' : 'none';
+        }
+        
+        render();
+    }
+
+    // Utility: Convert RGB to Hex for the color picker
+    function rgbToHex(color) {
+        if (color.startsWith('#')) return color;
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.fillStyle = color;
+        return ctx.fillStyle;
+    }
+
+    function toggleLock() {
+        if (!selectedEl) return;
+        selectedEl.locked = !selectedEl.locked;
+        render();
+        updateInspector();
+    }
+
+    function toggleBottomLayer() {
+        if (!selectedEl) return;
+        selectedEl.bottomLayer = !selectedEl.bottomLayer;
+        render();
+        updateInspector();
+    }
+
+    function clearCanvas() {
+        if(confirm("Clear everything?")) {
+            elements = [];
+            selectedEl = null;
+            canvasBgColor = '#ffffff';
+            document.getElementById('canvas-bg-color').value = '#ffffff';
+            render();
+            updateInspector();
+        }
+    }
+
+    function exportCode() {
+        let css = `body { margin: 0; background: ${canvasBgColor}; }\n.layout-wrapper { position: relative; width: 1200px; height: 800px; overflow: hidden; background: ${canvasBgColor}; }\n`;
+        let html = `<div class="layout-wrapper">\n`;
+
+        elements.forEach(el => {
+            css += `#${el.id} { position: absolute; left: ${el.x}px; top: ${el.y}px; width: ${el.w}px; height: ${el.h}px; box-sizing: border-box; `;
+            for (const [key, val] of Object.entries(el.styles)) {
+                if (val !== '0px' && val !== 'transparent') {
+                    // Convert camelCase to kebab-case
+                    let cssKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+                    css += `${cssKey}: ${val}; `;
+                }
+            }
+            css += `}\n`;
+            
+            html += `  <div id="${el.id}">${el.type === 'text' ? el.text : ''}</div>\n`;
+        });
+
+        html += `</div>`;
+
+        const finalOutput = `<style>\n${css}</style>\n\n${html}`;
+        navigator.clipboard.writeText(finalOutput).then(() => {
+            alert('Clean HTML & CSS copied to clipboard!');
+        });
+    }
+</script>
+</body>
+</html>
