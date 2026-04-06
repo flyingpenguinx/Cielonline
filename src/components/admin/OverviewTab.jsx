@@ -4,6 +4,7 @@ import {
   fetchRecentActivity,
   updateClientSite,
 } from "../../lib/adminApi";
+import { updateSiteSubscription } from "../../lib/sitePlatformApi";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -39,6 +40,13 @@ export default function OverviewTab({ siteId, site, onSiteUpdated }) {
     is_published: site?.is_published !== false,
   });
   const [savingSite, setSavingSite] = useState(false);
+  const [subForm, setSubForm] = useState({
+    is_subscription_required: site?.is_subscription_required || false,
+    subscription_status: site?.subscription_status || "free",
+    subscription_tier: site?.subscription_tier || "free",
+    subscription_expires_at: site?.subscription_expires_at || "",
+  });
+  const [savingSub, setSavingSub] = useState(false);
 
   useEffect(() => {
     setSiteForm({
@@ -47,6 +55,14 @@ export default function OverviewTab({ siteId, site, onSiteUpdated }) {
       slug: site?.slug || "",
       description: site?.description || "",
       is_published: site?.is_published !== false,
+    });
+    setSubForm({
+      is_subscription_required: site?.is_subscription_required || false,
+      subscription_status: site?.subscription_status || "free",
+      subscription_tier: site?.subscription_tier || "free",
+      subscription_expires_at: site?.subscription_expires_at
+        ? new Date(site.subscription_expires_at).toISOString().slice(0, 10)
+        : "",
     });
   }, [site]);
 
@@ -95,6 +111,26 @@ export default function OverviewTab({ siteId, site, onSiteUpdated }) {
       console.error(error);
     } finally {
       setSavingSite(false);
+    }
+  };
+
+  const handleSubSave = async (event) => {
+    event.preventDefault();
+    setSavingSub(true);
+    try {
+      const updated = await updateSiteSubscription(siteId, {
+        is_subscription_required: subForm.is_subscription_required,
+        subscription_status: subForm.subscription_status,
+        subscription_tier: subForm.subscription_tier,
+        subscription_expires_at: subForm.subscription_expires_at
+          ? new Date(subForm.subscription_expires_at).toISOString()
+          : null,
+      });
+      onSiteUpdated?.(updated);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingSub(false);
     }
   };
 
@@ -159,6 +195,93 @@ export default function OverviewTab({ siteId, site, onSiteUpdated }) {
           <div className="row-gap">
             <button type="submit" className="btn btn-primary" disabled={savingSite}>
               {savingSite ? "Saving..." : "Save Site Settings"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Subscription & Billing */}
+      <section className="panel">
+        <div className="admin-section-header">
+          <div>
+            <h3>Subscription & Billing</h3>
+            <p className="muted">Control whether this business requires a paid subscription to keep their site active.</p>
+          </div>
+        </div>
+
+        <form className="admin-form" onSubmit={handleSubSave}>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={subForm.is_subscription_required}
+              onChange={(e) => setSubForm((prev) => ({
+                ...prev,
+                is_subscription_required: e.target.checked,
+                subscription_status: e.target.checked ? prev.subscription_status === "free" ? "active" : prev.subscription_status : "free",
+              }))}
+            />
+            <span>Subscription required for this business</span>
+          </label>
+
+          {subForm.is_subscription_required && (
+            <>
+              <div className="form-grid">
+                <label className="field">
+                  <span>Subscription Status</span>
+                  <select
+                    value={subForm.subscription_status}
+                    onChange={(e) => setSubForm((prev) => ({ ...prev, subscription_status: e.target.value }))}
+                  >
+                    <option value="active">Active</option>
+                    <option value="trialing">Trialing</option>
+                    <option value="past_due">Past Due</option>
+                    <option value="canceled">Canceled</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Subscription Tier</span>
+                  <select
+                    value={subForm.subscription_tier}
+                    onChange={(e) => setSubForm((prev) => ({ ...prev, subscription_tier: e.target.value }))}
+                  >
+                    <option value="starter">Starter</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </label>
+              </div>
+              <label className="field">
+                <span>Subscription Expires</span>
+                <input
+                  type="date"
+                  value={subForm.subscription_expires_at}
+                  onChange={(e) => setSubForm((prev) => ({ ...prev, subscription_expires_at: e.target.value }))}
+                />
+                <small className="muted">Leave empty for no expiration.</small>
+              </label>
+
+              {subForm.subscription_status === "past_due" && (
+                <div className="admin-callout admin-callout-warning">
+                  ⚠️ This business has a past-due subscription. Their public site will remain visible but they cannot make edits until payment is resolved.
+                </div>
+              )}
+              {subForm.subscription_status === "canceled" && (
+                <div className="admin-callout admin-callout-danger">
+                  ❌ This subscription is canceled. The business can no longer access the admin dashboard. Change to Active to reactivate.
+                </div>
+              )}
+            </>
+          )}
+
+          {!subForm.is_subscription_required && (
+            <p className="muted" style={{ marginTop: 4 }}>
+              This business currently has free access. Toggle the checkbox above to require a paid subscription.
+            </p>
+          )}
+
+          <div className="row-gap">
+            <button type="submit" className="btn btn-primary" disabled={savingSub}>
+              {savingSub ? "Saving..." : "Save Subscription"}
             </button>
           </div>
         </form>

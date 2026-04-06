@@ -228,6 +228,70 @@ export async function deleteCustomerNote(id) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// COMPLETED JOBS
+// ══════════════════════════════════════════════════════════════════
+export async function fetchCompletedJobs(siteId) {
+  guard();
+  const { data, error } = await supabase
+    .from("completed_jobs")
+    .select("*, customers(id, first_name, last_name, email, phone)")
+    .eq("site_id", siteId)
+    .order("completed_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchCompletedJobsByCustomer(customerId) {
+  guard();
+  const { data, error } = await supabase
+    .from("completed_jobs")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("completed_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createCompletedJob(job) {
+  guard();
+  const { data, error } = await supabase
+    .from("completed_jobs")
+    .insert(job)
+    .select("*, customers(id, first_name, last_name, email, phone)")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCompletedJob(id, updates) {
+  guard();
+  const { data, error } = await supabase
+    .from("completed_jobs")
+    .update(updates)
+    .eq("id", id)
+    .select("*, customers(id, first_name, last_name, email, phone)")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCompletedJob(id) {
+  guard();
+  const { error } = await supabase.from("completed_jobs").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function uploadJobImage(siteId, jobId, file) {
+  guard();
+  const ext = file.name.split(".").pop();
+  const path = `${siteId}/jobs/${jobId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("site-images").upload(path, file);
+  if (error) throw error;
+  const { data } = supabase.storage.from("site-images").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ══════════════════════════════════════════════════════════════════
 // DASHBOARD STATS (Aggregates)
 // ══════════════════════════════════════════════════════════════════
 export async function fetchDashboardStats(siteId) {

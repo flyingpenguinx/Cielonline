@@ -5,7 +5,7 @@ import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
  * Reusable image field with drag-and-drop upload + URL fallback.
  * Uploads to Supabase Storage bucket "images".
  */
-export default function ImageUploadField({ value, onChange, label = "Image", placeholder = "Paste URL or upload", compact = false }) {
+export default function ImageUploadField({ value, onChange, label = "Image", placeholder = "Paste URL or upload", compact = false, bucket = "images" }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef(null);
@@ -26,7 +26,7 @@ export default function ImageUploadField({ value, onChange, label = "Image", pla
     setUploading(true);
 
     try {
-      const { error } = await supabase.storage.from("images").upload(path, file, {
+      const { error } = await supabase.storage.from(bucket).upload(path, file, {
         cacheControl: "3600",
         upsert: false,
       });
@@ -37,7 +37,7 @@ export default function ImageUploadField({ value, onChange, label = "Image", pla
         return;
       }
 
-      const { data: urlData } = supabase.storage.from("images").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
       if (urlData?.publicUrl) {
         onChange(urlData.publicUrl);
       }

@@ -8,6 +8,13 @@ import {
   createCustomerNote,
   deleteCustomerNote,
   fetchAppointments,
+  fetchCompletedJobsByCustomer,
+  createCompletedJob,
+  updateCompletedJob,
+  deleteCompletedJob,
+  uploadJobImage,
+  fetchServices,
+  createService,
 } from "../../lib/adminApi";
 
 function formatDate(iso) {
@@ -43,8 +50,21 @@ export default function CustomersTab({ siteId }) {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerNotes, setCustomerNotes] = useState([]);
   const [customerAppts, setCustomerAppts] = useState([]);
+  const [customerJobs, setCustomerJobs] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Job completion form
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [jobForm, setJobForm] = useState({ title: "", notes: "", amount_charged: "", completed_at: "" });
+  const [selectedJobServices, setSelectedJobServices] = useState([]);
+  const [otherService, setOtherService] = useState({ name: "", description: "", price: "" });
+  const [showOtherService, setShowOtherService] = useState(false);
+  const [addToServicesPrompt, setAddToServicesPrompt] = useState(null); // { name, description, price }
+  const [jobImages, setJobImages] = useState([]);
+  const [jobSaving, setJobSaving] = useState(false);
+  const [services, setServices] = useState([]);
+  const jobImageRef = useRef(null);
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -165,13 +185,18 @@ export default function CustomersTab({ siteId }) {
   const loadCustomerDetail = async (customer) => {
     setSelectedCustomer(customer);
     setDetailLoading(true);
+    setShowJobForm(false);
     try {
-      const [notes, allAppts] = await Promise.all([
+      const [notes, allAppts, jobs, srvs] = await Promise.all([
         fetchCustomerNotes(customer.id),
         fetchAppointments(siteId),
+        fetchCompletedJobsByCustomer(customer.id),
+        fetchServices(siteId),
       ]);
       setCustomerNotes(notes);
       setCustomerAppts(allAppts.filter((a) => a.customer_id === customer.id));
+      setCustomerJobs(jobs);
+      setServices(srvs);
     } catch (err) {
       console.error(err);
     } finally {
@@ -269,6 +294,100 @@ export default function CustomersTab({ siteId }) {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // ── Completed Jobs handlers ──
+  const toggleJobService = (name) => {
+    setSelectedJobServices((prev) =>
+      prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name]
+    );
+  };
+
+  const handleAddOtherService = () => {
+    if (!otherService.name.trim()) return;
+    const name = otherService.name.trim();
+    if (!selectedJobServices.includes(name)) {
+      setSelectedJobServices((prev) => [...prev, name]);
+    }
+    // Prompt: "Add to services?"
+    setAddToServicesPrompt({ ...otherService });
+    setOtherService({ name: "", description: "", price: "" });
+    setShowOtherService(false);
+  };
+
+  const handleConfirmAddToServices = async (accept) => {
+    if (accept && addToServicesPrompt) {
+      try {
+        const created = await createService({
+          site_id: siteId,
+          name: addToServicesPrompt.name,
+          description: addToServicesPrompt.description || null,
+          price: addToServicesPrompt.price ? parseFloat(addToServicesPrompt.price) : null,
+          is_active: true,
+          booking_enabled: true,
+          sort_order: services.length,
+        });
+        setServices((prev) => [...prev, created]);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setAddToServicesPrompt(null);
+  };
+
+  const handleSaveJob = async (e) => {
+    e.preventDefault();
+    if (!jobForm.title || !selectedCustomer) return;
+    setJobSaving(true);
+    try {
+      const payload = {
+        site_id: siteId,
+        customer_id: selectedCustomer.id,
+        title: jobForm.title,
+        services_performed: selectedJobServices,
+        notes: jobForm.notes || null,
+        amount_charged: jobForm.amount_charged ? parseFloat(jobForm.amount_charged) : null,
+        completed_at: jobForm.completed_at ? new Date(jobForm.completed_at).toISOString() : new Date().toISOString(),
+        images: [],
+      };
+      const created = await createCompletedJob(payload);
+
+      // Upload images if any
+      if (jobImages.length > 0) {
+        const urls = [];
+        for (const file of jobImages) {
+          const url = await uploadJobImage(siteId, created.id, file);
+          urls.push(url);
+        }
+        await updateCompletedJob(created.id, { images: urls });
+        created.images = urls;
+      }
+
+      setCustomerJobs((prev) => [created, ...prev]);
+      setShowJobForm(false);
+      setJobForm({ title: "", notes: "", amount_charged: "", completed_at: "" });
+      setSelectedJobServices([]);
+      setJobImages([]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setJobSaving(false);
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!confirm("Delete this job record?")) return;
+    try {
+      await deleteCompletedJob(jobId);
+      setCustomerJobs((prev) => prev.filter((j) => j.id !== jobId));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleJobImageSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    setJobImages((prev) => [...prev, ...files].slice(0, 6));
   };
 
   const filtered = customers.filter((c) => {
@@ -500,6 +619,275 @@ export default function CustomersTab({ siteId }) {
                       >
                         {(a.status || "").replace(/_/g, " ")}
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Completed Jobs / Visit History */}
+            <section className="panel">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ margin: 0 }}>Completed Jobs</h3>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    setShowJobForm(!showJobForm);
+                    setJobForm({ title: "", notes: "", amount_charged: "", completed_at: new Date().toISOString().slice(0, 16) });
+                    setSelectedJobServices([]);
+                    setJobImages([]);
+                    setShowOtherService(false);
+                    setAddToServicesPrompt(null);
+                  }}
+                >
+                  {showJobForm ? "Cancel" : "+ Log Job"}
+                </button>
+              </div>
+
+              {showJobForm && (
+                <form className="admin-form" onSubmit={handleSaveJob} style={{ marginBottom: 16, padding: 12, background: "var(--bg-secondary, #f8fafc)", borderRadius: 8 }}>
+                  <label className="field">
+                    <span>Job Title *</span>
+                    <input
+                      type="text"
+                      required
+                      value={jobForm.title}
+                      onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })}
+                      placeholder="e.g., Full Detail + Ceramic Coating"
+                    />
+                  </label>
+
+                  {/* Multi-service selection */}
+                  <div className="field">
+                    <span className="detail-label">Services Performed</span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                      {services.filter((s) => s.is_active).map((s) => (
+                        <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14 }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedJobServices.includes(s.name)}
+                            onChange={() => toggleJobService(s.name)}
+                          />
+                          <span>{s.name}</span>
+                          {s.price && <span className="muted" style={{ fontSize: 12 }}>(${s.price})</span>}
+                        </label>
+                      ))}
+                    </div>
+
+                    {/* Other service toggle */}
+                    {!showOtherService ? (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ marginTop: 8 }}
+                        onClick={() => setShowOtherService(true)}
+                      >
+                        + Other Service
+                      </button>
+                    ) : (
+                      <div style={{ marginTop: 8, padding: 10, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>
+                        <p style={{ margin: "0 0 8px", fontWeight: 600, fontSize: 13 }}>Add a custom service</p>
+                        <div className="form-grid">
+                          <label className="field">
+                            <span>Service Name *</span>
+                            <input
+                              type="text"
+                              value={otherService.name}
+                              onChange={(e) => setOtherService({ ...otherService, name: e.target.value })}
+                              placeholder="e.g., Banner Installation"
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Price</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={otherService.price}
+                              onChange={(e) => setOtherService({ ...otherService, price: e.target.value })}
+                              placeholder="0.00"
+                            />
+                          </label>
+                        </div>
+                        <label className="field">
+                          <span>Description</span>
+                          <input
+                            type="text"
+                            value={otherService.description}
+                            onChange={(e) => setOtherService({ ...otherService, description: e.target.value })}
+                            placeholder="Brief description of the service"
+                          />
+                        </label>
+                        <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={!otherService.name.trim()}
+                            onClick={handleAddOtherService}
+                          >
+                            Add to Job
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => { setShowOtherService(false); setOtherService({ name: "", description: "", price: "" }); }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* "Add to services?" prompt */}
+                    {addToServicesPrompt && (
+                      <div style={{ marginTop: 8, padding: 10, background: "#fffbeb", border: "1px solid #fbbf24", borderRadius: 6 }}>
+                        <p style={{ margin: "0 0 6px", fontWeight: 600, fontSize: 13 }}>
+                          Add "{addToServicesPrompt.name}" to your service list?
+                        </p>
+                        <p className="muted" style={{ margin: "0 0 8px", fontSize: 12 }}>
+                          This will save it as a service you offer so it appears on your website and is available for future jobs.
+                          {addToServicesPrompt.description && <><br/>{addToServicesPrompt.description}</>}
+                          {addToServicesPrompt.price && <><br/>Price: ${addToServicesPrompt.price}</>}
+                        </p>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button type="button" className="btn btn-primary btn-sm" onClick={() => handleConfirmAddToServices(true)}>
+                            Yes, Add to Services
+                          </button>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleConfirmAddToServices(false)}>
+                            No, Just This Job
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show selected services summary */}
+                    {selectedJobServices.length > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        {selectedJobServices.map((name, i) => (
+                          <span key={i} className="customer-tag" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            {name}
+                            <button
+                              type="button"
+                              onClick={() => toggleJobService(name)}
+                              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "inherit", padding: 0, lineHeight: 1 }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-grid">
+                    <label className="field">
+                      <span>Completed Date</span>
+                      <input
+                        type="datetime-local"
+                        value={jobForm.completed_at}
+                        onChange={(e) => setJobForm({ ...jobForm, completed_at: e.target.value })}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Total Amount Charged</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={jobForm.amount_charged}
+                        onChange={(e) => setJobForm({ ...jobForm, amount_charged: e.target.value })}
+                        placeholder="0.00"
+                      />
+                    </label>
+                  </div>
+                  <label className="field">
+                    <span>Notes</span>
+                    <textarea
+                      rows={2}
+                      value={jobForm.notes}
+                      onChange={(e) => setJobForm({ ...jobForm, notes: e.target.value })}
+                      placeholder="Any notes about the completed work..."
+                    />
+                  </label>
+                  <div className="field">
+                    <span className="detail-label">Photos (optional, up to 6)</span>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                      {jobImages.map((f, i) => (
+                        <div key={i} style={{ position: "relative", width: 60, height: 60, borderRadius: 6, overflow: "hidden", border: "1px solid #e2e8f0" }}>
+                          <img src={URL.createObjectURL(f)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <button
+                            type="button"
+                            onClick={() => setJobImages((prev) => prev.filter((_, idx) => idx !== i))}
+                            style={{ position: "absolute", top: 0, right: 0, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: 1, padding: "2px 4px" }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      {jobImages.length < 6 && (
+                        <button
+                          type="button"
+                          onClick={() => jobImageRef.current?.click()}
+                          style={{ width: 60, height: 60, borderRadius: 6, border: "2px dashed #cbd5e1", background: "none", cursor: "pointer", fontSize: 20, color: "#94a3b8" }}
+                        >
+                          +
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      ref={jobImageRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleJobImageSelect}
+                      style={{ display: "none" }}
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={jobSaving}>
+                    {jobSaving ? "Saving..." : "Save Job Record"}
+                  </button>
+                </form>
+              )}
+
+              {detailLoading ? (
+                <div className="loading-state" style={{ minHeight: 60 }}>
+                  <div className="loading-spinner" />
+                </div>
+              ) : customerJobs.length === 0 ? (
+                <p className="muted">No completed jobs yet. Use "Log Job" to record finished work.</p>
+              ) : (
+                <div className="customer-appt-list">
+                  <p className="muted" style={{ marginBottom: 8 }}>{customerJobs.length} visit{customerJobs.length !== 1 ? "s" : ""} total</p>
+                  {customerJobs.map((j) => (
+                    <div key={j.id} className="customer-appt-item" style={{ flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                        <div>
+                          <div className="customer-appt-date">{formatDate(j.completed_at)}</div>
+                          <div className="customer-appt-info">
+                            <strong>{j.title}</strong>
+                            {j.services_performed?.length > 0 && <span className="muted"> · {j.services_performed.join(", ")}</span>}
+                            {j.amount_charged && <span className="muted"> · ${Number(j.amount_charged).toFixed(2)}</span>}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="note-delete-btn"
+                          onClick={() => handleDeleteJob(j.id)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      {j.notes && <p className="muted" style={{ margin: 0, fontSize: 13 }}>{j.notes}</p>}
+                      {j.images?.length > 0 && (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                          {j.images.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                              <img src={url} alt="" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 6, border: "1px solid #e2e8f0" }} />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

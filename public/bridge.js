@@ -1,7 +1,9 @@
 /**
- * Cielonline Bridge v2.0
+ * Cielonline Bridge v3.0
  *
- * Connects external websites to Cielonline's CRM, booking, content, and analytics layers.
+ * Connects external websites to Cielonline's CRM, booking, content,
+ * analytics, and image layers — with optional Supabase Realtime support
+ * so edits made in the CielOnline admin appear live without page refresh.
  */
 (function () {
   "use strict";
@@ -34,6 +36,8 @@
   var serviceCache = null;
   var contentCache = null;
   var visitorId = getVisitorId();
+  var REALTIME_ENABLED = scriptTag.getAttribute("data-realtime") !== "false";
+  var realtimeChannel = null;
 
   function escapeValue(value) {
     return encodeURIComponent(value == null ? "" : String(value));
@@ -203,6 +207,18 @@
       return;
     }
 
+    // Image shorthand: <img data-ciel-img="home.hero.background">
+    if (element.tagName === "IMG" || element.hasAttribute("data-ciel-img")) {
+      element.setAttribute("src", value);
+      return;
+    }
+
+    // Background image shorthand: <div data-ciel-bg="home.hero.background">
+    if (element.hasAttribute("data-ciel-bg")) {
+      element.style.backgroundImage = "url(" + value + ")";
+      return;
+    }
+
     if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
       element.value = value;
       return;
@@ -216,6 +232,18 @@
       document.querySelectorAll("[data-ciel-field]").forEach(function (element) {
         var key = element.getAttribute("data-ciel-field");
         setElementValue(element, content[key]);
+      });
+
+      // Image fields: <img data-ciel-img="home.hero.background">
+      document.querySelectorAll("[data-ciel-img]").forEach(function (element) {
+        var key = element.getAttribute("data-ciel-img");
+        if (content[key]) element.setAttribute("src", content[key]);
+      });
+
+      // Background image fields: <div data-ciel-bg="home.hero.background">
+      document.querySelectorAll("[data-ciel-bg]").forEach(function (element) {
+        var key = element.getAttribute("data-ciel-bg");
+        if (content[key]) element.style.backgroundImage = "url(" + content[key] + ")";
       });
 
       document.querySelectorAll('[data-ciel-link="booking"]').forEach(function (link) {
@@ -402,6 +430,75 @@
     return div.innerHTML;
   }
 
+  /* ────────── Supabase Realtime (live edits) ────────── */
+
+  function startRealtime() {
+    if (!REALTIME_ENABLED) return;
+
+    ensureSiteId().then(function (siteId) {
+      var REALTIME_URL = SUPABASE_URL.replace(/^http/, "ws") + "/realtime/v1/websocket?apikey=" + SUPABASE_KEY + "&vsn=1.0.0";
+      var ws;
+
+      try {
+        ws = new WebSocket(REALTIME_URL);
+      } catch (e) {
+        console.warn("[Cielonline Bridge] Realtime connection failed:", e);
+        return;
+      }
+
+      var heartbeatTimer = null;
+      var ref = 0;
+
+      function send(topic, event, payload) {
+        ref++;
+        ws.send(JSON.stringify({ topic: topic, event: event, payload: payload, ref: String(ref) }));
+      }
+
+      ws.onopen = function () {
+        // Join the channel for this site's content
+        send(
+          "realtime:public:site_content_entries:site_id=eq." + siteId,
+          "phx_join",
+          { config: { broadcast: { self: false }, postgres_changes: [
+            { event: "*", schema: "public", table: "site_content_entries", filter: "site_id=eq." + siteId }
+          ]}}
+        );
+
+        // Heartbeat every 30s to keep the connection alive
+        heartbeatTimer = setInterval(function () {
+          send("phoenix", "heartbeat", {});
+        }, 30000);
+      };
+
+      ws.onmessage = function (event) {
+        try {
+          var msg = JSON.parse(event.data);
+          if (msg.event === "postgres_changes" || (msg.payload && msg.payload.data && msg.payload.data.record)) {
+            // Content changed — bust cache and re-apply
+            contentCache = null;
+            applySiteContent();
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+      };
+
+      ws.onclose = function () {
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        // Attempt reconnect after 5 seconds
+        setTimeout(function () { startRealtime(); }, 5000);
+      };
+
+      ws.onerror = function () {
+        ws.close();
+      };
+
+      realtimeChannel = ws;
+    }).catch(function () {
+      // Site not found or not published — skip realtime
+    });
+  }
+
   function init() {
     Promise.all([
       applySiteContent(),
@@ -412,6 +509,7 @@
       bindContactForms();
       bindTrackedLinks();
       trackEvent("page_view", { event_type: "page_view" });
+      startRealtime();
     });
   }
 

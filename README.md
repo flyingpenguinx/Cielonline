@@ -1,175 +1,86 @@
-# Cielonline QR Studio
+# CielOnline
 
-**QR codes made for you!**
+An all-in-one business management platform for service-based businesses. Built with React 18, Vite, and Supabase.
 
-A professional static site for showcasing and hosting QR code solutions, featuring both Hosted Card and Eco vCard options.
+Live at **cielonline.com** — hosted on Vercel.
 
-## 🌟 Features
+## Features
 
-- **Marketing Homepage**: Beautiful landing page explaining both QR code types
-- **Hosted Cards**: Dynamic web-based digital business cards (cards/\<slug\>/\<slug\>.html)
-- **Eco vCards**: Traditional vCard files for instant contact saving (cards/\<slug\>/\<slug\>.vcf)
-- **Demo Example**: Carlos Leon's business card demonstrating both formats
-- **Mobile Responsive**: Works perfectly on all devices
-- **GitHub Pages Ready**: Easy deployment and custom domain support
+- **Admin Dashboard** — Overview analytics, revenue tracking, appointment calendar
+- **Customer CRM** — Customer records, notes, multi-service job tracking with completion history
+- **Website Builder** — Drag-and-drop site editor with block-based templates for client websites
+- **QR Code Studio** — Generate and manage branded QR codes with scan analytics
+- **Digital Business Cards** — Hosted card pages with vCard downloads
+- **Payments** — Square and Stripe integrations via Supabase Edge Functions
+- **Inquiry Management** — Form submissions from client sites with status tracking
+- **External Site Control** — Manage content on client websites (e.g. vividautodetails.com) via `bridge.js`
 
-## 🚀 Publishing to GitHub Pages
+## Tech Stack
 
-### Step 1: Enable GitHub Pages
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + React Router 6 |
+| Build | Vite 5 |
+| Backend | Supabase (Postgres, Auth, RLS, Realtime, Storage) |
+| Payments | Square OAuth + Stripe Connect via Edge Functions |
+| Email | Resend via Supabase Edge Functions |
+| Hosting | Vercel |
 
-1. Go to your repository on GitHub: https://github.com/flyingpenguinx/Cielonline
-2. Click on **Settings** (top menu)
-3. Scroll down to **Pages** section (left sidebar)
-4. Under "Source", select:
-   - Branch: `main` (or your default branch)
-   - Folder: `/ (root)`
-5. Click **Save**
-6. Wait a few minutes for the site to build
-
-Your site will be available at: `https://flyingpenguinx.github.io/Cielonline/`
-
-### Step 2: Configure Custom Domain (https://cielonline.com)
-
-#### A. Add Custom Domain in GitHub
-
-1. In the same **Settings > Pages** section
-2. Under "Custom domain", enter: `cielonline.com`
-3. Click **Save**
-4. Check **Enforce HTTPS** (after DNS propagation)
-
-#### B. Configure DNS Records
-
-Add these DNS records with your domain registrar:
-
-**For root domain (cielonline.com):**
-```
-Type: A
-Name: @
-Value: 185.199.108.153
-```
-```
-Type: A
-Name: @
-Value: 185.199.109.153
-```
-```
-Type: A
-Name: @
-Value: 185.199.110.153
-```
-```
-Type: A
-Name: @
-Value: 185.199.111.153
-```
-
-**For www subdomain (optional):**
-```
-Type: CNAME
-Name: www
-Value: flyingpenguinx.github.io
-```
-
-#### C. Verify Custom Domain
-
-1. Wait for DNS propagation (can take 24-48 hours, but often faster)
-2. Check DNS propagation: https://www.whatsmydns.net/
-3. Once propagated, your site will be available at: https://cielonline.com
-4. GitHub will automatically provision an SSL certificate
-
-## 📁 Repository Structure
+## Project Structure
 
 ```
-Cielonline/
-├── index.html              # Marketing homepage
-├── cards/                  # Client cards directory
-│   └── carlos-leon/       # Example client (slug: carlos-leon)
-│       ├── carlos-leon.html    # Hosted card page
-│       └── carlos-leon.vcf     # vCard file for download
-├── _config.yml            # GitHub Pages configuration
-└── README.md              # This file
+├── index.html                 # Vite entry (React app)
+├── landing.html               # Marketing landing page
+├── vite.config.js             # Vite config (multi-page)
+├── package.json
+├── public/
+│   └── bridge.js              # Script loaded on external client sites
+├── src/
+│   ├── App.jsx                # Router & auth wrapper
+│   ├── main.jsx               # React entry point
+│   ├── components/            # UI components
+│   │   └── admin/             # Dashboard tab panels
+│   ├── hooks/                 # Custom React hooks
+│   ├── lib/                   # Supabase client, API helpers, templates
+│   ├── pages/                 # Route-level page components
+│   ├── styles/                # CSS
+│   └── utils/                 # Utility functions
+├── supabase/
+│   └── functions/             # Edge Functions (payments, webhooks, email)
+├── cards/                     # Static business card pages
+├── BACKEND_SCHEMA.md          # Complete Supabase schema & disaster recovery reference
+├── SETUP_INSTRUCTIONS.md      # Step-by-step project setup guide
+└── Ui-rules.txt               # Design system guidelines
 ```
 
-## 🎨 Adding New Client Cards
+## Getting Started
 
-To add a new client card, follow the `cards/<slug>/` pattern:
-
-1. Create a new directory: `cards/<client-slug>/`
-2. Add HTML file: `cards/<client-slug>/<client-slug>.html`
-3. Add vCard file: `cards/<client-slug>/<client-slug>.vcf`
-4. Update the homepage if needed to link to the new card
-
-### Example vCard Format
-
-```vcard
-BEGIN:VCARD
-VERSION:3.0
-FN:Full Name
-N:LastName;FirstName;;;
-ORG:Company Name
-TITLE:Job Title
-TEL;TYPE=CELL:(123) 456-7890
-EMAIL;TYPE=INTERNET:email@example.com
-NOTE:Your tagline here
-REV:2024-01-01T00:00:00Z
-END:VCARD
+```bash
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-## 🔗 Demo
+Requires a `.env` file with Supabase credentials:
 
-Visit the demo page for Carlos Leon (Owner & Founder):
-- **Hosted Card**: https://cielonline.com/cards/carlos-leon/carlos-leon.html
-- **vCard Download**: https://cielonline.com/cards/carlos-leon/carlos-leon.vcf
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-## 🛠️ Local Development
+See `SETUP_INSTRUCTIONS.md` for full setup including Supabase tables, auth, payments, and deployment.
 
-To test locally:
+## Database
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/flyingpenguinx/Cielonline.git
-   cd Cielonline
-   ```
+The Supabase backend has 14 tables, Row Level Security on every table, realtime subscriptions, and storage buckets. See `BACKEND_SCHEMA.md` for the complete schema — it serves as a disaster recovery reference if the database ever needs to be rebuilt.
 
-2. Open `index.html` in your browser:
-   ```bash
-   open index.html  # macOS
-   xdg-open index.html  # Linux
-   start index.html  # Windows
-   ```
+## Deployment
 
-   Or use a simple HTTP server:
-   ```bash
-   python3 -m http.server 8000
-   # Visit http://localhost:8000
-   ```
+The app is deployed to Vercel. Push to `main` to trigger a production build.
 
-## 📱 QR Code Generation
+```bash
+npm run build      # outputs to dist/
+```
 
-To create QR codes for your cards:
+## License
 
-1. **For Hosted Cards**: Generate QR code pointing to:
-   ```
-   https://cielonline.com/cards/<slug>/<slug>.html
-   ```
-
-2. **For vCards**: Generate QR code pointing to:
-   ```
-   https://cielonline.com/cards/<slug>/<slug>.vcf
-   ```
-
-Recommended QR code generators:
-- https://www.qr-code-generator.com/
-- https://www.qrcode-monkey.com/
-- https://goqr.me/
-
-## 📄 License
-
-© 2025 Cielonline. All rights reserved.
-
-## 🤝 Contact
-
-**Carlos Leon**
-- Phone: (916) 616-3269
-- Email: carloslmgustavo@gmail.com
-- Tagline: "QR codes made for you!"
+© 2025 CielOnline. All rights reserved.

@@ -3,11 +3,14 @@ import { useSiteEditor } from "../../hooks/useSiteEditor";
 import SiteEditorCanvas from "../SiteEditorCanvas";
 import BlockPropertiesPanel from "../BlockPropertiesPanel";
 import SiteTemplateLibrary from "../SiteTemplateLibrary";
+import ImageUploadField from "../ImageUploadField";
 import {
   DEFAULT_SITE_CONTENT_FIELDS,
   fetchSiteContentEntries,
   getDefaultSiteContentEntries,
   upsertSiteContentEntries,
+  uploadSiteImage,
+  updateSiteSubscription,
 } from "../../lib/sitePlatformApi";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
@@ -19,7 +22,7 @@ const VIEWPORTS = [
   { key: "mobile", label: "Mobile", icon: "📲", width: "375px", maxWidth: "375px" },
 ];
 
-const CANVAS_PAGE_ORDER = ["Home", "Services", "Business"];
+const CANVAS_PAGE_ORDER = ["Home", "Services", "Business", "Footer"];
 
 function buildCanvasSections(entries) {
   const grouped = new Map();
@@ -323,7 +326,16 @@ function VisualCanvasPanel({ site, siteId, viewport, zoom, iframeKey, iframeRef,
                 <label key={field.key} className="field canvas-field-card">
                   <span>{field.layerName || field.label}</span>
                   <small className="muted">{field.helpText || field.label}</small>
-                  {field.type === "textarea" ? (
+                  {field.type === "image" ? (
+                    <ImageUploadField
+                      value={value}
+                      onChange={(url) => updateEntryValue(field.key, url)}
+                      label=""
+                      placeholder={field.placeholder}
+                      compact
+                      bucket="site-images"
+                    />
+                  ) : field.type === "textarea" ? (
                     <textarea
                       rows={4}
                       value={value}
@@ -467,7 +479,16 @@ function ManagedContentPanel({ siteId }) {
                   return (
                     <label key={field.key} className="field">
                       <span>{field.label}</span>
-                      {field.type === "textarea" ? (
+                      {field.type === "image" ? (
+                        <ImageUploadField
+                          value={value}
+                          onChange={(url) => updateEntryValue(field.key, url)}
+                          label=""
+                          placeholder={field.placeholder}
+                          compact
+                          bucket="site-images"
+                        />
+                      ) : field.type === "textarea" ? (
                         <textarea
                           rows={4}
                           value={value}
@@ -503,6 +524,7 @@ function IntegrationPanel({ site }) {
   data-supabase-url="${SUPABASE_URL}"
   data-supabase-key="${SUPABASE_KEY}"
   data-site-slug="${site.slug || "your-site-slug"}"
+  data-realtime="true"
 ><\/script>`;
 
   const formExample = `<form data-ciel="contact" data-success="Thanks! We'll be in touch soon.">
@@ -520,8 +542,30 @@ function IntegrationPanel({ site }) {
   const servicesExample = `<!-- Services auto-load from your Cielonline admin -->
 <div data-ciel="services" data-show-price="true" data-show-duration="true"></div>`;
 
-  const contentExample = `<h1 data-ciel-field="home.hero.title_line_1">Your ride.</h1>
+  const contentExample = `<!-- Text fields -->
+<h1 data-ciel-field="home.hero.title_line_1">Your ride.</h1>
 <p data-ciel-field="home.hero.description">Premium detailing copy lives here.</p>
+
+<!-- Image fields -->
+<img data-ciel-img="home.hero.background_image" src="fallback.jpg" alt="Hero">
+<img data-ciel-img="home.about.image" src="fallback.jpg" alt="About us">
+
+<!-- Background image -->
+<div data-ciel-bg="home.hero.background_image" style="background-image:url(fallback.jpg)">
+
+<!-- Gallery images -->
+<img data-ciel-img="home.gallery.image_1" src="fallback.jpg" alt="Gallery 1">
+<img data-ciel-img="home.gallery.image_2" src="fallback.jpg" alt="Gallery 2">
+
+<!-- Testimonials -->
+<blockquote data-ciel-field="home.testimonial_1.text">"Great service!"</blockquote>
+<cite data-ciel-field="home.testimonial_1.author">John D.</cite>
+
+<!-- Footer -->
+<p data-ciel-field="footer.tagline">Premium auto detailing.</p>
+<img data-ciel-img="footer.logo_image" src="logo.png" alt="Logo">
+
+<!-- Links -->
 <a href="${bookingUrl}" data-ciel-link="booking">Book Now</a>`;
 
   const bookingExample = `<a href="${bookingUrl}" data-ciel-link="booking">Book Now</a>`;
