@@ -37,7 +37,7 @@
         #right-panel { width: 260px; overflow-y: auto; }
 
         /* ===== CANVAS ===== */
-        #canvas-wrapper { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 0; background: #1e1e1e; display: flex; justify-content: center; }
+        #canvas-wrapper { flex: 1; overflow-y: auto; overflow-x: auto; padding: 20px 0; background: #1e1e1e; display: flex; justify-content: center; align-items: flex-start; }
         #canvas { width: calc(100vw - 60px - 260px - 30px); max-width: 1400px; min-width: 800px; background: #ffffff; box-shadow: 0 0 20px rgba(0,0,0,0.5); flex-shrink: 0; position: relative; }
 
         /* ===== CANVAS SECTIONS ===== */
@@ -51,6 +51,7 @@
         /* ===== ELEMENTS ===== */
         .element { position: absolute; user-select: none; }
         .element.selected { outline: 2px solid #007fd4; outline-offset: -2px; }
+        .element.multi-selected { outline: 2px dashed #4ec9ff; outline-offset: -2px; }
         .element.locked { opacity: 0.85; }
         .element.locked.selected { outline: 2px dashed #ff9800; outline-offset: -2px; }
         .element.editing { outline: 2px solid #4caf50 !important; outline-offset: -2px; }
@@ -222,6 +223,151 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #666; }
+
+        /* ===== DEVICE PREVIEW ===== */
+        .device-toggle { display: flex; background: #1a1a1a; border-radius: 6px; padding: 2px; gap: 2px; }
+        .device-btn { padding: 4px 10px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; background: transparent; color: #888; transition: all 0.15s; }
+        .device-btn.active { background: #3a3a3a; color: #fff; }
+        .device-btn:hover:not(.active) { color: #ccc; }
+        #canvas-wrapper.device-desktop #canvas { width: calc(100vw - 60px - 260px - 40px); max-width: 1400px; min-width: 800px; }
+        #canvas-wrapper.device-tablet #canvas { width: 768px; min-width: 768px; max-width: 768px; border-radius: 12px; overflow: hidden; }
+        #canvas-wrapper.device-mobile #canvas { width: 390px; min-width: 390px; max-width: 390px; border-radius: 20px; overflow: hidden; }
+        #canvas-wrapper.device-tablet, #canvas-wrapper.device-mobile { padding: 30px 0; }
+
+        /* Fixed (no-scroll) canvas mode — for dashboards, login pages, creative single-screen layouts */
+        #canvas-wrapper.mode-fixed { overflow: hidden; padding: 20px 0; }
+        #canvas-wrapper.mode-fixed #canvas { height: calc(100vh - 44px - 32px - 40px); min-height: 400px; display: flex; flex-direction: column; }
+        #canvas-wrapper.mode-fixed.device-tablet #canvas,
+        #canvas-wrapper.mode-fixed.device-mobile #canvas { height: calc(100vh - 44px - 32px - 60px); }
+        #canvas-wrapper.mode-fixed .canvas-section { flex: 1; height: 100% !important; border-bottom: none; }
+        #canvas-wrapper.mode-fixed .section-resize-handle { display: none; }
+        #canvas-wrapper.mode-fixed .section-label { display: none; }
+        /* Hide section targeting buttons (Nav/Hero/Foot) and the Sections accordion group in fixed mode */
+        body.canvas-fixed .section-target-btn[data-section="navbar"],
+        body.canvas-fixed .section-target-btn[data-section="hero"],
+        body.canvas-fixed .section-target-btn[data-section="footer"],
+        body.canvas-fixed #sections-panel { display: none !important; }
+
+        /* ===== ZOOM CONTROLS ===== */
+        .zoom-bar { display: flex; align-items: center; gap: 4px; background: #1a1a1a; border-radius: 6px; padding: 2px 4px; }
+        .zoom-btn { width: 22px; height: 22px; border: none; border-radius: 3px; background: transparent; color: #ccc; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+        .zoom-btn:hover { background: #333; }
+        .zoom-val { font-size: 10px; color: #ccc; min-width: 36px; text-align: center; font-variant-numeric: tabular-nums; cursor: pointer; }
+        #canvas { transform-origin: top center; transition: transform 0.1s; }
+
+        /* ===== GRID OVERLAY ===== */
+        .canvas-section.show-grid {
+            background-image: linear-gradient(to right, rgba(0,127,212,0.08) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0,127,212,0.08) 1px, transparent 1px) !important;
+            background-size: 20px 20px !important;
+        }
+
+        /* ===== PREVIEW MODE ===== */
+        body.preview-mode #toolbar,
+        body.preview-mode #page-tabs-bar,
+        body.preview-mode #left-panel,
+        body.preview-mode #right-panel,
+        body.preview-mode .section-resize-handle,
+        body.preview-mode .section-label,
+        body.preview-mode .resize-handle,
+        body.preview-mode .lock-icon,
+        body.preview-mode .bottom-badge,
+        body.preview-mode .float-badge { display: none !important; }
+        body.preview-mode .element.selected,
+        body.preview-mode .element { outline: none !important; }
+        body.preview-mode .canvas-section { border-bottom: none !important; }
+        body.preview-mode #canvas-wrapper { padding: 0 !important; }
+        body.preview-mode #canvas { box-shadow: none !important; }
+
+        #preview-exit {
+            display: none; position: fixed; top: 16px; right: 16px; z-index: 10001;
+            background: rgba(0,0,0,0.75); color: #fff; border: 1px solid #555;
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
+        }
+        body.preview-mode #preview-exit { display: block; }
+
+        /* ===== CONTEXT MENU ===== */
+        #context-menu {
+            display: none; position: fixed; z-index: 10002;
+            background: #2d2d2d; border: 1px solid #555; border-radius: 6px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+            padding: 4px; min-width: 180px;
+        }
+        #context-menu.visible { display: block; }
+        .cm-item { padding: 6px 12px; font-size: 11px; color: #ddd; cursor: pointer; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .cm-item:hover { background: #3a3a3a; color: #fff; }
+        .cm-item.danger:hover { background: #5c2b2b; color: #ff9b9b; }
+        .cm-item.disabled { color: #666; cursor: default; pointer-events: none; }
+        .cm-sep { height: 1px; background: #444; margin: 4px 2px; }
+        .cm-kbd { font-size: 9px; color: #888; font-family: monospace; }
+
+        /* ===== MODAL ===== */
+        .modal-backdrop {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 10005; align-items: center; justify-content: center;
+        }
+        .modal-backdrop.visible { display: flex; }
+        .modal {
+            background: #252526; border: 1px solid #444; border-radius: 10px;
+            padding: 20px; min-width: 420px; max-width: 90vw; max-height: 85vh; overflow: auto;
+            color: #ddd;
+        }
+        .modal h3 { margin: 0 0 12px 0; font-size: 14px; color: #fff; }
+        .modal-close { position: absolute; top: 10px; right: 14px; background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
+        .modal-close:hover { color: #fff; }
+        .shortcut-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 11px; border-bottom: 1px solid #333; }
+        .shortcut-row:last-child { border-bottom: none; }
+        .shortcut-row kbd { background: #3a3a3a; border: 1px solid #555; border-radius: 3px; padding: 1px 6px; font-family: monospace; font-size: 10px; color: #fff; }
+
+        /* ===== TEMPLATE LIBRARY ===== */
+        .template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .template-card {
+            background: #1e1e1e; border: 1px solid #444; border-radius: 8px; padding: 10px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .template-card:hover { border-color: #007fd4; transform: translateY(-2px); }
+        .template-thumb { width: 100%; height: 80px; border-radius: 5px; margin-bottom: 6px; position: relative; overflow: hidden; }
+        .template-name { font-size: 11px; font-weight: 600; color: #fff; }
+        .template-desc { font-size: 9px; color: #888; margin-top: 2px; }
+
+        /* ===== ALIGNMENT TOOLBAR (contextual) ===== */
+        .align-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; }
+        .align-btn { height: 24px; background: #333; border: 1px solid #444; border-radius: 3px; color: #ccc; cursor: pointer; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+        .align-btn:hover { background: #3c3c3c; color: #fff; }
+
+        /* ===== ELEMENT TYPE PALETTE ===== */
+        .element-palette { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .el-palette-btn {
+            width: 44px; height: 36px; background: #2d2d2d; border: 1px solid #3a3a3a; color: #ccc;
+            border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: 600;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+            transition: all 0.12s;
+        }
+        .el-palette-btn:hover { background: #383838; border-color: #555; color: #fff; }
+        .el-palette-icon { font-size: 14px; line-height: 1; }
+
+        /* ===== TOAST ===== */
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #2d2d2d; color: #fff; padding: 8px 16px; border-radius: 6px;
+            font-size: 11px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); z-index: 10010;
+            opacity: 0; transition: opacity 0.25s; pointer-events: none; border: 1px solid #555;
+        }
+        #toast.visible { opacity: 1; }
+
+        /* ===== TEXT PROPS ===== */
+        .text-props-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+        /* ===== BUTTON / LINK ELEMENTS ===== */
+        .element[data-type="button"] .text-content,
+        .element[data-type="link"] .text-content {
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-weight: 600;
+        }
+        .element[data-type="divider"] { background: #ccc; height: 2px; }
+        .element[data-type="video"] iframe,
+        .element[data-type="video"] video { width: 100%; height: 100%; border: none; pointer-events: none; }
+        .element[data-type="icon"] { display: flex; align-items: center; justify-content: center; font-size: 48px; color: #333; }
     </style>
 </head>
 <body>
@@ -235,10 +381,30 @@
                 <button class="mode-btn active" data-mode="layout" onclick="setMode('layout')">&#9312; Layout</button>
                 <button class="mode-btn" data-mode="design" onclick="setMode('design')">&#9313; Design</button>
             </div>
+            <div class="device-toggle" title="Device preview">
+                <button class="device-btn active" data-device="desktop" onclick="setDevice('desktop')" title="Desktop">&#128187;</button>
+                <button class="device-btn" data-device="tablet" onclick="setDevice('tablet')" title="Tablet">&#128241;</button>
+                <button class="device-btn" data-device="mobile" onclick="setDevice('mobile')" title="Mobile">&#128242;</button>
+            </div>
+            <div class="device-toggle" title="Canvas mode: scroll = full site with sections, fixed = single screen (dashboards, login, creative)" style="margin-left:0;">
+                <button class="device-btn active" data-canvasmode="scroll" onclick="setCanvasMode('scroll')" title="Scroll — full site with sections">Scroll</button>
+                <button class="device-btn" data-canvasmode="fixed" onclick="setCanvasMode('fixed')" title="Fixed — single screen, no scroll">Fixed</button>
+            </div>
+            <div class="zoom-bar" title="Zoom (Ctrl+Scroll)">
+                <button class="zoom-btn" onclick="setZoom(zoomLevel - 0.1)">&#8722;</button>
+                <span class="zoom-val" id="zoom-val" onclick="setZoom(1)" title="Click to reset">100%</span>
+                <button class="zoom-btn" onclick="setZoom(zoomLevel + 0.1)">&#43;</button>
+            </div>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="toggleGrid()" id="btn-grid" title="Toggle grid overlay">Grid</button>
         </div>
         <div style="display: flex; gap: 6px; align-items: center;">
             <button class="tool-btn" style="width:28px;font-size:12px;" onclick="undo()" title="Undo (Ctrl+Z)">&#8617;</button>
             <button class="tool-btn" style="width:28px;font-size:12px;" onclick="redo()" title="Redo (Ctrl+Shift+Z)">&#8618;</button>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="showShortcuts()" title="Keyboard shortcuts (?)">?</button>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="showTemplates()" title="Template library">Templates</button>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="enterPreviewMode()" title="Preview (P)">Preview</button>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="saveProject()" title="Save project to file">Save</button>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="loadProject()" title="Load project from file">Open</button>
             <button class="tool-btn" style="width: auto; padding: 0 10px; font-size: 9px;" onclick="clearCanvas()">Clear</button>
             <button class="tool-btn" style="width: auto; padding: 0 10px; background: #007fd4; color: white; border: none; font-size: 9px;" onclick="exportHTML()">Export HTML</button>
         </div>
@@ -258,9 +424,15 @@
             <button class="section-target-btn active" data-section="content" onclick="setTargetSection('content')">Body</button>
             <button class="section-target-btn" data-section="footer" onclick="setTargetSection('footer')">Foot</button>
             <div class="left-sep"></div>
-            <button class="tool-btn" onclick="addElement('box')" title="Add Box">Box</button>
-            <button class="tool-btn" onclick="addElement('text')" title="Add Text">Txt</button>
-            <button class="tool-btn" onclick="addElement('image')" title="Add Image">Img</button>
+            <button class="el-palette-btn" onclick="addElement('box')" title="Box / Container"><span class="el-palette-icon">&#9634;</span>Box</button>
+            <button class="el-palette-btn" onclick="addElement('text')" title="Text"><span class="el-palette-icon">T</span>Text</button>
+            <button class="el-palette-btn" onclick="addElement('heading')" title="Heading"><span class="el-palette-icon">H</span>Head</button>
+            <button class="el-palette-btn" onclick="addElement('button')" title="Button"><span class="el-palette-icon" style="font-size:10px;">[&nbsp;]</span>Btn</button>
+            <button class="el-palette-btn" onclick="addElement('link')" title="Link"><span class="el-palette-icon">&#128279;</span>Link</button>
+            <button class="el-palette-btn" onclick="addElement('image')" title="Image"><span class="el-palette-icon">&#128247;</span>Img</button>
+            <button class="el-palette-btn" onclick="addElement('video')" title="Video / Embed"><span class="el-palette-icon">&#9654;</span>Vid</button>
+            <button class="el-palette-btn" onclick="openIconPicker()" title="Icon"><span class="el-palette-icon">&#9733;</span>Icon</button>
+            <button class="el-palette-btn" onclick="addElement('divider')" title="Divider"><span class="el-palette-icon">&#8212;</span>Div</button>
         </div>
 
         <!-- CANVAS -->
@@ -439,11 +611,99 @@
                         <div class="details-content">
                             <button class="tool-btn" id="btn-lock" style="width:100%;font-size:10px;" onclick="toggleLock()">&#128274; Lock Position</button>
                             <button class="tool-btn" id="btn-bottom" style="width:100%;font-size:10px;" onclick="toggleBottomLayer()">&#11015; Bottom Layer</button>
-                            <button class="tool-btn" style="width:100%;font-size:10px;" onclick="duplicateSelected()">&#128203; Duplicate</button>
+                            <button class="tool-btn" style="width:100%;font-size:10px;" onclick="duplicateSelected()">&#128203; Duplicate (Ctrl+D)</button>
+                        </div>
+                    </details>
+                    <details open id="text-props-panel" style="display:none;">
+                        <summary>Text</summary>
+                        <div class="details-content">
+                            <div class="control-group">
+                                <div class="control-header"><span>Font Family</span></div>
+                                <select id="prop-fontFamily" onchange="updateTextStyle('fontFamily',this.value)">
+                                    <option value="inherit">Default</option>
+                                    <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">System</option>
+                                    <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
+                                    <option value="Georgia, 'Times New Roman', serif">Georgia</option>
+                                    <option value="'Courier New', monospace">Monospace</option>
+                                    <option value="Impact, sans-serif">Impact</option>
+                                    <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                                </select>
+                            </div>
+                            <div class="text-props-grid">
+                                <div class="control-group">
+                                    <div class="control-header"><span>Size</span> <span class="val-display" id="val-fs">16px</span></div>
+                                    <input type="range" id="prop-fontSize" min="8" max="120" value="16" oninput="updateTextStyle('fontSize',this.value+'px');document.getElementById('val-fs').innerText=this.value+'px'">
+                                </div>
+                                <div class="control-group">
+                                    <div class="control-header"><span>Weight</span></div>
+                                    <select id="prop-fontWeight" onchange="updateTextStyle('fontWeight',this.value)">
+                                        <option value="300">Light</option>
+                                        <option value="400" selected>Normal</option>
+                                        <option value="500">Medium</option>
+                                        <option value="600">Semibold</option>
+                                        <option value="700">Bold</option>
+                                        <option value="900">Black</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-props-grid">
+                                <div class="control-group">
+                                    <div class="control-header"><span>Align</span></div>
+                                    <select id="prop-textAlign" onchange="updateTextStyle('textAlign',this.value)">
+                                        <option value="left">Left</option>
+                                        <option value="center">Center</option>
+                                        <option value="right">Right</option>
+                                        <option value="justify">Justify</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <div class="control-header"><span>Line H</span> <span class="val-display" id="val-lh">1.4</span></div>
+                                    <input type="range" id="prop-lineHeight" min="0.8" max="3" value="1.4" step="0.1" oninput="updateTextStyle('lineHeight',this.value);document.getElementById('val-lh').innerText=this.value">
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <div class="control-header"><span>Text Color</span></div>
+                                <input type="color" id="prop-textColor" value="#000000" oninput="updateTextStyle('color',this.value)">
+                            </div>
+                            <div class="control-group" id="link-href-group" style="display:none;">
+                                <div class="control-header"><span>Link URL</span></div>
+                                <input type="text" id="prop-href" placeholder="https://..." oninput="updateElementField('href',this.value)">
+                            </div>
+                            <div class="control-group" id="video-src-group" style="display:none;">
+                                <div class="control-header"><span>Video (Upload or URL)</span></div>
+                                <div style="display:flex;gap:4px;">
+                                    <input type="text" id="prop-videoSrc" placeholder="https://youtube.com/... or upload" oninput="updateElementField('videoSrc',this.value)" style="flex:1;">
+                                    <button class="mini-btn" onclick="uploadVideoForSelected()" title="Upload video file">Upload</button>
+                                </div>
+                            </div>
+                            <div class="control-group" id="icon-char-group" style="display:none;">
+                                <div class="control-header"><span>Icon</span></div>
+                                <div style="display:flex;gap:4px;">
+                                    <input type="text" id="prop-iconChar" placeholder="&#9733;" maxlength="4" oninput="updateElementField('iconChar',this.value);render()" style="flex:1;">
+                                    <button class="mini-btn" onclick="openIconPicker(true)" title="Browse icons">Browse</button>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details open>
+                        <summary>Align &amp; Distribute</summary>
+                        <div class="details-content">
+                            <div class="control-header"><span>Horizontal</span></div>
+                            <div class="align-row">
+                                <button class="align-btn" onclick="alignElement('left')" title="Align left to section">&#8676;</button>
+                                <button class="align-btn" onclick="alignElement('hcenter')" title="Center horizontally">&#8596;</button>
+                                <button class="align-btn" onclick="alignElement('right')" title="Align right to section">&#8677;</button>
+                            </div>
+                            <div class="control-header"><span>Vertical</span></div>
+                            <div class="align-row">
+                                <button class="align-btn" onclick="alignElement('top')" title="Align top">&#8670;</button>
+                                <button class="align-btn" onclick="alignElement('vcenter')" title="Center vertically">&#8597;</button>
+                                <button class="align-btn" onclick="alignElement('bottom')" title="Align bottom">&#8671;</button>
+                            </div>
                         </div>
                     </details>
                     <div id="text-hint" style="display:none;padding:6px 10px;font-size:10px;color:#888;background:#2a2a2a;border-bottom:1px solid #333;">
-                        Double-click the text element to edit inline.
+                        Double-click text to edit inline.
                     </div>
                     <div style="padding:10px;">
                         <button class="tool-btn" style="width:100%;color:#ff6b6b;border-color:#5c2b2b;" onclick="deleteSelected()">Delete</button>
@@ -457,29 +717,29 @@
                 <details open>
                     <summary>Theme &amp; Colors</summary>
                     <div class="details-content">
-                        <div style="font-size:9px;color:#888;margin-bottom:2px;">Global palette applied across all pages</div>
-                        <div class="theme-color-row">
-                            <label>Primary</label>
+                        <div style="font-size:9px;color:#888;margin-bottom:2px;">Click "Apply" below to push these colors to your sections.</div>
+                        <div class="theme-color-row" title="Used for buttons, links and highlights">
+                            <label>Buttons &amp; Links</label>
                             <input type="color" id="theme-primary" value="#007fd4" oninput="updateTheme('primary',this.value)">
                             <span class="val-display" style="font-size:9px;" id="theme-primary-val">#007fd4</span>
                         </div>
-                        <div class="theme-color-row">
-                            <label>Secondary</label>
+                        <div class="theme-color-row" title="Applied to Navbar and Footer backgrounds">
+                            <label>Navbar &amp; Footer</label>
                             <input type="color" id="theme-secondary" value="#2d2d2d" oninput="updateTheme('secondary',this.value)">
                             <span class="val-display" style="font-size:9px;" id="theme-secondary-val">#2d2d2d</span>
                         </div>
-                        <div class="theme-color-row">
-                            <label>Accent</label>
+                        <div class="theme-color-row" title="Accent color for badges, tags, hover states">
+                            <label>Accent / Highlights</label>
                             <input type="color" id="theme-accent" value="#4caf50" oninput="updateTheme('accent',this.value)">
                             <span class="val-display" style="font-size:9px;" id="theme-accent-val">#4caf50</span>
                         </div>
-                        <div class="theme-color-row">
-                            <label>Surface</label>
+                        <div class="theme-color-row" title="Applied to Hero and Body backgrounds">
+                            <label>Hero &amp; Body BG</label>
                             <input type="color" id="theme-surface" value="#ffffff" oninput="updateTheme('surface',this.value)">
                             <span class="val-display" style="font-size:9px;" id="theme-surface-val">#ffffff</span>
                         </div>
-                        <div class="theme-color-row">
-                            <label>Text</label>
+                        <div class="theme-color-row" title="Default paragraph / text color">
+                            <label>Text Color</label>
                             <input type="color" id="theme-text" value="#1a1a1a" oninput="updateTheme('text',this.value)">
                             <span class="val-display" style="font-size:9px;" id="theme-text-val">#1a1a1a</span>
                         </div>
@@ -512,6 +772,16 @@
                                 <button class="mat-btn mat-deep" data-mat="deep" onclick="applyMaterial('deep')"><div class="mat-preview"></div>Deep</button>
                                 <button class="mat-btn mat-neu" data-mat="neu" onclick="applyMaterial('neu')"><div class="mat-preview"></div>Neumorphic</button>
                                 <button class="mat-btn mat-flat" data-mat="flat" onclick="applyMaterial('flat')" style="grid-column: span 2;"><div class="mat-preview"></div>Flat (Reset)</button>
+                            </div>
+                            <div id="material-tint-group" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #333;">
+                                <div class="control-group">
+                                    <div class="control-header"><span>Tint Color</span></div>
+                                    <input type="color" id="prop-tint-color" value="#ffffff" oninput="updateMaterialTint()">
+                                </div>
+                                <div class="control-group">
+                                    <div class="control-header"><span>Tint Strength</span> <span class="val-display" id="val-tint-strength">0%</span></div>
+                                    <input type="range" id="prop-tint-strength" min="0" max="100" value="0" oninput="updateMaterialTint()">
+                                </div>
                             </div>
                         </div>
                     </details>
@@ -601,7 +871,8 @@
                             <div class="control-group">
                                 <div class="control-header"><span>Style</span></div>
                                 <select id="prop-border-style" onchange="updateBorder()">
-                                    <option value="solid">Solid</option>
+                                    <option value="none">None</option>
+                                    <option value="solid" selected>Solid</option>
                                     <option value="dashed">Dashed</option>
                                     <option value="dotted">Dotted</option>
                                     <option value="double">Double</option>
@@ -643,6 +914,23 @@
     </div>
 </div>
 
+<!-- Preview exit button -->
+<button id="preview-exit" onclick="exitPreviewMode()">&#10005; Exit Preview (Esc)</button>
+
+<!-- Context menu -->
+<div id="context-menu"></div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
+    <div class="modal" id="modal-content" style="position:relative;"></div>
+</div>
+
+<!-- Hidden file input for project import -->
+<input type="file" id="project-file-input" accept=".json" style="display:none;">
+
+<!-- Toast -->
+<div id="toast"></div>
+
 <script>
 // =====================================================================
 //  STATE
@@ -660,6 +948,7 @@ let isDragging = false;
 let isResizing = false;
 let resizeDir = '';
 let startX, startY, startW, startH, startLeft, startTop;
+let groupDragOffsets = null;
 
 // Double-click tracking
 let lastClickTime = 0;
@@ -706,6 +995,7 @@ function redo() {
 function restoreHistoryState(snapshot) {
     const state = JSON.parse(snapshot);
     pages = state.pages;
+    pages.forEach(p => { if (!p.canvasMode) p.canvasMode = 'scroll'; });
     activePageId = state.activePageId;
     pageCounter = state.pageCounter;
     globalTheme = state.globalTheme;
@@ -747,7 +1037,7 @@ const SNAP_THRESHOLD = 5;
 // =====================================================================
 let pageCounter = 1;
 let pages = [
-    { id: 'page_1', name: 'Home', elements: [], sections: defaultSections() }
+    { id: 'page_1', name: 'Home', elements: [], sections: defaultSections(), canvasMode: 'scroll' }
 ];
 let activePageId = 'page_1';
 
@@ -768,14 +1058,15 @@ let globalTheme = {
 };
 
 const COLOR_PALETTES = [
-    { name: 'Ocean Breeze',   colors: ['#0077b6','#023e8a','#48cae4','#caf0f8','#03045e'] },
-    { name: 'Sunset Warm',    colors: ['#ff6b35','#f7931e','#ffd166','#fff3cd','#2b2d42'] },
-    { name: 'Forest',         colors: ['#2d6a4f','#40916c','#74c69d','#d8f3dc','#1b4332'] },
-    { name: 'Royal Purple',   colors: ['#7209b7','#560bad','#b5179e','#f8edff','#240046'] },
-    { name: 'Midnight',       colors: ['#2b2d42','#8d99ae','#edf2f4','#ef233c','#d90429'] },
-    { name: 'Mint Fresh',     colors: ['#06d6a0','#1b9aaa','#e0fbfc','#ffffff','#293241'] },
-    { name: 'Warm Earth',     colors: ['#bc6c25','#dda15e','#fefae0','#606c38','#283618'] },
-    { name: 'Neon Night',     colors: ['#ff006e','#8338ec','#3a86ff','#0a0a0a','#ffffff'] },
+    // [primary, secondary(dark/nav), accent, surface(bg), text]
+    { name: 'Future',     colors: ['#6366f1','#0f172a','#06b6d4','#ffffff','#0f172a'] },
+    { name: 'Modern',     colors: ['#111827','#1f2937','#3b82f6','#f9fafb','#111827'] },
+    { name: 'Warm White', colors: ['#c2410c','#1c1917','#d97706','#fafaf5','#292524'] },
+    { name: 'Cold',       colors: ['#0ea5e9','#0f172a','#38bdf8','#f1f5f9','#0f172a'] },
+    { name: 'Mono Noir',  colors: ['#000000','#0a0a0a','#737373','#fafafa','#171717'] },
+    { name: 'Soft Pastel',colors: ['#a78bfa','#faf5ff','#f472b6','#ffffff','#4c1d95'] },
+    { name: 'Forest',     colors: ['#15803d','#052e16','#84cc16','#f7f9f4','#14532d'] },
+    { name: 'Sunset',     colors: ['#e11d48','#881337','#fb923c','#fff7ed','#1f2937'] },
 ];
 
 // =====================================================================
@@ -882,7 +1173,8 @@ function addPage() {
         id: 'page_' + pageCounter,
         name: 'Page ' + pageCounter,
         elements: [],
-        sections: defaultSections()
+        sections: defaultSections(),
+        canvasMode: 'scroll'
     };
     pages.push(newPage);
     switchPage(newPage.id);
@@ -1106,28 +1398,65 @@ function updateTargetButtons() {
 function makeDefaultElement(type) {
     counter++;
     const isSmall = (targetSection === 'navbar' || targetSection === 'footer');
+    const baseW = isSmall ? (type === 'text' ? 100 : 80) : (type === 'text' ? 200 : 180);
+    const baseH = isSmall ? (type === 'text' ? 30 : 40) : (type === 'text' ? 50 : 120);
+
+    let w = baseW, h = baseH;
+    let html = '';
+    let bg = 'transparent';
+    let textStyles = { fontFamily: 'inherit', fontSize: '16px', fontWeight: '400', textAlign: 'left', lineHeight: '1.4', color: '#000000' };
+
+    if (type === 'text') { html = 'Type your text here'; }
+    else if (type === 'heading') {
+        html = 'Heading';
+        textStyles.fontSize = '36px'; textStyles.fontWeight = '700';
+        w = isSmall ? 200 : 400; h = isSmall ? 40 : 60;
+    }
+    else if (type === 'button') {
+        html = 'Click me';
+        bg = globalTheme.primary || '#007fd4';
+        textStyles.color = '#ffffff'; textStyles.fontWeight = '600'; textStyles.textAlign = 'center';
+        w = 140; h = 44;
+    }
+    else if (type === 'link') {
+        html = 'Link text';
+        textStyles.color = globalTheme.primary || '#007fd4';
+        textStyles.textDecoration = 'underline';
+        w = 120; h = 28;
+    }
+    else if (type === 'box') { bg = '#e0e0e0'; }
+    else if (type === 'divider') { bg = '#cccccc'; w = isSmall ? 120 : 400; h = 2; }
+    else if (type === 'icon') {
+        html = '&#9733;'; // star
+        textStyles.fontSize = '48px'; textStyles.textAlign = 'center'; textStyles.color = '#333333';
+        w = 72; h = 72;
+    }
+    else if (type === 'video') { bg = '#000000'; w = 480; h = 270; }
+
     return {
         id: 'el_' + counter,
         type: type,
         section: targetSection,
-        x: 10, y: 5,
-        w: isSmall ? (type === 'text' ? 100 : 80) : (type === 'text' ? 200 : 180),
-        h: isSmall ? (type === 'text' ? 30 : 40) : (type === 'text' ? 50 : 120),
+        x: 10, y: 5, w: w, h: h,
         locked: false,
         bottomLayer: false,
         opacity: 1,
         bgImage: null,
+        href: '',
+        videoSrc: '',
+        iconChar: type === 'icon' ? '\u2605' : '',
         styles: {
-            backgroundColor: type === 'box' ? '#e0e0e0' : 'transparent',
-            borderRadius: '0px',
+            backgroundColor: bg,
+            borderRadius: (type === 'button' ? '8px' : '0px'),
             display: 'block',
             flexDirection: 'row',
             justifyContent: 'flex-start',
             alignItems: 'flex-start',
             gap: '0px',
-            padding: '0px',
+            padding: (type === 'button' ? '0 16px' : '0px'),
         },
-        html: type === 'text' ? 'Type your text here' : '',
+        textStyles: textStyles,
+        html: html,
         // Design properties
         material: null,
         shadow: { x: 0, y: 0, blur: 0, spread: 0, color: '#000000', opacity: 0 },
@@ -1141,7 +1470,11 @@ function makeDefaultElement(type) {
 function addElement(type) {
     exitEditMode();
     const sects = getSections();
-    if (!sects[targetSection] || !sects[targetSection].enabled) {
+    const page = getPage();
+    if (page && page.canvasMode === 'fixed') {
+        targetSection = 'content';
+        updateTargetButtons();
+    } else if (!sects[targetSection] || !sects[targetSection].enabled) {
         targetSection = 'content';
         updateTargetButtons();
     }
@@ -1171,6 +1504,32 @@ function addElement(type) {
         return;
     }
 
+    if (type === 'video') {
+        // Prompt for video upload immediately (mirrors image flow)
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'video/mp4,video/webm,video/ogg';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 50 * 1024 * 1024) {
+                if (!confirm('This video is ' + Math.round(file.size / 1024 / 1024) + 'MB. Large videos may slow the builder. Continue?')) return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const el = makeDefaultElement('video');
+                el.videoSrc = ev.target.result;
+                getElements().push(el);
+                saveState();
+                render();
+                selectElement(el.id);
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+        return;
+    }
+
     const el = makeDefaultElement(type);
     getElements().push(el);
     saveState();
@@ -1180,12 +1539,38 @@ function addElement(type) {
     if (sectionDom) sectionDom.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function uploadVideoForSelected() {
+    if (!selectedEl || selectedEl.type !== 'video') return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/mp4,video/webm,video/ogg';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 50 * 1024 * 1024) {
+            if (!confirm('This video is ' + Math.round(file.size / 1024 / 1024) + 'MB. Large videos may slow the builder. Continue?')) return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            selectedEl.videoSrc = ev.target.result;
+            const inp = document.getElementById('prop-videoSrc');
+            if (inp) inp.value = '[uploaded video]';
+            saveState();
+            render();
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
 function deleteSelected() {
+    if (selectedIds.size > 0 && getSelectedElements().length > 1) { deleteGroup(); return; }
     if (!selectedEl) return;
     exitEditMode();
     const page = getPage();
     page.elements = page.elements.filter(e => e.id !== selectedEl.id);
     selectedEl = null;
+    clearMultiSelect();
     saveState();
     render();
     updateInspector();
@@ -1193,6 +1578,7 @@ function deleteSelected() {
 }
 
 function duplicateSelected() {
+    if (selectedIds.size > 0 && getSelectedElements().length > 1) { duplicateGroup(); return; }
     if (!selectedEl) return;
     const clone = JSON.parse(JSON.stringify(selectedEl));
     counter++;
@@ -1213,10 +1599,14 @@ function render() {
     canvas.innerHTML = '';
     const elements = getElements();
     const sections = getSections();
+    const page = getPage();
+    const isFixed = page && page.canvasMode === 'fixed';
+    applyCanvasModeUI();
 
-    SECTION_ORDER.forEach(key => {
+    const order = isFixed ? ['content'] : SECTION_ORDER;
+    order.forEach(key => {
         const sect = sections[key];
-        if (!sect.enabled) return;
+        if (!sect.enabled && !isFixed) return;
 
         const sectionDom = document.createElement('div');
         sectionDom.className = 'canvas-section';
@@ -1267,8 +1657,10 @@ function render() {
 function createElementDom(el, zIdx) {
     const dom = document.createElement('div');
     dom.id = el.id;
+    dom.dataset.type = el.type;
     dom.className = 'element'
         + (selectedEl && selectedEl.id === el.id ? ' selected' : '')
+        + (selectedIds.has(el.id) ? ' multi-selected' : '')
         + (el.locked ? ' locked' : '')
         + (editingElId === el.id ? ' editing' : '');
 
@@ -1298,6 +1690,27 @@ function createElementDom(el, zIdx) {
         if (mat.backdropFilter) { dom.style.backdropFilter = mat.backdropFilter; dom.style.webkitBackdropFilter = mat.backdropFilter; }
         if (mat.border) dom.style.border = mat.border;
         if (mat.boxShadow) dom.style.boxShadow = mat.boxShadow;
+
+        // Tint overlay (layered on top of material so glass stays transparent)
+        const tint = el.materialTint;
+        if (tint && tint.strength > 0) {
+            const rgb = hexToRgb(tint.color);
+            const a = tint.strength / 100;
+            const tintLayer = 'linear-gradient(rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a + '),rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a + '))';
+            if (mat.background) {
+                // Opaque material (metal/brushed etc.) — layer tint over the existing gradient
+                dom.style.background = tintLayer + ',' + mat.background;
+            } else {
+                // Translucent material (glass/frosted) — tint as image layer above bg color
+                dom.style.backgroundImage = tintLayer;
+                dom.style.backgroundColor = mat.backgroundColor || 'transparent';
+            }
+            // For glass/frosted, nudge the border color toward the tint for cohesion
+            if (el.material === 'glass' || el.material === 'frosted') {
+                const borderA = Math.min(0.6, a * 1.5);
+                dom.style.border = '1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + borderA + ')';
+            }
+        }
     } else {
         dom.style.backgroundColor = el.styles.backgroundColor;
     }
@@ -1318,9 +1731,13 @@ function createElementDom(el, zIdx) {
         dom.style.boxShadow = el.shadow.x + 'px ' + el.shadow.y + 'px ' + el.shadow.blur + 'px ' + el.shadow.spread + 'px rgba(' + sc.r + ',' + sc.g + ',' + sc.b + ',' + a + ')';
     }
 
-    // Border design
-    if (el.borderDesign && el.borderDesign.width > 0) {
-        dom.style.border = el.borderDesign.width + 'px ' + el.borderDesign.style + ' ' + el.borderDesign.color;
+    // Border design (width>0 draws a border; style 'none' explicitly clears any material border)
+    if (el.borderDesign) {
+        if (el.borderDesign.style === 'none') {
+            dom.style.border = 'none';
+        } else if (el.borderDesign.width > 0) {
+            dom.style.border = el.borderDesign.width + 'px ' + el.borderDesign.style + ' ' + el.borderDesign.color;
+        }
     }
 
     // Backdrop blur
@@ -1352,13 +1769,25 @@ function createElementDom(el, zIdx) {
         dom.classList.add('el-floating');
     }
 
-    // Text element
-    if (el.type === 'text') {
+    // Text / Heading / Button / Link / Icon element
+    const textTypes = ['text', 'heading', 'button', 'link', 'icon'];
+    if (textTypes.includes(el.type)) {
         const tc = document.createElement('div');
         tc.className = 'text-content';
-        tc.innerHTML = el.html;
-        tc.style.fontSize = '16px';
-        tc.style.color = '#000000';
+        tc.innerHTML = el.type === 'icon' ? (el.iconChar || el.html || '&#9733;') : el.html;
+        const ts = el.textStyles || {};
+        tc.style.fontFamily = ts.fontFamily || 'inherit';
+        tc.style.fontSize = ts.fontSize || '16px';
+        tc.style.fontWeight = ts.fontWeight || '400';
+        tc.style.textAlign = ts.textAlign || 'left';
+        tc.style.lineHeight = ts.lineHeight || '1.4';
+        tc.style.color = ts.color || '#000000';
+        if (ts.textDecoration) tc.style.textDecoration = ts.textDecoration;
+        if (el.type === 'button' || el.type === 'link' || el.type === 'icon') {
+            tc.style.display = 'flex';
+            tc.style.alignItems = 'center';
+            tc.style.justifyContent = ts.textAlign === 'left' ? 'flex-start' : ts.textAlign === 'right' ? 'flex-end' : 'center';
+        }
 
         if (editingElId === el.id) {
             tc.contentEditable = 'true';
@@ -1379,6 +1808,30 @@ function createElementDom(el, zIdx) {
         tc.addEventListener('keydown', handleTextKeydown);
 
         dom.appendChild(tc);
+    }
+
+    // Video element
+    if (el.type === 'video' && el.videoSrc) {
+        const src = el.videoSrc;
+        let embedSrc = src;
+        const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+        if (ytMatch) embedSrc = 'https://www.youtube.com/embed/' + ytMatch[1];
+        const vimeoMatch = src.match(/vimeo\.com\/(\d+)/);
+        if (vimeoMatch) embedSrc = 'https://player.vimeo.com/video/' + vimeoMatch[1];
+        if (src.startsWith('data:video/') || src.startsWith('blob:') || /\.(mp4|webm|ogg)$/i.test(src)) {
+            const v = document.createElement('video');
+            v.src = src; v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+            dom.appendChild(v);
+        } else {
+            const f = document.createElement('iframe');
+            f.src = embedSrc; f.allowFullscreen = true; f.setAttribute('allow', 'autoplay; encrypted-media');
+            dom.appendChild(f);
+        }
+    } else if (el.type === 'video') {
+        const placeholder = document.createElement('div');
+        placeholder.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;font-size:11px;background:#111;';
+        placeholder.textContent = '▶ Add video URL in inspector';
+        dom.appendChild(placeholder);
     }
 
     // Badges
@@ -1440,10 +1893,23 @@ canvas.addEventListener('mousedown', function(e) {
 
         if (editingElId === el.id) return;
 
+        // Shift+click toggles multi-select
+        if (e.shiftKey) {
+            e.preventDefault(); e.stopPropagation();
+            toggleMultiSelect(el.id);
+            render();
+            updateInspector();
+            if (currentMode === 'design') updateDesignInspector();
+            return;
+        }
+
+        // Regular click on element not in multi-selection → clear multi-select
+        if (!selectedIds.has(el.id)) clearMultiSelect();
+
         if (el.id === lastClickElId && now - lastClickTime < 400) {
             lastClickTime = 0;
             lastClickElId = null;
-            if (el.type === 'text') {
+            if (['text','heading','button','link'].includes(el.type)) {
                 enterEditMode(el.id);
                 return;
             }
@@ -1459,6 +1925,7 @@ canvas.addEventListener('mousedown', function(e) {
     lastClickElId = null;
     exitEditMode();
     selectedEl = null;
+    clearMultiSelect();
     render();
     updateInspector();
     if (currentMode === 'design') updateDesignInspector();
@@ -1468,7 +1935,7 @@ canvas.addEventListener('dblclick', function(e) {
     const elementDom = e.target.closest('.element');
     if (elementDom) {
         const el = getElements().find(x => x.id === elementDom.id);
-        if (el && el.type === 'text') enterEditMode(el.id);
+        if (el && ['text','heading','button','link'].includes(el.type)) enterEditMode(el.id);
     }
 });
 
@@ -1490,7 +1957,15 @@ function selectElement(id) {
 function handleElementPointerDown(e, el) {
     e.stopPropagation();
     if (editingElId && editingElId !== el.id) exitEditMode();
-    selectElement(el.id);
+    // Don't clear multi-select if we're about to drag a group
+    const partOfGroup = selectedIds.has(el.id) || (selectedEl && selectedEl.id === el.id && selectedIds.size > 0);
+    if (!partOfGroup) {
+        clearMultiSelect();
+        selectElement(el.id);
+    } else {
+        selectedEl = el;
+        updateInspector();
+    }
     if (el.locked) return;
 
     isDragging = true;
@@ -1498,6 +1973,13 @@ function handleElementPointerDown(e, el) {
     startY = e.clientY;
     startLeft = el.x;
     startTop = el.y;
+
+    // Capture initial positions of other selected elements for group drag
+    groupDragOffsets = null;
+    const groupEls = getSelectedElements().filter(g => g.id !== el.id && !g.locked);
+    if (groupEls.length > 0) {
+        groupDragOffsets = groupEls.map(g => ({ el: g, startX: g.x, startY: g.y }));
+    }
 
     window.addEventListener('mousemove', onDrag);
     window.addEventListener('mouseup', stopInteraction);
@@ -1520,6 +2002,18 @@ function onDrag(e) {
     if (dom) {
         dom.style.left = newX + 'px';
         dom.style.top = newY + 'px';
+    }
+
+    // Move group companions by same delta
+    if (groupDragOffsets) {
+        const dx = newX - startLeft;
+        const dy = newY - startTop;
+        groupDragOffsets.forEach(info => {
+            info.el.x = Math.max(0, info.startX + dx);
+            info.el.y = Math.max(0, info.startY + dy);
+            const gdom = document.getElementById(info.el.id);
+            if (gdom) { gdom.style.left = info.el.x + 'px'; gdom.style.top = info.el.y + 'px'; }
+        });
     }
     updateInspectorNumbers();
 }
@@ -1571,6 +2065,7 @@ function stopInteraction() {
     const wasDragging = isDragging || isResizing;
     isDragging = false;
     isResizing = false;
+    groupDragOffsets = null;
     clearGuides();
     window.removeEventListener('mousemove', onDrag);
     window.removeEventListener('mousemove', onResize);
@@ -1767,7 +2262,40 @@ function updateInspector() {
 
     empty.style.display = 'none';
     props.style.display = 'block';
-    textHint.style.display = selectedEl.type === 'text' ? 'block' : 'none';
+    const textTypes = ['text','heading','button','link','icon'];
+    textHint.style.display = ['text','heading','button','link'].includes(selectedEl.type) ? 'block' : 'none';
+
+    // Text props panel visibility
+    const textPanel = document.getElementById('text-props-panel');
+    if (textPanel) textPanel.style.display = textTypes.includes(selectedEl.type) ? 'block' : 'none';
+    // Sub-controls
+    const linkGroup = document.getElementById('link-href-group');
+    if (linkGroup) linkGroup.style.display = (selectedEl.type === 'link' || selectedEl.type === 'button') ? 'flex' : 'none';
+    const videoGroup = document.getElementById('video-src-group');
+    if (videoGroup) videoGroup.style.display = selectedEl.type === 'video' ? 'flex' : 'none';
+    const iconGroup = document.getElementById('icon-char-group');
+    if (iconGroup) iconGroup.style.display = selectedEl.type === 'icon' ? 'flex' : 'none';
+
+    // Sync text props UI
+    if (textTypes.includes(selectedEl.type)) {
+        const ts = selectedEl.textStyles || {};
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        setVal('prop-fontFamily', ts.fontFamily || 'inherit');
+        const fs = parseInt(ts.fontSize) || 16;
+        setVal('prop-fontSize', fs);
+        const fsDisp = document.getElementById('val-fs'); if (fsDisp) fsDisp.innerText = fs + 'px';
+        setVal('prop-fontWeight', ts.fontWeight || '400');
+        setVal('prop-textAlign', ts.textAlign || 'left');
+        setVal('prop-lineHeight', ts.lineHeight || '1.4');
+        const lhDisp = document.getElementById('val-lh'); if (lhDisp) lhDisp.innerText = ts.lineHeight || '1.4';
+        setVal('prop-textColor', ts.color || '#000000');
+        if (selectedEl.type === 'link' || selectedEl.type === 'button') setVal('prop-href', selectedEl.href || '');
+        if (selectedEl.type === 'video') {
+            const vs = selectedEl.videoSrc || '';
+            setVal('prop-videoSrc', vs.startsWith('data:video/') ? '[uploaded video]' : vs);
+        }
+        if (selectedEl.type === 'icon') setVal('prop-iconChar', selectedEl.iconChar || '');
+    }
 
     updateInspectorNumbers();
     updateSectionDropdown();
@@ -1798,7 +2326,7 @@ function updateInspector() {
 
     // Box image group
     const imgGroup = document.getElementById('box-image-group');
-    imgGroup.style.display = selectedEl.type === 'box' ? 'flex' : 'none';
+    imgGroup.style.display = (selectedEl.type === 'box' || selectedEl.type === 'button') ? 'flex' : 'none';
     const clearElImg = document.getElementById('clear-el-img');
     clearElImg.style.display = selectedEl.bgImage ? '' : 'none';
 
@@ -1893,6 +2421,17 @@ function updateDesignInspector() {
     // Material buttons
     document.querySelectorAll('.mat-btn').forEach(b => b.classList.toggle('active', b.dataset.mat === selectedEl.material));
 
+    // Material tint (shown only when a material is applied)
+    const tintGroup = document.getElementById('material-tint-group');
+    if (tintGroup) {
+        const hasMat = !!selectedEl.material;
+        tintGroup.style.display = hasMat ? 'block' : 'none';
+        const tint = selectedEl.materialTint || { color: '#ffffff', strength: 0 };
+        document.getElementById('prop-tint-color').value = tint.color;
+        document.getElementById('prop-tint-strength').value = tint.strength;
+        document.getElementById('val-tint-strength').textContent = tint.strength + '%';
+    }
+
     // Shadow
     const sh = selectedEl.shadow || { x: 0, y: 0, blur: 0, spread: 0, color: '#000000', opacity: 0 };
     document.getElementById('prop-shadow-x').value = sh.x;
@@ -1950,10 +2489,24 @@ function applyMaterial(matKey) {
         selectedEl.gradient = { enabled: false, type: 'linear', angle: 135, c1: '#007fd4', c2: '#4caf50' };
         selectedEl.borderDesign = { width: 0, style: 'solid', color: '#000000' };
         selectedEl.backdropBlur = 0;
+        selectedEl.materialTint = { color: '#ffffff', strength: 0 };
+    }
+    // Default tint if none exists so the UI has a starting state
+    if (selectedEl.material && !selectedEl.materialTint) {
+        selectedEl.materialTint = { color: '#ffffff', strength: 0 };
     }
     saveState();
     render();
     updateDesignInspector();
+}
+
+function updateMaterialTint() {
+    if (!selectedEl) return;
+    const color = document.getElementById('prop-tint-color').value;
+    const strength = parseInt(document.getElementById('prop-tint-strength').value) || 0;
+    selectedEl.materialTint = { color: color, strength: strength };
+    document.getElementById('val-tint-strength').textContent = strength + '%';
+    render();
 }
 
 // =====================================================================
@@ -2075,7 +2628,13 @@ function renderLayersList() {
     for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
         const isActive = selectedEl && selectedEl.id === el.id;
-        const label = el.type === 'text' ? (stripHtml(el.html).substring(0, 18) || 'Empty text') : 'Box';
+        const textTypes = ['text','heading','button','link'];
+        let label;
+        if (textTypes.includes(el.type)) label = (stripHtml(el.html).substring(0, 18) || ('Empty ' + el.type));
+        else if (el.type === 'icon') label = 'Icon ' + (el.iconChar || '');
+        else if (el.type === 'video') label = 'Video';
+        else if (el.type === 'divider') label = 'Divider';
+        else label = 'Box';
         const sectionTag = el.section === 'content' ? '' : ' <span style="color:#4fc3f7;font-size:7px;">' + el.section.toUpperCase() + '</span>';
         const lockBadge = el.locked ? '<span class="layer-badge lock">\u{1F512}</span>' : '';
         const btmBadge = el.bottomLayer ? '<span class="layer-badge btm">BTM</span>' : '';
@@ -2131,7 +2690,12 @@ function exportHTML() {
         h += '        * { margin: 0; padding: 0; box-sizing: border-box; }\n';
         h += '        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }\n';
 
-        if (sects.navbar.enabled) {
+        const fixedMode = page.canvasMode === 'fixed';
+        if (fixedMode) {
+            h += '        html, body { height: 100%; overflow: hidden; }\n';
+            h += '        main { width: 100%; height: 100vh; background-color: ' + sects.content.bgColor + '; position: relative; overflow: hidden; }\n';
+        } else {
+            if (sects.navbar.enabled) {
             h += '        nav { width: 100%; height: ' + sects.navbar.height + 'px;';
             h += sects.navbar.transparent ? ' background: transparent;' : ' background-color: ' + sects.navbar.bgColor + ';';
             h += ' position: ' + (sects.navbar.sticky ? 'sticky' : 'relative') + ';';
@@ -2154,6 +2718,7 @@ function exportHTML() {
             if (sects.footer.bgImage && !sects.footer.transparent) h += ' background-image: url(\'' + sects.footer.bgImage + '\'); background-size: cover; background-position: center;';
             h += ' }\n';
         }
+        }
 
         // Float elevation keyframes (not needed for static elevation)
         let needsFloat = false;
@@ -2164,9 +2729,11 @@ function exportHTML() {
 
         h += '    </style>\n</head>\n<body>\n';
 
-        SECTION_ORDER.forEach(key => {
+        const isFixedExport = page.canvasMode === 'fixed';
+        const exportOrder = isFixedExport ? ['content'] : SECTION_ORDER;
+        exportOrder.forEach(key => {
             const sect = sects[key];
-            if (!sect.enabled) return;
+            if (!sect.enabled && !isFixedExport) return;
 
             const tag = key === 'navbar' ? 'nav' : key === 'footer' ? 'footer' : key === 'hero' ? 'section' : 'main';
             const cls = key === 'hero' ? ' class="hero"' : '';
@@ -2192,6 +2759,24 @@ function exportHTML() {
                     if (mat.backdropFilter) s += ' backdrop-filter: ' + mat.backdropFilter + '; -webkit-backdrop-filter: ' + mat.backdropFilter + ';';
                     if (mat.border && mat.border !== 'none') s += ' border: ' + mat.border + ';';
                     if (mat.boxShadow && mat.boxShadow !== 'none') s += ' box-shadow: ' + mat.boxShadow + ';';
+
+                    // Tint layer
+                    const tint = el.materialTint;
+                    if (tint && tint.strength > 0) {
+                        const rgb = hexToRgb(tint.color);
+                        const a = tint.strength / 100;
+                        const tintLayer = 'linear-gradient(rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a + '),rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a + '))';
+                        if (mat.background) {
+                            s += ' background: ' + tintLayer + ',' + mat.background + ';';
+                        } else {
+                            s += ' background-image: ' + tintLayer + ';';
+                            s += ' background-color: ' + (mat.backgroundColor || 'transparent') + ';';
+                        }
+                        if (el.material === 'glass' || el.material === 'frosted') {
+                            const borderA = Math.min(0.6, a * 1.5);
+                            s += ' border: 1px solid rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + borderA + ');';
+                        }
+                    }
                 } else {
                     if (el.styles.backgroundColor && el.styles.backgroundColor !== 'transparent') {
                         s += ' background-color: ' + el.styles.backgroundColor + ';';
@@ -2215,8 +2800,12 @@ function exportHTML() {
                 }
 
                 // Border
-                if (el.borderDesign && el.borderDesign.width > 0) {
-                    s += ' border: ' + el.borderDesign.width + 'px ' + el.borderDesign.style + ' ' + el.borderDesign.color + ';';
+                if (el.borderDesign) {
+                    if (el.borderDesign.style === 'none') {
+                        s += ' border: none;';
+                    } else if (el.borderDesign.width > 0) {
+                        s += ' border: ' + el.borderDesign.width + 'px ' + el.borderDesign.style + ' ' + el.borderDesign.color + ';';
+                    }
                 }
 
                 // Backdrop blur
@@ -2245,8 +2834,48 @@ function exportHTML() {
                     s += ' box-shadow: ' + (s.indexOf('box-shadow') > -1 ? '' : '') + '0 ' + shadowY + 'px ' + shadowBlur + 'px ' + shadowSpread + 'px rgba(0,0,0,' + shadowAlpha + ');';
                 }
 
-                const content = el.type === 'text' ? el.html : '';
-                h += '        <div style="' + s + '">' + content + '</div>\n';
+                const textTypesExp = ['text','heading','button','link','icon'];
+                let innerStyle = '';
+                let innerHtml = '';
+                let outerTag = 'div';
+                let outerAttrs = '';
+                if (textTypesExp.includes(el.type)) {
+                    const ts = el.textStyles || {};
+                    const parts = [];
+                    if (ts.fontFamily && ts.fontFamily !== 'inherit') parts.push('font-family:' + ts.fontFamily);
+                    if (ts.fontSize) parts.push('font-size:' + ts.fontSize);
+                    if (ts.fontWeight) parts.push('font-weight:' + ts.fontWeight);
+                    if (ts.textAlign) parts.push('text-align:' + ts.textAlign);
+                    if (ts.lineHeight) parts.push('line-height:' + ts.lineHeight);
+                    if (ts.color) parts.push('color:' + ts.color);
+                    if (ts.textDecoration) parts.push('text-decoration:' + ts.textDecoration);
+                    parts.push('width:100%'); parts.push('height:100%');
+                    if (el.type === 'button' || el.type === 'link' || el.type === 'icon') {
+                        parts.push('display:flex'); parts.push('align-items:center');
+                        parts.push('justify-content:' + (ts.textAlign === 'left' ? 'flex-start' : ts.textAlign === 'right' ? 'flex-end' : 'center'));
+                    }
+                    innerStyle = parts.join(';');
+                    innerHtml = '<div style="' + innerStyle + '">' + (el.type === 'icon' ? (el.iconChar || el.html || '&#9733;') : el.html) + '</div>';
+                    if ((el.type === 'button' || el.type === 'link') && el.href) {
+                        outerTag = 'a';
+                        outerAttrs = ' href="' + escapeHtml(el.href) + '"' + (el.href.startsWith('http') ? ' target="_blank" rel="noopener"' : '');
+                    }
+                } else if (el.type === 'video' && el.videoSrc) {
+                    const src = el.videoSrc;
+                    let embedSrc = src;
+                    const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+                    if (ytMatch) embedSrc = 'https://www.youtube.com/embed/' + ytMatch[1];
+                    const vimeoMatch = src.match(/vimeo\.com\/(\d+)/);
+                    if (vimeoMatch) embedSrc = 'https://player.vimeo.com/video/' + vimeoMatch[1];
+                    if (src.startsWith('data:video/') || src.startsWith('blob:') || /\.(mp4|webm|ogg)$/i.test(src)) {
+                        innerHtml = '<video src="' + escapeHtml(src) + '" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>';
+                    } else {
+                        innerHtml = '<iframe src="' + escapeHtml(embedSrc) + '" style="width:100%;height:100%;border:0;" allow="autoplay;encrypted-media" allowfullscreen></iframe>';
+                    }
+                } else if (el.type === 'divider') {
+                    // no inner, element itself is the line
+                }
+                h += '        <' + outerTag + outerAttrs + ' style="' + s + '">' + innerHtml + '</' + outerTag + '>\n';
             });
 
             h += '    </' + tag + '>\n';
@@ -2262,8 +2891,10 @@ function exportHTML() {
     });
 
     navigator.clipboard.writeText(fullOutput).then(() => {
+        if (window.__exportSilent) return;
         alert('HTML code copied to clipboard!' + (multiPage ? ' (' + pages.length + ' pages included)' : '') + '\nPaste it into any AI assistant or code editor.');
     }).catch(() => {
+        if (window.__exportSilent) return;
         const ta = document.createElement('textarea');
         ta.value = fullOutput;
         ta.style.cssText = 'position:fixed;top:10%;left:10%;width:80%;height:80%;z-index:99999;font-size:11px;font-family:monospace;background:#1e1e1e;color:#d4d4d4;padding:16px;border:1px solid #555;border-radius:8px;';
@@ -2429,14 +3060,747 @@ document.addEventListener('keydown', function(e) {
 });
 
 // =====================================================================
+//  NEW FEATURES: DEVICE / ZOOM / GRID / PREVIEW / CONTEXT MENU / MODAL /
+//                AUTOSAVE / SAVE-LOAD / ALIGN / NUDGE / CLIPBOARD /
+//                TEMPLATES / TEXT STYLES
+// =====================================================================
+
+// ---------- DEVICE PREVIEW ----------
+let currentDevice = 'desktop';
+function setDevice(dev) {
+    currentDevice = dev;
+    const wrap = document.getElementById('canvas-wrapper');
+    wrap.classList.remove('device-desktop','device-tablet','device-mobile');
+    wrap.classList.add('device-' + dev);
+    document.querySelectorAll('.device-btn[data-device]').forEach(b => b.classList.toggle('active', b.dataset.device === dev));
+    render();
+}
+
+// ---------- CANVAS MODE (Scroll vs Fixed) ----------
+function setCanvasMode(mode) {
+    const page = getPage();
+    if (!page) return;
+    page.canvasMode = mode;
+    applyCanvasModeUI();
+    saveState();
+    render();
+}
+function applyCanvasModeUI() {
+    const page = getPage();
+    const mode = (page && page.canvasMode) || 'scroll';
+    const wrap = document.getElementById('canvas-wrapper');
+    wrap.classList.toggle('mode-fixed', mode === 'fixed');
+    document.body.classList.toggle('canvas-fixed', mode === 'fixed');
+    document.querySelectorAll('.device-btn[data-canvasmode]').forEach(b => b.classList.toggle('active', b.dataset.canvasmode === mode));
+}
+
+// ---------- ZOOM ----------
+let zoomLevel = 1;
+function setZoom(z) {
+    zoomLevel = Math.max(0.25, Math.min(2, Math.round(z * 20) / 20));
+    canvas.style.transform = 'scale(' + zoomLevel + ')';
+    document.getElementById('zoom-val').textContent = Math.round(zoomLevel * 100) + '%';
+}
+document.getElementById('canvas-wrapper').addEventListener('wheel', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        setZoom(zoomLevel + (e.deltaY < 0 ? 0.1 : -0.1));
+    }
+}, { passive: false });
+
+// ---------- GRID OVERLAY ----------
+let showGrid = false;
+function toggleGrid() {
+    showGrid = !showGrid;
+    document.getElementById('btn-grid').classList.toggle('active', showGrid);
+    document.querySelectorAll('.canvas-section').forEach(s => s.classList.toggle('show-grid', showGrid));
+}
+// re-apply after each render
+const _origRender = render;
+render = function() {
+    _origRender.apply(this, arguments);
+    if (showGrid) document.querySelectorAll('.canvas-section').forEach(s => s.classList.add('show-grid'));
+};
+
+// ---------- TOAST ----------
+let toastTimer = null;
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('visible'), 2000);
+}
+
+// ---------- MODAL ----------
+function openModal(html) {
+    const mc = document.getElementById('modal-content');
+    mc.innerHTML = '<button class="modal-close" onclick="closeModal()">&#10005;</button>' + html;
+    document.getElementById('modal-backdrop').classList.add('visible');
+}
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('visible'); }
+
+// ---------- PREVIEW MODE ----------
+function enterPreviewMode() {
+    exitEditMode();
+    selectedEl = null;
+    render();
+    document.body.classList.add('preview-mode');
+    toast('Preview mode — press Esc to exit');
+}
+function exitPreviewMode() { document.body.classList.remove('preview-mode'); }
+
+// ---------- KEYBOARD SHORTCUTS MODAL ----------
+function showShortcuts() {
+    const rows = [
+        ['Undo', 'Ctrl + Z'],
+        ['Redo', 'Ctrl + Shift + Z'],
+        ['Duplicate element(s)', 'Ctrl + D'],
+        ['Multi-select elements', 'Shift + Click'],
+        ['Copy', 'Ctrl + C'],
+        ['Paste', 'Ctrl + V'],
+        ['Delete element(s)', 'Delete / Backspace'],
+        ['Nudge 1 px', 'Arrow keys'],
+        ['Nudge 10 px', 'Shift + Arrow keys'],
+        ['Zoom in / out', 'Ctrl + Scroll'],
+        ['Reset zoom', 'Click zoom %'],
+        ['Preview mode', 'P'],
+        ['Exit preview / edit', 'Esc'],
+        ['Toggle grid', 'G'],
+        ['Save project', 'Ctrl + S'],
+        ['Shortcuts', '?'],
+    ];
+    let h = '<h3>Keyboard Shortcuts</h3>';
+    rows.forEach(([a, b]) => { h += '<div class="shortcut-row"><span>' + a + '</span><kbd>' + b + '</kbd></div>'; });
+    openModal(h);
+}
+
+// ---------- CONTEXT MENU ----------
+canvas.addEventListener('contextmenu', function(e) {
+    const elementDom = e.target.closest('.element');
+    if (!elementDom) return;
+    e.preventDefault();
+    const el = getElements().find(x => x.id === elementDom.id);
+    if (!el) return;
+    selectElement(el.id);
+    showContextMenu(e.clientX, e.clientY);
+});
+document.addEventListener('click', function(e) {
+    const cm = document.getElementById('context-menu');
+    if (!cm.contains(e.target)) cm.classList.remove('visible');
+});
+function showContextMenu(x, y) {
+    if (!selectedEl) return;
+    const cm = document.getElementById('context-menu');
+    const items = [
+        { label: 'Duplicate', kbd: 'Ctrl+D', action: 'duplicateSelected()' },
+        { label: 'Copy', kbd: 'Ctrl+C', action: 'copySelected()' },
+        { label: 'Paste', kbd: 'Ctrl+V', action: 'pasteClipboard()' },
+        { sep: true },
+        { label: 'Bring Forward', action: "moveLayer('" + selectedEl.id + "',1)" },
+        { label: 'Send Backward', action: "moveLayer('" + selectedEl.id + "',-1)" },
+        { label: 'Bring to Front', action: 'bringToFront()' },
+        { label: 'Send to Back', action: 'sendToBack()' },
+        { sep: true },
+        { label: selectedEl.locked ? 'Unlock' : 'Lock', action: 'toggleLock()' },
+        { sep: true },
+        { label: 'Delete', kbd: 'Del', danger: true, action: 'deleteSelected()' },
+    ];
+    let h = '';
+    items.forEach(it => {
+        if (it.sep) h += '<div class="cm-sep"></div>';
+        else h += '<div class="cm-item' + (it.danger ? ' danger' : '') + '" onclick="document.getElementById(\'context-menu\').classList.remove(\'visible\');' + it.action + '">'
+                   + '<span>' + it.label + '</span>' + (it.kbd ? '<span class="cm-kbd">' + it.kbd + '</span>' : '') + '</div>';
+    });
+    cm.innerHTML = h;
+    cm.classList.add('visible');
+    const rect = cm.getBoundingClientRect();
+    let left = x, top = y;
+    if (left + rect.width > window.innerWidth) left = window.innerWidth - rect.width - 4;
+    if (top + rect.height > window.innerHeight) top = window.innerHeight - rect.height - 4;
+    cm.style.left = left + 'px';
+    cm.style.top = top + 'px';
+}
+
+// ---------- LAYER Z-ORDER ----------
+function bringToFront() {
+    if (!selectedEl) return;
+    const els = getElements();
+    const idx = els.findIndex(e => e.id === selectedEl.id);
+    if (idx === -1) return;
+    const [e] = els.splice(idx, 1);
+    els.push(e);
+    saveState(); render(); updateInspector();
+}
+function sendToBack() {
+    if (!selectedEl) return;
+    const els = getElements();
+    const idx = els.findIndex(e => e.id === selectedEl.id);
+    if (idx === -1) return;
+    const [e] = els.splice(idx, 1);
+    els.unshift(e);
+    saveState(); render(); updateInspector();
+}
+
+// ---------- CLIPBOARD (copy / paste) ----------
+let clipboard = null;
+function copySelected() {
+    if (selectedIds.size > 0 || getSelectedElements().length > 1) { copyGroup(); return; }
+    if (!selectedEl) return;
+    clipboard = JSON.parse(JSON.stringify(selectedEl));
+    toast('Copied');
+}
+function pasteClipboard() {
+    if (!clipboard) return;
+    if (Array.isArray(clipboard)) { pasteGroup(); return; }
+    const clone = JSON.parse(JSON.stringify(clipboard));
+    counter++;
+    clone.id = 'el_' + counter;
+    clone.x += 20; clone.y += 20;
+    clone.section = targetSection;
+    getElements().push(clone);
+    saveState();
+    render();
+    selectElement(clone.id);
+    toast('Pasted');
+}
+
+// ---------- ARROW KEY NUDGE ----------
+function nudgeSelected(dx, dy) {
+    if (!selectedEl || selectedEl.locked) return;
+    const group = getSelectedElements();
+    group.forEach(el => {
+        if (el.locked) return;
+        el.x = Math.max(0, el.x + dx);
+        el.y = Math.max(0, el.y + dy);
+    });
+    render();
+    updateInspectorNumbers();
+}
+
+// ---------- ALIGNMENT ----------
+function alignElement(mode) {
+    if (!selectedEl) return;
+    const W = getCanvasW();
+    const sh = getSections()[selectedEl.section].height;
+    if (mode === 'left') selectedEl.x = 0;
+    else if (mode === 'right') selectedEl.x = W - selectedEl.w;
+    else if (mode === 'hcenter') selectedEl.x = Math.round((W - selectedEl.w) / 2);
+    else if (mode === 'top') selectedEl.y = 0;
+    else if (mode === 'bottom') selectedEl.y = sh - selectedEl.h;
+    else if (mode === 'vcenter') selectedEl.y = Math.round((sh - selectedEl.h) / 2);
+    saveState(); render(); updateInspectorNumbers();
+}
+
+// ---------- TEXT STYLES ----------
+function updateTextStyle(prop, value) {
+    if (!selectedEl) return;
+    if (!selectedEl.textStyles) selectedEl.textStyles = {};
+    selectedEl.textStyles[prop] = value;
+    render();
+}
+
+function updateElementField(field, value) {
+    if (!selectedEl) return;
+    selectedEl[field] = value;
+    render();
+}
+
+// ---------- AUTOSAVE (localStorage) ----------
+const AUTOSAVE_KEY = 'webBuilder.autosave.v1';
+let autosaveTimer = null;
+function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(autosave, 800);
+}
+function autosave() {
+    try {
+        const data = {
+            pages: pages,
+            activePageId: activePageId,
+            pageCounter: pageCounter,
+            counter: counter,
+            globalTheme: globalTheme,
+            savedAt: Date.now(),
+        };
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+    } catch(err) { /* quota or other */ }
+}
+function loadAutosave() {
+    try {
+        const raw = localStorage.getItem(AUTOSAVE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data.pages || !data.pages.length) return false;
+        pages = data.pages;
+        pages.forEach(p => { if (!p.canvasMode) p.canvasMode = 'scroll'; });
+        activePageId = data.activePageId || pages[0].id;
+        pageCounter = data.pageCounter || pages.length;
+        counter = data.counter || 0;
+        if (data.globalTheme) globalTheme = data.globalTheme;
+        return true;
+    } catch(err) { return false; }
+}
+// Wrap saveState to also trigger autosave
+const _origSaveState = saveState;
+saveState = function() {
+    _origSaveState.apply(this, arguments);
+    scheduleAutosave();
+};
+
+// ---------- SAVE / LOAD PROJECT (JSON download) ----------
+function saveProject() {
+    const data = {
+        format: 'webBuilder.project',
+        version: 1,
+        savedAt: new Date().toISOString(),
+        pages, activePageId, pageCounter, counter, globalTheme,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'project_' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Project saved');
+}
+function loadProject() {
+    const input = document.getElementById('project-file-input');
+    input.value = '';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!data.pages || !Array.isArray(data.pages)) throw new Error('Invalid project');
+                if (!confirm('Replace current project with loaded file?')) return;
+                pages = data.pages;
+                pages.forEach(p => { if (!p.canvasMode) p.canvasMode = 'scroll'; });
+                activePageId = data.activePageId || pages[0].id;
+                pageCounter = data.pageCounter || pages.length;
+                counter = data.counter || 0;
+                if (data.globalTheme) globalTheme = data.globalTheme;
+                selectedEl = null;
+                exitEditMode();
+                syncSectionUI();
+                renderPageTabs();
+                render();
+                updateInspector();
+                if (currentMode === 'design') updateDesignInspector();
+                ['primary','secondary','accent','surface','text'].forEach(k => {
+                    const inp = document.getElementById('theme-' + k);
+                    if (inp) inp.value = globalTheme[k];
+                    const valSpan = document.getElementById('theme-' + k + '-val');
+                    if (valSpan) valSpan.textContent = globalTheme[k];
+                });
+                renderPaletteList();
+                saveState();
+                toast('Project loaded');
+            } catch(err) {
+                alert('Failed to load project: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+// ---------- DOWNLOAD EXPORTED HTML ----------
+// Override exportHTML to also offer a download (keeps clipboard copy behavior)
+const _origExportHTML = exportHTML;
+exportHTML = function() {
+    exitEditMode();
+    const multiPage = pages.length > 1;
+    // Capture clipboard text from original function via temp hook
+    let captured = null;
+    const origWrite = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText.bind(navigator.clipboard) : null;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText = function(txt) { captured = txt; return Promise.resolve(); };
+    }
+    window.__exportSilent = true;
+    try { _origExportHTML(); } catch(e) { console.error(e); }
+    if (origWrite) navigator.clipboard.writeText = origWrite;
+    window.__exportSilent = false;
+
+    if (!captured) { toast('Export failed'); return; }
+
+    // Also copy for real
+    if (origWrite) origWrite(captured).catch(()=>{});
+
+    const blob = new Blob([captured], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const fname = (pages.length === 1 ? pages[0].name.replace(/\s+/g,'_') : 'site') + '.html';
+
+    const h = '<h3>Export HTML</h3>'
+        + '<div style="font-size:11px;color:#aaa;margin-bottom:10px;">Copied to clipboard' + (multiPage ? ' (' + pages.length + ' pages combined)' : '') + '.</div>'
+        + '<div style="display:flex;gap:8px;margin-bottom:10px;">'
+        + '<a class="theme-apply-btn" style="text-decoration:none;text-align:center;display:inline-block;" href="' + url + '" download="' + fname + '">Download .html</a>'
+        + '<button class="theme-apply-btn" onclick="navigator.clipboard.writeText(document.getElementById(\'export-code\').value);toast(\'Copied\')">Copy Code</button>'
+        + '<button class="theme-apply-btn" onclick="const w=window.open();w.document.write(document.getElementById(\'export-code\').value);w.document.close();">Preview in Tab</button>'
+        + '</div>'
+        + '<textarea id="export-code" readonly style="width:600px;max-width:80vw;height:320px;background:#1e1e1e;color:#d4d4d4;border:1px solid #444;border-radius:6px;padding:10px;font-family:monospace;font-size:11px;">' + escapeHtml(captured) + '</textarea>';
+    openModal(h);
+};
+
+// ---------- ICON PICKER ----------
+const ICON_LIBRARY = [
+    { group: 'Stars & Awards', icons: ['★','☆','✦','✧','✪','✯','✰','🏆','🥇','🎖','🏅','⭐'] },
+    { group: 'Hearts & Likes', icons: ['♥','♡','💖','💕','💯','👍','👎','🙌','👏','🤝'] },
+    { group: 'Check & Status',  icons: ['✓','✔','✗','✘','⚠','ℹ','❓','❗','❕','⏰','🔔','🔕'] },
+    { group: 'Arrows',          icons: ['→','←','↑','↓','↗','↘','↖','↙','⟵','⟶','⇢','⇠','➜','➔','➤'] },
+    { group: 'Communication',   icons: ['✉','📧','📨','📩','📬','📭','💬','💭','🗨','📞','☎','📱','📲','📠'] },
+    { group: 'Business & Work', icons: ['💼','📁','📂','📊','📈','📉','📋','📌','📍','📎','🖇','📇','📚','📖','📝','✏','🖊','🖋','✒'] },
+    { group: 'Time & Calendar', icons: ['⏱','⏲','⏳','⌛','⌚','📅','📆','🗓','🕐','🕑','🕒'] },
+    { group: 'Tech & Devices',  icons: ['💻','⌨','🖱','🖲','💾','💿','📀','🖥','🖨','📡','🔌','🔋'] },
+    { group: 'Web & Social',    icons: ['🌐','🔗','🔒','🔓','🔑','🗝','👤','👥','🆔','📡','📶','🔍','🔎'] },
+    { group: 'Money & Shopping',icons: ['💰','💵','💴','💶','💷','💸','💳','🧾','🛒','🛍','🏷','🎁'] },
+    { group: 'Travel & Places', icons: ['✈','🚀','🚗','🚙','🚕','🚌','🚂','🚇','🚢','⚓','🏠','🏢','🏬','🏨','🗺','📍'] },
+    { group: 'Food & Drink',    icons: ['☕','🍵','🍺','🍷','🥂','🍴','🍽','🍕','🍔','🍟','🥗','🍎','🍰'] },
+    { group: 'Nature',          icons: ['☀','☁','⛅','🌤','🌧','⛈','❄','☃','⛄','🌙','⭐','🌈','🔥','💧','🌊','🌱','🌿','🌳','🌲','🌵','🌴'] },
+    { group: 'Symbols',         icons: ['⚡','✨','💡','🔆','🔅','♻','☮','☯','⚛','☢','☣','⚕','✝','✡','☪','🕉','☸','☦'] },
+    { group: 'Music & Media',   icons: ['♪','♫','♬','🎵','🎶','🎤','🎧','🎼','🎹','🥁','🎸','🎺','📷','📸','📹','🎥','🎬','🎞'] },
+    { group: 'Sports & Games',  icons: ['⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🏓','🎳','⛳','🎯','🎮','🎲','🎰','♟'] },
+    { group: 'Weather',         icons: ['🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','☄','💫','⭐','🌟'] },
+    { group: 'Faces',           icons: ['😀','😃','😄','😁','😊','😍','🤩','😎','🤔','😴','😇','🙂','😐','😢','😡'] },
+    { group: 'Hands',           icons: ['👋','🤚','✋','🖐','👌','✌','🤞','🤘','🤙','👈','👉','👆','👇','☝','👊','✊','🤛','🤜','🤝'] },
+];
+function openIconPicker(editExisting) {
+    let h = '<h3>Choose an Icon</h3>';
+    h += '<input type="text" id="icon-search" placeholder="Search icons..." style="width:100%;padding:8px;background:#1e1e1e;border:1px solid #444;color:#fff;border-radius:6px;margin-bottom:10px;font-size:12px;" oninput="filterIcons(this.value)">';
+    h += '<div id="icon-picker-grid" style="max-height:60vh;overflow-y:auto;">';
+    ICON_LIBRARY.forEach(cat => {
+        h += '<div class="icon-cat-title" style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin:10px 4px 6px;">' + cat.group + '</div>';
+        h += '<div class="icon-cat-grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;">';
+        cat.icons.forEach(ic => {
+            h += '<button class="icon-pick-btn" data-icon="' + escapeHtml(ic) + '" data-search="' + escapeHtml(cat.group.toLowerCase()) + '" onclick="pickIcon(\'' + encodeURIComponent(ic) + '\',' + (editExisting ? 'true' : 'false') + ')" style="font-size:22px;height:40px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;">' + ic + '</button>';
+        });
+        h += '</div>';
+    });
+    h += '</div>';
+    openModal(h);
+}
+function filterIcons(q) {
+    q = (q || '').toLowerCase().trim();
+    document.querySelectorAll('.icon-pick-btn').forEach(b => {
+        const ic = b.dataset.icon || '';
+        const grp = b.dataset.search || '';
+        const match = !q || grp.indexOf(q) >= 0 || ic.indexOf(q) >= 0;
+        b.style.display = match ? '' : 'none';
+    });
+    document.querySelectorAll('.icon-cat-grid').forEach(g => {
+        const visible = Array.from(g.querySelectorAll('.icon-pick-btn')).some(b => b.style.display !== 'none');
+        g.style.display = visible ? 'grid' : 'none';
+        if (g.previousElementSibling && g.previousElementSibling.classList.contains('icon-cat-title')) {
+            g.previousElementSibling.style.display = visible ? '' : 'none';
+        }
+    });
+}
+function pickIcon(encoded, editExisting) {
+    const ic = decodeURIComponent(encoded);
+    closeModal();
+    if (editExisting && selectedEl && selectedEl.type === 'icon') {
+        selectedEl.iconChar = ic;
+        const inp = document.getElementById('prop-iconChar'); if (inp) inp.value = ic;
+        saveState();
+        render();
+        updateInspector();
+        return;
+    }
+    // Add new icon element
+    const el = makeDefaultElement('icon');
+    el.iconChar = ic;
+    getElements().push(el);
+    saveState();
+    render();
+    selectElement(el.id);
+}
+
+// ---------- MULTI-SELECT ----------
+let selectedIds = new Set();
+function isSelected(id) {
+    return (selectedEl && selectedEl.id === id) || selectedIds.has(id);
+}
+function clearMultiSelect() { selectedIds.clear(); }
+function toggleMultiSelect(id) {
+    if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+        if (selectedEl && selectedEl.id === id) {
+            selectedEl = selectedIds.size ? getElements().find(e => e.id === Array.from(selectedIds)[0]) : null;
+        }
+    } else {
+        if (selectedEl) selectedIds.add(selectedEl.id);
+        selectedIds.add(id);
+        selectedEl = getElements().find(e => e.id === id);
+    }
+}
+function getSelectedElements() {
+    const ids = new Set(selectedIds);
+    if (selectedEl) ids.add(selectedEl.id);
+    return getElements().filter(e => ids.has(e.id));
+}
+
+// Duplicate a group — maintains relative positions
+function duplicateGroup() {
+    const group = getSelectedElements();
+    if (group.length === 0) return;
+    if (group.length === 1) { duplicateSelected(); return; }
+    const clones = [];
+    clearMultiSelect();
+    group.forEach(src => {
+        const clone = JSON.parse(JSON.stringify(src));
+        counter++;
+        clone.id = 'el_' + counter;
+        clone.x += 20; clone.y += 20;
+        getElements().push(clone);
+        clones.push(clone);
+    });
+    selectedEl = clones[0];
+    clones.slice(1).forEach(c => selectedIds.add(c.id));
+    saveState();
+    render();
+    updateInspector();
+    toast('Duplicated ' + clones.length + ' elements');
+}
+
+// Copy a group
+function copyGroup() {
+    const group = getSelectedElements();
+    if (group.length === 0) return;
+    clipboard = group.map(e => JSON.parse(JSON.stringify(e)));
+    toast('Copied ' + group.length + ' element' + (group.length > 1 ? 's' : ''));
+}
+
+// Paste — supports both single object and array
+function pasteGroup() {
+    if (!clipboard) return;
+    const arr = Array.isArray(clipboard) ? clipboard : [clipboard];
+    clearMultiSelect();
+    const newOnes = [];
+    arr.forEach(src => {
+        const clone = JSON.parse(JSON.stringify(src));
+        counter++;
+        clone.id = 'el_' + counter;
+        clone.x += 20; clone.y += 20;
+        clone.section = targetSection;
+        getElements().push(clone);
+        newOnes.push(clone);
+    });
+    selectedEl = newOnes[0] || null;
+    newOnes.slice(1).forEach(c => selectedIds.add(c.id));
+    saveState();
+    render();
+    updateInspector();
+    toast('Pasted ' + newOnes.length);
+}
+
+// Delete a group
+function deleteGroup() {
+    const group = getSelectedElements();
+    if (group.length === 0) return;
+    exitEditMode();
+    const ids = new Set(group.map(e => e.id));
+    const page = getPage();
+    page.elements = page.elements.filter(e => !ids.has(e.id));
+    clearMultiSelect();
+    selectedEl = null;
+    saveState();
+    render();
+    updateInspector();
+}
+
+// ---------- TEMPLATES ----------
+const TEMPLATES = [
+    {
+        name: 'Simple Landing', desc: 'Hero + CTA + 3 features',
+        thumb: 'linear-gradient(135deg,#007fd4,#4caf50)',
+        build: () => applyTemplate_Landing(),
+    },
+    {
+        name: 'Portfolio Hero', desc: 'Big heading + subtitle',
+        thumb: 'linear-gradient(135deg,#2d2d2d,#555)',
+        build: () => applyTemplate_Portfolio(),
+    },
+    {
+        name: 'Navbar Kit', desc: 'Logo + links + CTA',
+        thumb: 'linear-gradient(90deg,#111,#333)',
+        build: () => applyTemplate_Navbar(),
+    },
+    {
+        name: 'Footer Kit', desc: 'Copyright + links',
+        thumb: 'linear-gradient(180deg,#2d2d2d,#111)',
+        build: () => applyTemplate_Footer(),
+    },
+    {
+        name: 'Feature Grid', desc: '3-column feature row',
+        thumb: 'linear-gradient(135deg,#f0f0f0,#e0e0e0)',
+        build: () => applyTemplate_FeatureGrid(),
+    },
+    {
+        name: 'Call to Action', desc: 'Centered headline + button',
+        thumb: 'linear-gradient(135deg,#7209b7,#b5179e)',
+        build: () => applyTemplate_CTA(),
+    },
+];
+function showTemplates() {
+    let h = '<h3>Template Library</h3><div style="font-size:11px;color:#888;margin-bottom:4px;">Adds elements to the current page.</div><div class="template-grid">';
+    TEMPLATES.forEach((t, i) => {
+        h += '<div class="template-card" onclick="closeModal();TEMPLATES[' + i + '].build();toast(\'Template added\')">'
+            + '<div class="template-thumb" style="background:' + t.thumb + ';"></div>'
+            + '<div class="template-name">' + t.name + '</div>'
+            + '<div class="template-desc">' + t.desc + '</div></div>';
+    });
+    h += '</div>';
+    openModal(h);
+}
+function _pushEl(partial) {
+    counter++;
+    const base = makeDefaultElement(partial.type || 'box');
+    base.id = 'el_' + counter;
+    Object.assign(base, partial);
+    if (partial.styles) base.styles = Object.assign({}, base.styles, partial.styles);
+    if (partial.textStyles) base.textStyles = Object.assign({}, base.textStyles, partial.textStyles);
+    getElements().push(base);
+    return base;
+}
+function applyTemplate_Landing() {
+    targetSection = 'hero';
+    _pushEl({ type: 'heading', section: 'hero', x: 80, y: 120, w: 700, h: 70, html: 'Build beautiful sites in minutes', textStyles: { fontSize: '44px', fontWeight: '700', textAlign: 'left', color: '#1a1a1a' } });
+    _pushEl({ type: 'text', section: 'hero', x: 80, y: 200, w: 600, h: 60, html: 'A flexible drag-and-drop builder for creating landing pages, portfolios, and more.', textStyles: { fontSize: '18px', color: '#555', lineHeight: '1.5' } });
+    _pushEl({ type: 'button', section: 'hero', x: 80, y: 290, w: 170, h: 48, html: 'Get Started', href: '#' });
+    targetSection = 'content';
+    _pushEl({ type: 'heading', section: 'content', x: 80, y: 60, w: 600, h: 50, html: 'Features', textStyles: { fontSize: '30px', fontWeight: '700', color: '#1a1a1a' } });
+    const cw = getCanvasW();
+    const boxW = Math.max(220, Math.floor((cw - 160 - 40) / 3));
+    for (let i = 0; i < 3; i++) {
+        const x = 80 + i * (boxW + 20);
+        _pushEl({ type: 'box', section: 'content', x: x, y: 140, w: boxW, h: 180, styles: { backgroundColor: '#f5f5f5', borderRadius: '10px' } });
+        _pushEl({ type: 'heading', section: 'content', x: x + 20, y: 160, w: boxW - 40, h: 36, html: 'Feature ' + (i + 1), textStyles: { fontSize: '20px', fontWeight: '600', color: '#1a1a1a' } });
+        _pushEl({ type: 'text', section: 'content', x: x + 20, y: 200, w: boxW - 40, h: 100, html: 'Describe this feature clearly. Keep it short and focused on value.', textStyles: { fontSize: '14px', color: '#555', lineHeight: '1.5' } });
+    }
+    saveState(); render(); renderLayersList();
+}
+function applyTemplate_Portfolio() {
+    targetSection = 'hero';
+    _pushEl({ type: 'heading', section: 'hero', x: 60, y: 140, w: 900, h: 90, html: 'Jane Doe — Designer', textStyles: { fontSize: '64px', fontWeight: '900', textAlign: 'left', color: '#1a1a1a' } });
+    _pushEl({ type: 'text', section: 'hero', x: 60, y: 240, w: 700, h: 40, html: 'Crafting digital experiences with care and clarity.', textStyles: { fontSize: '20px', color: '#666' } });
+    saveState(); render(); renderLayersList();
+}
+function applyTemplate_Navbar() {
+    const sects = getSections();
+    if (!sects.navbar.enabled) { sects.navbar.enabled = true; syncSectionUI(); }
+    targetSection = 'navbar';
+    _pushEl({ type: 'heading', section: 'navbar', x: 20, y: 16, w: 140, h: 28, html: 'Brand', textStyles: { fontSize: '18px', fontWeight: '700', color: '#ffffff' } });
+    const cw = getCanvasW();
+    const links = ['Home', 'About', 'Work', 'Contact'];
+    links.forEach((l, i) => {
+        _pushEl({ type: 'link', section: 'navbar', x: cw - 500 + i * 80, y: 20, w: 70, h: 20, html: l, href: '#', textStyles: { color: '#ffffff', fontSize: '14px', textAlign: 'center', textDecoration: 'none' } });
+    });
+    _pushEl({ type: 'button', section: 'navbar', x: cw - 160, y: 12, w: 120, h: 36, html: 'Sign Up', href: '#' });
+    saveState(); render(); renderLayersList();
+}
+function applyTemplate_Footer() {
+    const sects = getSections();
+    if (!sects.footer.enabled) { sects.footer.enabled = true; syncSectionUI(); }
+    sects.footer.height = Math.max(sects.footer.height, 120);
+    targetSection = 'footer';
+    _pushEl({ type: 'text', section: 'footer', x: 20, y: 50, w: 360, h: 22, html: '© ' + new Date().getFullYear() + ' Your Company. All rights reserved.', textStyles: { color: '#bbb', fontSize: '12px' } });
+    const cw = getCanvasW();
+    ['Privacy', 'Terms', 'Contact'].forEach((l, i) => {
+        _pushEl({ type: 'link', section: 'footer', x: cw - 280 + i * 90, y: 50, w: 80, h: 22, html: l, href: '#', textStyles: { color: '#bbb', fontSize: '12px', textAlign: 'center', textDecoration: 'none' } });
+    });
+    saveState(); render(); renderLayersList();
+}
+function applyTemplate_FeatureGrid() {
+    targetSection = 'content';
+    const cw = getCanvasW();
+    const boxW = Math.max(220, Math.floor((cw - 160 - 40) / 3));
+    for (let i = 0; i < 3; i++) {
+        const x = 80 + i * (boxW + 20);
+        _pushEl({ type: 'box', section: 'content', x: x, y: 40, w: boxW, h: 200, styles: { backgroundColor: '#ffffff', borderRadius: '12px' }, shadow: { x: 0, y: 4, blur: 20, spread: 0, color: '#000000', opacity: 10 } });
+        _pushEl({ type: 'icon', section: 'content', x: x + 20, y: 60, w: 50, h: 50, iconChar: ['⚡','🎯','🚀'][i], textStyles: { fontSize: '38px', textAlign: 'center' } });
+        _pushEl({ type: 'heading', section: 'content', x: x + 20, y: 120, w: boxW - 40, h: 30, html: ['Fast','Focused','Powerful'][i], textStyles: { fontSize: '18px', fontWeight: '700', color: '#1a1a1a' } });
+        _pushEl({ type: 'text', section: 'content', x: x + 20, y: 155, w: boxW - 40, h: 70, html: 'A short blurb describing the benefit in simple language.', textStyles: { fontSize: '13px', color: '#666', lineHeight: '1.5' } });
+    }
+    saveState(); render(); renderLayersList();
+}
+function applyTemplate_CTA() {
+    targetSection = 'content';
+    const cw = getCanvasW();
+    _pushEl({ type: 'box', section: 'content', x: 40, y: 40, w: cw - 80, h: 260, styles: { borderRadius: '16px' }, gradient: { enabled: true, type: 'linear', angle: 135, c1: '#7209b7', c2: '#b5179e' } });
+    _pushEl({ type: 'heading', section: 'content', x: 40, y: 90, w: cw - 80, h: 60, html: 'Ready to get started?', textStyles: { fontSize: '40px', fontWeight: '800', color: '#ffffff', textAlign: 'center' } });
+    _pushEl({ type: 'text', section: 'content', x: 40, y: 160, w: cw - 80, h: 30, html: 'Join thousands building beautiful sites today.', textStyles: { fontSize: '16px', color: 'rgba(255,255,255,0.9)', textAlign: 'center' } });
+    _pushEl({ type: 'button', section: 'content', x: Math.floor((cw - 180) / 2), y: 220, w: 180, h: 52, html: 'Start Now', href: '#', styles: { backgroundColor: '#ffffff', borderRadius: '999px' }, textStyles: { color: '#7209b7', fontWeight: '700', textAlign: 'center' } });
+    saveState(); render(); renderLayersList();
+}
+
+// ---------- EXTRA KEYBOARD BINDINGS ----------
+document.addEventListener('keydown', function(e) {
+    // Escape exits preview / edit / closes modal / menu
+    if (e.key === 'Escape') {
+        if (document.getElementById('modal-backdrop').classList.contains('visible')) { closeModal(); return; }
+        if (document.body.classList.contains('preview-mode')) { exitPreviewMode(); return; }
+        document.getElementById('context-menu').classList.remove('visible');
+    }
+    if (editingElId) return;
+    const target = e.target;
+    const inField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+    if (inField) return;
+
+    // Preview P
+    if (e.key === 'p' || e.key === 'P') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); if (document.body.classList.contains('preview-mode')) exitPreviewMode(); else enterPreviewMode(); }
+    }
+    // Grid G
+    if (e.key === 'g' || e.key === 'G') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); toggleGrid(); }
+    }
+    // ?
+    if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); showShortcuts(); }
+    // Ctrl+S save project
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveProject(); }
+    // Ctrl+C / Ctrl+V
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedEl) { e.preventDefault(); copySelected(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') { e.preventDefault(); pasteClipboard(); }
+    // Arrow keys
+    if (selectedEl && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowUp') nudgeSelected(0, -step);
+        if (e.key === 'ArrowDown') nudgeSelected(0, step);
+        if (e.key === 'ArrowLeft') nudgeSelected(-step, 0);
+        if (e.key === 'ArrowRight') nudgeSelected(step, 0);
+        // save state after nudge burst (debounce)
+        clearTimeout(window._nudgeTimer);
+        window._nudgeTimer = setTimeout(() => saveState(), 500);
+    }
+});
+
+// =====================================================================
 //  INIT
 // =====================================================================
+// Try to restore autosave first (before first render)
+const _restored = loadAutosave();
 renderPageTabs();
 renderPaletteList();
 updateTargetButtons();
 SECTION_ORDER.forEach(k => updateSectionHeightDisplay(k));
+setDevice('desktop');
+if (_restored) {
+    syncSectionUI();
+    ['primary','secondary','accent','surface','text'].forEach(k => {
+        const inp = document.getElementById('theme-' + k);
+        if (inp) inp.value = globalTheme[k];
+        const valSpan = document.getElementById('theme-' + k + '-val');
+        if (valSpan) valSpan.textContent = globalTheme[k];
+    });
+    renderPaletteList();
+}
 render();
-saveState(); // Initial state for undo
+_origSaveState(); // baseline history entry (direct, don't trigger autosave)
+if (_restored) toast('Restored from autosave');
 </script>
 </body>
 </html>
