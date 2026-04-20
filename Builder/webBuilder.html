@@ -104,7 +104,7 @@
         .tb-color-wrap input[type="color"] { position: absolute; top: -4px; left: -4px; width: 36px; height: 36px; cursor: pointer; border: none; padding: 0; }
 
         /* ===== UI CONTROLS ===== */
-        .tool-btn { width: 42px; height: 30px; background: #333; border: 1px solid #444; color: #ccc; border-radius: 5px; cursor: pointer; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .tool-btn { width: 42px; height: 30px; background: #333; border: 1px solid #444; color: #ccc; border-radius: 5px; cursor: pointer; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: background 0.15s; white-space: nowrap; flex-shrink: 0; }
         .tool-btn:hover { background: #444; }
 
         /* ===== SECTION TARGET BUTTONS ===== */
@@ -406,6 +406,7 @@
             <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="saveProject()" title="Save project to file">Save</button>
             <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="loadProject()" title="Load project from file">Open</button>
             <button class="tool-btn" style="width: auto; padding: 0 10px; font-size: 9px;" onclick="clearCanvas()">Clear</button>
+            <button class="tool-btn" style="width:auto;padding:0 10px;font-size:9px;" onclick="importHTML()" title="Import an existing HTML page and turn it into editable elements">Import</button>
             <button class="tool-btn" style="width: auto; padding: 0 10px; background: #007fd4; color: white; border: none; font-size: 9px;" onclick="exportHTML()">Export HTML</button>
         </div>
     </div>
@@ -3444,6 +3445,177 @@ exportHTML = function() {
         + '<textarea id="export-code" readonly style="width:600px;max-width:80vw;height:320px;background:#1e1e1e;color:#d4d4d4;border:1px solid #444;border-radius:6px;padding:10px;font-family:monospace;font-size:11px;">' + escapeHtml(captured) + '</textarea>';
     openModal(h);
 };
+
+// ---------- IMPORT HTML ----------
+// Loads an existing HTML document into the canvas as editable builder elements.
+// Renders the source HTML inside an offscreen iframe, walks the DOM, and for
+// every visible element creates a builder element with absolute coordinates
+// and computed styles. Complex layouts (flex/grid/media queries) collapse to
+// absolute positioning — the user can then rearrange with the normal tools.
+function importHTML() {
+    exitEditMode();
+    const h = '<h3>Import HTML</h3>'
+        + '<div style="font-size:11px;color:#aaa;margin-bottom:10px;line-height:1.5;">'
+        + 'Paste a complete HTML document (inline/embedded CSS is supported). The importer renders it invisibly, walks the DOM, and creates editable builder elements at their on-screen positions.<br>'
+        + '<b>Notes:</b> External stylesheets and scripts are ignored. Images become background-image boxes. Complex layouts flatten to absolute positioning — use multi-select and drag to rearrange.'
+        + '</div>'
+        + '<textarea id="import-html-code" placeholder="<!DOCTYPE html>..." style="width:600px;max-width:80vw;height:260px;background:#1e1e1e;color:#d4d4d4;border:1px solid #444;border-radius:6px;padding:10px;font-family:monospace;font-size:11px;"></textarea>'
+        + '<div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">'
+        + '<label style="font-size:11px;color:#aaa;">Render width:</label>'
+        + '<input id="import-vw" type="number" value="1200" min="320" max="3840" style="width:80px;background:#2d2d2d;color:#d4d4d4;border:1px solid #444;padding:4px;border-radius:4px;font-size:11px;">'
+        + '<label style="font-size:11px;color:#aaa;margin-left:10px;"><input id="import-replace" type="checkbox" style="vertical-align:middle;"> Replace current page</label>'
+        + '<button class="theme-apply-btn" onclick="doImportHTML()">Import</button>'
+        + '<button class="theme-apply-btn" style="background:#444;" onclick="closeModal()">Cancel</button>'
+        + '</div>';
+    openModal(h);
+}
+
+async function doImportHTML() {
+    const ta = document.getElementById('import-html-code');
+    const src = ta ? ta.value.trim() : '';
+    if (!src) { alert('Paste some HTML first.'); return; }
+    const vw = Math.max(320, Math.min(3840, parseInt(document.getElementById('import-vw').value, 10) || 1200));
+    const replace = document.getElementById('import-replace').checked;
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', 'allow-same-origin');
+    iframe.style.cssText = 'position:fixed;left:-99999px;top:0;width:' + vw + 'px;height:2000px;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+    await new Promise(r => { iframe.onload = r; iframe.srcdoc = src; });
+    await new Promise(r => setTimeout(r, 350));
+
+    const idoc = iframe.contentDocument;
+    if (!idoc || !idoc.body) { iframe.remove(); alert('Could not parse HTML.'); return; }
+
+    iframe.style.height = Math.max(2000, idoc.documentElement.scrollHeight) + 'px';
+    await new Promise(r => setTimeout(r, 120));
+
+    const SKIP = new Set(['SCRIPT','STYLE','LINK','META','HEAD','NOSCRIPT','BR','TITLE','SOURCE','TRACK']);
+    const TEXT_TAGS = new Set(['P','SPAN','LI','LABEL','EM','STRONG','B','I','U','SMALL','CODE','PRE','TD','TH','BLOCKQUOTE','CAPTION','FIGCAPTION','DT','DD','TIME','Q','CITE','ABBR']);
+    const HEADING_TAGS = new Set(['H1','H2','H3','H4','H5','H6']);
+    const imported = [];
+    const win = idoc.defaultView;
+
+    idoc.body.querySelectorAll('*').forEach(node => {
+        if (SKIP.has(node.tagName)) return;
+        const r = node.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return;
+        const cs = win.getComputedStyle(node);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return;
+
+        const tag = node.tagName;
+        const directText = Array.from(node.childNodes)
+            .filter(n => n.nodeType === 3 && n.textContent.trim())
+            .map(n => n.textContent.trim()).join(' ');
+        const hasElementChildren = Array.from(node.children).some(c => !SKIP.has(c.tagName));
+
+        const bgColor = cs.backgroundColor;
+        const hasBg = bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent';
+        const hasBgImage = cs.backgroundImage && cs.backgroundImage !== 'none';
+        const borderW = Math.max(parseFloat(cs.borderTopWidth)||0, parseFloat(cs.borderBottomWidth)||0,
+                                 parseFloat(cs.borderLeftWidth)||0, parseFloat(cs.borderRightWidth)||0);
+        const hasBorder = borderW > 0 && cs.borderTopStyle !== 'none';
+
+        let elType = null, html = '', bgImage = null, videoSrc = '', href = '', iconChar = '';
+
+        if (tag === 'IMG') {
+            elType = 'box';
+            bgImage = node.src;
+        } else if (tag === 'VIDEO') {
+            elType = 'video';
+            const s = node.querySelector('source');
+            videoSrc = node.currentSrc || node.getAttribute('src') || (s && s.src) || '';
+        } else if (tag === 'HR') {
+            elType = 'divider';
+        } else if (tag === 'BUTTON' || (tag === 'INPUT' && (node.type === 'button' || node.type === 'submit' || node.type === 'reset'))) {
+            elType = 'button';
+            html = (node.innerText || node.value || 'Button').trim();
+        } else if (tag === 'A' && !hasElementChildren && directText) {
+            elType = 'link';
+            html = directText;
+            href = node.getAttribute('href') || '';
+        } else if (HEADING_TAGS.has(tag)) {
+            elType = 'heading';
+            html = (node.innerText || directText || 'Heading').trim();
+        } else if (TEXT_TAGS.has(tag) && !hasElementChildren && directText) {
+            elType = 'text';
+            html = directText;
+        } else if (!hasElementChildren && directText) {
+            elType = 'text';
+            html = directText;
+        } else if ((hasBg || hasBorder || hasBgImage)) {
+            elType = 'box';
+            if (hasBgImage) {
+                const m = cs.backgroundImage.match(/url\(["']?([^"')]+)["']?\)/);
+                if (m) bgImage = m[1];
+            }
+        }
+
+        if (!elType) return;
+
+        counter++;
+        const targetSect = (getPage() && getPage().canvasMode === 'fixed') ? 'content' : 'content';
+        const el = {
+            id: 'el_' + counter,
+            type: elType,
+            section: targetSect,
+            x: Math.max(0, Math.round(r.left)),
+            y: Math.max(0, Math.round(r.top)),
+            w: Math.max(2, Math.round(r.width)),
+            h: Math.max(2, Math.round(r.height)),
+            locked: false,
+            bottomLayer: (elType === 'box' && hasElementChildren),
+            opacity: parseFloat(cs.opacity) || 1,
+            bgImage: bgImage,
+            href: href,
+            videoSrc: videoSrc,
+            iconChar: iconChar,
+            styles: {
+                backgroundColor: (hasBg ? bgColor : (elType === 'box' ? 'transparent' : 'transparent')),
+                borderRadius: cs.borderTopLeftRadius || '0px',
+                display: 'block',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+                gap: '0px',
+                padding: cs.padding || '0px',
+            },
+            textStyles: {
+                fontFamily: cs.fontFamily || 'inherit',
+                fontSize: cs.fontSize || '16px',
+                fontWeight: cs.fontWeight || '400',
+                textAlign: cs.textAlign || 'left',
+                lineHeight: (cs.lineHeight && cs.lineHeight !== 'normal') ? cs.lineHeight : '1.4',
+                color: cs.color || '#000000',
+            },
+            html: html,
+            material: null,
+            shadow: { x:0, y:0, blur:0, spread:0, color:'#000000', opacity:0 },
+            float: { enabled:false, elevation:2 },
+            gradient: { enabled:false, type:'linear', angle:135, c1:'#007fd4', c2:'#4caf50' },
+            borderDesign: {
+                width: Math.round(borderW) || 0,
+                style: (hasBorder ? (cs.borderTopStyle || 'solid') : 'none'),
+                color: cs.borderTopColor || '#000000',
+            },
+            backdropBlur: 0,
+        };
+        imported.push(el);
+    });
+
+    iframe.remove();
+
+    if (!imported.length) { alert('No importable elements found.'); return; }
+
+    const page = getPage();
+    if (replace) page.elements = [];
+    imported.forEach(e => page.elements.push(e));
+    selectedEl = null;
+    saveState();
+    render();
+    closeModal();
+    toast('Imported ' + imported.length + ' elements');
+}
 
 // ---------- ICON PICKER ----------
 const ICON_LIBRARY = [
