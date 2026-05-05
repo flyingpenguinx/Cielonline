@@ -307,65 +307,49 @@ Now whenever a new inquiry or appointment is created, an email notification will
 
 ## Connecting vividautodetails.com
 
-To receive inquiries from the Vivid Auto Details website, the contact form on `vividautodetails.com` needs to submit data to your Supabase database. Here's what you need to add to the contact form:
+Vivid can stay in its own repository. Cielonline acts as the dashboard and Supabase home base through the reusable bridge script.
 
-### Option A: Direct Supabase Insert (Recommended for simple forms)
-
-Add this JavaScript to the vividautodetails.com contact form page:
+Add this once near the end of the Vivid site HTML, before `</body>`:
 
 ```html
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
-  // Replace SITE_ID with the UUID of the Vivid Auto Details site from your client_sites table
-  const SITE_ID = 'YOUR_VIVID_SITE_ID';
-
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  document.getElementById('contact-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    const { error } = await supabase.from('inquiries').insert({
-      site_id: SITE_ID,
-      name: formData.get('name'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      message: formData.get('message'),
-      service_requested: formData.get('service'),
-      vehicle_info: formData.get('vehicle'),
-      preferred_date: formData.get('preferred_date') || null,
-      status: 'new',
-      source: 'website',
-    });
-
-    if (error) {
-      alert('Something went wrong. Please call us directly.');
-      console.error(error);
-    } else {
-      alert('Thank you! We will get back to you shortly.');
-      this.reset();
-    }
-  });
-</script>
+<script
+  src="https://cielonline.com/bridge.js"
+  data-site-slug="vivid-auto-details"
+  data-supabase-url="https://mffuqdwqjdxbwpbhuxby.supabase.co"
+  data-supabase-key="YOUR_SUPABASE_ANON_KEY"
+  data-realtime="true"
+  defer
+></script>
 ```
 
-### Option B: API Endpoint (if you prefer server-side)
+Then mark up the Vivid form and any editable content with bridge attributes:
 
-Create a small API route on the vividautodetails server that accepts form data and inserts it to Supabase using the **service_role** key (never expose service_role on the client side).
+```html
+<form data-ciel="contact">
+  <input name="name" placeholder="Name" />
+  <input name="email" placeholder="Email" />
+  <input name="phone" placeholder="Phone" />
+  <select name="service" data-ciel-services-select></select>
+  <textarea name="message" placeholder="Tell us what you need"></textarea>
+  <button type="submit">Request quote</button>
+</form>
+
+<h1 data-ciel-field="hero.title">Vivid Auto Details</h1>
+<p data-ciel-field="hero.subtitle"></p>
+<div data-ciel-services></div>
+<a data-ciel-booking-link data-ciel-link="booking">Book online</a>
+```
+
+The bridge resolves the site by slug, renders services, updates editable content, tracks page/link events, and sends inquiries into Cielonline. If you build a server-side Vivid API later, use the Supabase `service_role` key only on the server.
 
 ---
 
 ## How to Find Your Site ID
 
-After seeding, run this in the SQL Editor:
+The bridge normally uses `data-site-slug`, so you do not need to hardcode the UUID. If you need to inspect the site manually, run this in the SQL Editor:
 ```sql
-SELECT id, site_name FROM public.client_sites;
+SELECT id, site_name, slug FROM public.client_sites;
 ```
-
-Copy the `id` UUID for Vivid Auto Details â€” you'll need it for the contact form integration.
 
 ---
 
@@ -378,7 +362,6 @@ npm run dev
 
 Open http://localhost:5173
 
-- **Landing page**: http://localhost:5173/landing (or landing.html)
 - **Home**: http://localhost:5173/
 - **Login**: http://localhost:5173/login
 - **Preview Builder**: http://localhost:5173/preview (read-only, non-logged-in only)
@@ -387,6 +370,7 @@ Open http://localhost:5173
 - **QR Dashboard**: http://localhost:5173/qr-dashboard (requires login)
 - **Admin Portal**: http://localhost:5173/admin (requires login)
 - **My Sites Editor**: http://localhost:5173/site-editor (requires login)
+- **WebBuilder Beta**: http://localhost:5173/web-builder-beta.html (standalone experimental tool)
 
 ---
 
@@ -394,8 +378,8 @@ Open http://localhost:5173
 
 ```
 /
-â”œâ”€â”€ landing.html          â† Landing page (first page visitors see)
 â”œâ”€â”€ index.html            â† React SPA entry point
+â”œâ”€â”€ public/web-builder-beta.html â† Standalone experimental WebBuilder copy
 â”œâ”€â”€ src/
 â”‚   â”œâ”€â”€ App.jsx           â† Router + nav
 â”‚   â”œâ”€â”€ main.jsx          â† React root

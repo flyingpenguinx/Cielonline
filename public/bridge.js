@@ -1,5 +1,5 @@
 /**
- * Cielonline Bridge v3.0
+ * Cielonline Bridge v3.1.0
  *
  * Connects external websites to Cielonline's CRM, booking, content,
  * analytics, and image layers — with optional Supabase Realtime support
@@ -15,7 +15,9 @@
   var SUPABASE_KEY = scriptTag.getAttribute("data-supabase-key");
   var SITE_ID = scriptTag.getAttribute("data-site-id");
   var SITE_SLUG = scriptTag.getAttribute("data-site-slug");
+  var VERSION = "3.1.0";
   var siteIdPromise = null;
+  var initPromise = null;
 
   if (!SUPABASE_URL || !SUPABASE_KEY || (!SITE_ID && !SITE_SLUG)) {
     console.warn("[Cielonline Bridge] Missing required script attributes.");
@@ -59,7 +61,12 @@
 
   function handleJsonResponse(response) {
     return response.text().then(function (text) {
-      var payload = text ? JSON.parse(text) : null;
+      var payload = null;
+      try {
+        payload = text ? JSON.parse(text) : null;
+      } catch (error) {
+        payload = text;
+      }
       if (!response.ok) throw payload || new Error("Request failed");
       return payload;
     });
@@ -89,6 +96,7 @@
         throw new Error("Unable to resolve site slug: " + SITE_SLUG);
       }
       SITE_ID = rows[0].id;
+      if (window.Cielonline) window.Cielonline.siteId = SITE_ID;
       return SITE_ID;
     });
 
@@ -273,7 +281,7 @@
   }
 
   function renderServices() {
-    var containers = document.querySelectorAll('[data-ciel="services"]');
+    var containers = document.querySelectorAll('[data-ciel="services"], [data-ciel-services]');
     if (containers.length === 0) return Promise.resolve();
 
     return getServices().then(function (services) {
@@ -298,7 +306,7 @@
   }
 
   function populateServiceDropdowns() {
-    var selects = document.querySelectorAll('select[data-ciel="service-picker"]');
+    var selects = document.querySelectorAll('select[data-ciel="service-picker"], select[data-ciel-services-select]');
     if (selects.length === 0) return Promise.resolve();
 
     return getServices().then(function (services) {
@@ -316,7 +324,7 @@
   }
 
   function populateServiceCheckboxes() {
-    var containers = document.querySelectorAll('[data-ciel="service-checkboxes"]');
+    var containers = document.querySelectorAll('[data-ciel="service-checkboxes"], [data-ciel-services-checkboxes]');
     if (containers.length === 0) return Promise.resolve();
 
     return getServices().then(function (services) {
@@ -335,14 +343,18 @@
 
   function bindTrackedLinks() {
     document.querySelectorAll('[data-ciel-link]').forEach(function (link) {
+      if (link.__cielTracked) return;
+      link.__cielTracked = true;
+
       link.addEventListener("click", function () {
-        trackEvent("booking_link_click", {
-          event_type: "conversion",
+        var linkType = link.getAttribute("data-ciel-link") || "link";
+        trackEvent(linkType + "_link_click", {
+          event_type: linkType === "booking" || linkType === "payment" ? "conversion" : "engagement",
           metadata: {
             href: link.getAttribute("href"),
-            link_type: link.getAttribute("data-ciel-link"),
+            link_type: linkType,
           },
-        });
+        }).catch(function () {});
       });
     });
   }
@@ -381,8 +393,8 @@
         }
 
         var payload = extractInquiryPayload(form);
-        if (!payload.email) {
-          alert("Please provide an email address.");
+        if (!payload.email && !payload.phone) {
+          alert("Please provide an email address or phone number.");
           return;
         }
 
@@ -398,17 +410,17 @@
           metadata: {
             service_requested: payload.service_requested,
           },
-        });
+        }).catch(function () {});
 
         submitInquiry(payload)
           .then(function () {
             showFormSuccess(form);
-            return trackEvent("quote_success", {
+            trackEvent("quote_success", {
               event_type: "conversion",
               metadata: {
                 service_requested: payload.service_requested,
               },
-            });
+            }).catch(function () {});
           })
           .catch(function (error) {
             console.error("[Cielonline Bridge] Inquiry error:", error);
@@ -432,8 +444,18 @@
 
   /* ────────── Supabase Realtime (live edits) ────────── */
 
+  function refreshDynamicContent() {
+    return Promise.allSettled([
+      applySiteContent(),
+      renderServices(),
+      populateServiceDropdowns(),
+      populateServiceCheckboxes(),
+    ]);
+  }
+
   function startRealtime() {
     if (!REALTIME_ENABLED) return;
+    if (realtimeChannel && realtimeChannel.readyState !== WebSocket.CLOSED) return;
 
     ensureSiteId().then(function (siteId) {
       var REALTIME_URL = SUPABASE_URL.replace(/^http/, "ws") + "/realtime/v1/websocket?apikey=" + SUPABASE_KEY + "&vsn=1.0.0";
@@ -455,7 +477,6 @@
       }
 
       ws.onopen = function () {
-        // Join the channel for this site's content
         send(
           "realtime:public:site_content_entries:site_id=eq." + siteId,
           "phx_join",
@@ -464,7 +485,14 @@
           ]}}
         );
 
-        // Heartbeat every 30s to keep the connection alive
+        send(
+          "realtime:public:services:site_id=eq." + siteId,
+          "phx_join",
+          { config: { broadcast: { self: false }, postgres_changes: [
+            { event: "*", schema: "public", table: "services", filter: "site_id=eq." + siteId }
+          ]}}
+        );
+
         heartbeatTimer = setInterval(function () {
           send("phoenix", "heartbeat", {});
         }, 30000);
@@ -474,9 +502,9 @@
         try {
           var msg = JSON.parse(event.data);
           if (msg.event === "postgres_changes" || (msg.payload && msg.payload.data && msg.payload.data.record)) {
-            // Content changed — bust cache and re-apply
             contentCache = null;
-            applySiteContent();
+            serviceCache = null;
+            refreshDynamicContent();
           }
         } catch (e) {
           // ignore parse errors
@@ -485,7 +513,7 @@
 
       ws.onclose = function () {
         if (heartbeatTimer) clearInterval(heartbeatTimer);
-        // Attempt reconnect after 5 seconds
+        realtimeChannel = null;
         setTimeout(function () { startRealtime(); }, 5000);
       };
 
@@ -500,17 +528,14 @@
   }
 
   function init() {
-    Promise.all([
-      applySiteContent(),
-      renderServices(),
-      populateServiceDropdowns(),
-      populateServiceCheckboxes(),
-    ]).finally(function () {
+    initPromise = refreshDynamicContent().finally(function () {
       bindContactForms();
       bindTrackedLinks();
-      trackEvent("page_view", { event_type: "page_view" });
+      trackEvent("page_view", { event_type: "page_view" }).catch(function () {});
       startRealtime();
     });
+
+    return initPromise;
   }
 
   if (document.readyState === "loading") {
@@ -520,8 +545,18 @@
   }
 
   window.Cielonline = {
+    version: VERSION,
     siteId: SITE_ID,
     siteSlug: SITE_SLUG,
+    ready: function () {
+      return initPromise || Promise.resolve();
+    },
+    getSiteId: ensureSiteId,
+    refresh: function () {
+      contentCache = null;
+      serviceCache = null;
+      return refreshDynamicContent();
+    },
     submitInquiry: function (payload) {
       return submitInquiry({
         name: payload.name || [payload.firstName, payload.lastName].filter(Boolean).join(" "),
@@ -537,6 +572,7 @@
     },
     getServices: getServices,
     getSiteContent: getSiteContent,
+    renderServices: renderServices,
     trackEvent: trackEvent,
     getBookingUrl: function () {
       return getSiteContent().then(function (content) {

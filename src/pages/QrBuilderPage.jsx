@@ -14,6 +14,14 @@ const PenIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
 );
 
+function formatSupabaseError(error) {
+  if (!error?.message) return "Something went wrong.";
+  if (/column .* does not exist|Could not find .* column/i.test(error.message)) {
+    return `${error.message} Run the card designer migration in BACKEND_SCHEMA.md.`;
+  }
+  return error.message;
+}
+
 export default function QrBuilderPage({ user }) {
   const { card, updateCard, resetCard, sanitized } = useCardForm();
   const [cards, setCards] = useState([]);
@@ -74,7 +82,7 @@ export default function QrBuilderPage({ user }) {
     const { error } = await supabase.from("cards").upsert(payload, { onConflict: "slug" });
 
     if (error) {
-      setStatus(error.message);
+      setStatus(formatSupabaseError(error));
       setSavingCard(false);
       return;
     }
@@ -127,9 +135,6 @@ export default function QrBuilderPage({ user }) {
     setActiveTab("builder");
   };
 
-  /* derive template letter from card.template_key */
-  const templateLetter = (card.template_key || "template-a").replace("template-", "").toUpperCase();
-
   return (
     <main className="container main-space fade-in">
       {/* ── Top tabs ── */}
@@ -168,7 +173,7 @@ export default function QrBuilderPage({ user }) {
             <div className={`workspace-preview ${mobileView === "edit" ? "mobile-hidden" : ""}`}>
               <div className="workspace-preview-inner">
                 <PhoneFrame className="phone-preview-center">
-                  <CardPreview card={card} template={templateLetter} />
+                  <CardPreview card={card} />
                 </PhoneFrame>
                 <div className="workspace-preview-actions">
                   <button type="button" className="btn btn-secondary btn-sm" onClick={resetCard}>

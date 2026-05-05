@@ -7,9 +7,11 @@ import PublicCardPage from "./pages/PublicCardPage";
 
 const HubPage = lazy(() => import("./pages/HubPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const QrPreviewPage = lazy(() => import("./pages/QrPreviewPage"));
 const QrBuilderPage = lazy(() => import("./pages/QrBuilderPage"));
 const QrDashboardPage = lazy(() => import("./pages/QrDashboardPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
+const AdminPreviewPage = lazy(() => import("./pages/AdminPreviewPage"));
 const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
 const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
@@ -41,7 +43,9 @@ function AppHeader({ session, signOut }) {
   const navLinks = (
     <>
       <Link to="/" onClick={close}>Home</Link>
-      {!session && <Link to="/preview" onClick={close}>Preview Builder</Link>}
+      {!session && <Link to="/qr-preview" onClick={close}>QR Preview</Link>}
+      {!session && <Link to="/admin-preview" onClick={close}>Admin Preview</Link>}
+      {!session && <Link to="/preview" onClick={close}>Card Designer</Link>}
       {session ? <Link to="/dashboard" onClick={close}>Dashboard</Link> : null}
       {session ? <Link to="/qr-builder" onClick={close}>Build QR</Link> : null}
       {session ? <Link to="/admin" onClick={close}>Admin Portal</Link> : null}
@@ -100,6 +104,22 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage session={session} />} />
         <Route
+          path="/qr-preview"
+          element={
+            <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading QR preview...</span></div>}>
+              <QrPreviewPage session={session} />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin-preview"
+          element={
+            <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading admin preview...</span></div>}>
+              <AdminPreviewPage session={session} />
+            </Suspense>
+          }
+        />
+        <Route
           path="/login"
           element={
             session ? (
@@ -120,7 +140,7 @@ export default function App() {
               <Navigate to="/dashboard" replace />
             ) : (
               <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Loading preview...</span></div>}>
-                <DashboardPage previewOnly />
+                <DashboardPage />
               </Suspense>
             )
           }

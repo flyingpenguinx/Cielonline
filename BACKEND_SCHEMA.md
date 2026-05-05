@@ -114,17 +114,32 @@ $$;
 CREATE TABLE IF NOT EXISTS public.cards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  site_id UUID,
   slug TEXT NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9-]{3,60}$'),
   full_name TEXT NOT NULL,
   title TEXT,
   company TEXT,
   bio TEXT,
+  tagline TEXT,
   website TEXT,
   avatar_url TEXT,
+  logo_url TEXT,
   template_key TEXT NOT NULL DEFAULT 'template-a' CHECK (template_key IN (
     'template-a','template-b','template-c','template-d','template-e'
   )),
+  card_style TEXT NOT NULL DEFAULT 'glass' CHECK (card_style IN (
+    'flat','glass','glossy','gradient','minimal'
+  )),
+  font_style TEXT NOT NULL DEFAULT 'default' CHECK (font_style IN (
+    'default','serif','mono','rounded'
+  )),
+  border_radius TEXT NOT NULL DEFAULT 'rounded' CHECK (border_radius IN (
+    'sharp','rounded','pill'
+  )),
   background_color TEXT NOT NULL DEFAULT '#355dff',
+  text_color TEXT NOT NULL DEFAULT '#0f172a',
+  show_logo BOOLEAN NOT NULL DEFAULT true,
+  show_qr_on_card BOOLEAN NOT NULL DEFAULT false,
   phone_1 TEXT,
   phone_2 TEXT,
   email_1 TEXT,
@@ -132,11 +147,32 @@ CREATE TABLE IF NOT EXISTS public.cards (
   address TEXT,
   instagram_url TEXT,
   linkedin_url TEXT,
+  facebook_url TEXT,
+  twitter_url TEXT,
+  tiktok_url TEXT,
+  youtube_url TEXT,
+  github_url TEXT,
   social JSONB NOT NULL DEFAULT '{}'::jsonb,
   is_published BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Existing projects created before the designer fields can run this once.
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS site_id UUID;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS tagline TEXT;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS card_style TEXT NOT NULL DEFAULT 'glass';
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS font_style TEXT NOT NULL DEFAULT 'default';
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS border_radius TEXT NOT NULL DEFAULT 'rounded';
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS text_color TEXT NOT NULL DEFAULT '#0f172a';
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS show_logo BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS show_qr_on_card BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS facebook_url TEXT;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS twitter_url TEXT;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS tiktok_url TEXT;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS youtube_url TEXT;
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS github_url TEXT;
 
 
 -- ══════════════════════════════════════════
@@ -205,6 +241,15 @@ CREATE TABLE IF NOT EXISTS public.client_sites (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+DO $$
+BEGIN
+  ALTER TABLE public.cards
+    ADD CONSTRAINT cards_site_id_fkey
+    FOREIGN KEY (site_id) REFERENCES public.client_sites(id) ON DELETE SET NULL;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- settings jsonb can store payment-provider metadata:
 --   payment_provider, stripe_account_id, stripe_charges_enabled, stripe_details_submitted

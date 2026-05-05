@@ -30,11 +30,11 @@ Live at **cielonline.com** — hosted on Vercel.
 
 ```
 ├── index.html                 # Vite entry (React app)
-├── landing.html               # Marketing landing page
-├── vite.config.js             # Vite config (multi-page)
+├── vite.config.js             # Vite config
 ├── package.json
 ├── public/
-│   └── bridge.js              # Script loaded on external client sites
+│   ├── bridge.js              # Script loaded on external client sites
+│   └── web-builder-beta.html  # Experimental standalone WebBuilder copy
 ├── src/
 │   ├── App.jsx                # Router & auth wrapper
 │   ├── main.jsx               # React entry point

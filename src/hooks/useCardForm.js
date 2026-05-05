@@ -10,6 +10,7 @@ export const templateOptions = [
 
 export const cardStyleOptions = [
   { key: "flat", label: "Flat" },
+  { key: "glass", label: "Glass" },
   { key: "glossy", label: "Glossy" },
   { key: "gradient", label: "Gradient" },
   { key: "minimal", label: "Minimal" },
@@ -32,7 +33,7 @@ const emptyCard = {
   avatar_url: "",
   logo_url: "",
   template_key: "template-a",
-  card_style: "flat",
+  card_style: "glass",
   font_style: "default",
   border_radius: "rounded",
   background_color: "#355dff",
@@ -63,7 +64,7 @@ export function useCardForm(initialData = {}) {
   const resetCard = () => setCard(emptyCard);
 
   const sanitized = useMemo(() => {
-    const normalizedSlug = card.slug
+    const normalizedSlug = (card.slug || card.full_name || "card")
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "-")
       .replace(/-+/g, "-")
@@ -79,8 +80,10 @@ export function useCardForm(initialData = {}) {
       title: trimField("title"),
       company: trimField("company"),
       bio: trimField("bio"),
+      tagline: trimField("tagline"),
       website: trimField("website"),
       avatar_url: trimField("avatar_url"),
+      logo_url: trimField("logo_url"),
       phone_1: trimField("phone_1"),
       phone_2: trimField("phone_2"),
       email_1: trimField("email_1"),

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import CardPreview from "./CardPreview";
 import { useQrPayload } from "../hooks/useQrPayload";
 
 const QrTypeIcon = ({ type }) => {
@@ -61,6 +62,9 @@ export default function QrBuilder({ cards, onSaveQr }) {
     { value: "wifi", label: "Wi-Fi Access", desc: "Auto-connect to your network" },
   ];
 
+  const selectedCard = type === "card" ? cards.find((card) => card.slug === values.cardSlug) : null;
+  const canSave = Boolean(payload && values.qrSlug && (type !== "card" || selectedCard));
+
   return (
     <section className="builder-panel qr-builder-panel">
       <div className="qr-header">
@@ -115,7 +119,17 @@ export default function QrBuilder({ cards, onSaveQr }) {
             {type === "card" && (
               <label className="field">
                 <span>Select card</span>
-                <select value={values.cardSlug} onChange={(event) => setField("cardSlug", event.target.value)}>
+                <select
+                  value={values.cardSlug}
+                  onChange={(event) => {
+                    const cardSlug = event.target.value;
+                    setValues((current) => ({
+                      ...current,
+                      cardSlug,
+                      qrSlug: current.qrSlug || (cardSlug ? `${cardSlug}-qr` : ""),
+                    }));
+                  }}
+                >
                   <option value="">Choose a saved card...</option>
                   {cards.map((card) => (
                     <option key={card.id} value={card.slug}>
@@ -181,7 +195,7 @@ export default function QrBuilder({ cards, onSaveQr }) {
               <span>QR slug</span>
               <input value={values.qrSlug} onChange={(event) => setField("qrSlug", event.target.value)} placeholder="e.g. my-card-qr" />
             </label>
-            <button type="button" className="btn btn-primary btn-lg qr-save-btn" onClick={handleSave} disabled={!payload || !values.qrSlug}>
+            <button type="button" className="btn btn-primary btn-lg qr-save-btn" onClick={handleSave} disabled={!canSave}>
               Save QR Configuration
             </button>
           </section>
@@ -205,6 +219,12 @@ export default function QrBuilder({ cards, onSaveQr }) {
                     <span className="qr-preview-type-label">{qrTypes.find(q => q.value === type)?.label}</span>
                     {values.qrSlug && <span className="qr-preview-slug">/{values.qrSlug}</span>}
                   </div>
+                  {selectedCard && (
+                    <div className="qr-linked-card-panel">
+                      <span>Scans open this card</span>
+                      <CardPreview card={selectedCard} wrapperClass="qr-linked-card-preview" />
+                    </div>
+                  )}
                   <div className="qr-preview-actions">
                     <button type="button" className="btn btn-primary btn-sm qr-download-btn" onClick={handleDownload}>
                       <DownloadIcon /> Download PNG

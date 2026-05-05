@@ -1,12 +1,12 @@
+import { useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
 import { initialsFromName } from "../utils/initials";
 
-/* ── SVG Icons ── */
 const PhoneIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>);
 const EmailIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>);
 const GlobeIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>);
 const MapPinIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>);
 
-/* Social media brand icons */
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
 );
@@ -29,7 +29,6 @@ const GitHubIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
 );
 
-/* ── Social Icons Bar ── */
 function SocialIcons({ card }) {
   const socials = [
     { url: card.instagram_url, Icon: InstagramIcon, label: "Instagram", color: "#E4405F" },
@@ -39,7 +38,7 @@ function SocialIcons({ card }) {
     { url: card.tiktok_url, Icon: TikTokIcon, label: "TikTok", color: "#000000" },
     { url: card.youtube_url, Icon: YouTubeIcon, label: "YouTube", color: "#FF0000" },
     { url: card.github_url, Icon: GitHubIcon, label: "GitHub", color: "#181717" },
-  ].filter((s) => s.url);
+  ].filter((social) => social.url);
 
   if (socials.length === 0) return null;
 
@@ -63,95 +62,98 @@ function SocialIcons({ card }) {
   );
 }
 
-/* ── Contact Rows ── */
 function ContactRows({ card }) {
   return (
     <div className="contact-rows-modern">
-      {card.phone_1 && (
-        <a href={`tel:${card.phone_1}`} className="contact-item">
-          <PhoneIcon /> <span>{card.phone_1}</span>
-        </a>
-      )}
-      {card.phone_2 && (
-        <a href={`tel:${card.phone_2}`} className="contact-item">
-          <PhoneIcon /> <span>{card.phone_2}</span>
-        </a>
-      )}
-      {card.email_1 && (
-        <a href={`mailto:${card.email_1}`} className="contact-item">
-          <EmailIcon /> <span>{card.email_1}</span>
-        </a>
-      )}
-      {card.email_2 && (
-        <a href={`mailto:${card.email_2}`} className="contact-item">
-          <EmailIcon /> <span>{card.email_2}</span>
-        </a>
-      )}
-      {card.website && (
-        <a href={card.website.startsWith("http") ? card.website : `https://${card.website}`} target="_blank" rel="noopener noreferrer" className="contact-item">
-          <GlobeIcon /> <span>{card.website}</span>
-        </a>
-      )}
-      {card.address && (
-        <div className="contact-item address-item">
-          <MapPinIcon /> <span>{card.address}</span>
-        </div>
-      )}
+      {card.phone_1 && <a href={`tel:${card.phone_1}`} className="contact-item"><PhoneIcon /> <span>{card.phone_1}</span></a>}
+      {card.phone_2 && <a href={`tel:${card.phone_2}`} className="contact-item"><PhoneIcon /> <span>{card.phone_2}</span></a>}
+      {card.email_1 && <a href={`mailto:${card.email_1}`} className="contact-item"><EmailIcon /> <span>{card.email_1}</span></a>}
+      {card.email_2 && <a href={`mailto:${card.email_2}`} className="contact-item"><EmailIcon /> <span>{card.email_2}</span></a>}
+      {card.website && <a href={card.website.startsWith("http") ? card.website : `https://${card.website}`} target="_blank" rel="noopener noreferrer" className="contact-item"><GlobeIcon /> <span>{card.website}</span></a>}
+      {card.address && <div className="contact-item address-item"><MapPinIcon /> <span>{card.address}</span></div>}
     </div>
   );
 }
 
-/* ── Avatar ── */
+function resolveCardUrl(card) {
+  if (card.qr_payload) return card.qr_payload;
+  if (card.card_url) return card.card_url;
+  if (card.slug && typeof window !== "undefined") return `${window.location.origin}/c/${card.slug}`;
+  return "";
+}
+
+function CardQrBadge({ card, qrDataUrl, showQr }) {
+  const [generatedQr, setGeneratedQr] = useState("");
+  const qrTarget = useMemo(() => resolveCardUrl(card), [card]);
+
+  useEffect(() => {
+    if (!showQr || qrDataUrl || !qrTarget) {
+      setGeneratedQr("");
+      return;
+    }
+
+    let active = true;
+    QRCode.toDataURL(qrTarget, {
+      width: 180,
+      margin: 1,
+      color: { dark: "#0f172a", light: "#ffffff" },
+    })
+      .then((url) => { if (active) setGeneratedQr(url); })
+      .catch(() => { if (active) setGeneratedQr(""); });
+
+    return () => { active = false; };
+  }, [qrDataUrl, qrTarget, showQr]);
+
+  const source = qrDataUrl || generatedQr;
+  if (!showQr || !source) return null;
+
+  return (
+    <div className="card-qr-badge" aria-label="Card QR code">
+      <img src={source} alt="QR code for this card" />
+      <span>Scan card</span>
+    </div>
+  );
+}
+
 function Avatar({ card }) {
-  if (card.avatar_url) {
-    return <img className="avatar modern-avatar" src={card.avatar_url} alt={`${card.full_name} avatar`} />;
-  }
+  if (card.avatar_url) return <img className="avatar modern-avatar" src={card.avatar_url} alt={`${card.full_name} avatar`} />;
   return <div className="avatar initials modern-avatar">{initialsFromName(card.full_name)}</div>;
 }
 
-/* ── Style class helper ── */
 function styleClass(card) {
-  const style = card.card_style || "flat";
-  return `card-style-${style}`;
+  return `card-style-${card.card_style || "flat"}`;
 }
 
-/* ── Font class helper ── */
 function fontClass(card) {
-  const font = card.font_style || "default";
-  return `card-font-${font}`;
+  return `card-font-${card.font_style || "default"}`;
 }
 
-/* ── Border radius class helper ── */
 function radiusClass(card) {
-  const r = card.border_radius || "rounded";
-  return `card-radius-${r}`;
+  return `card-radius-${card.border_radius || "rounded"}`;
 }
 
-/* ── Bio Row ── */
 function BioRow({ card }) {
   if (!card.bio) return null;
   return <p className="card-bio">{card.bio}</p>;
 }
 
-/* ── Tagline Row ── */
 function TaglineRow({ card }) {
   if (!card.tagline) return null;
   return <p className="card-tagline">{card.tagline}</p>;
 }
 
-/* ── Logo ── */
 function CardLogo({ card }) {
   if (!card.show_logo || !card.logo_url) return null;
-  return <img className="card-logo" src={card.logo_url} alt={`${card.company || ""} logo`} />;
+  return <img className="card-logo" src={card.logo_url} alt={`${card.company || "Company"} logo`} />;
 }
 
-/* ── Template A: Classic top-accent ── */
-function TemplateA({ card }) {
+function TemplateA({ card, qrDataUrl, showQr }) {
   return (
     <article className={`template-card modern-template modern-template-a ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="card-top-accent" />
       <div className="card-content">
         <CardLogo card={card} />
+        <CardQrBadge card={card} qrDataUrl={qrDataUrl} showQr={showQr} />
         <Avatar card={card} />
         <div className="card-header-info">
           <h3>{card.full_name || "Your Name"}</h3>
@@ -167,8 +169,7 @@ function TemplateA({ card }) {
   );
 }
 
-/* ── Template B: Horizontal header ── */
-function TemplateB({ card }) {
+function TemplateB({ card, qrDataUrl, showQr }) {
   return (
     <article className={`template-card modern-template modern-template-b ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="card-content">
@@ -180,6 +181,7 @@ function TemplateB({ card }) {
           </div>
           <Avatar card={card} />
         </div>
+        <CardQrBadge card={card} qrDataUrl={qrDataUrl} showQr={showQr} />
         <CardLogo card={card} />
         <TaglineRow card={card} />
         <BioRow card={card} />
@@ -190,8 +192,7 @@ function TemplateB({ card }) {
   );
 }
 
-/* ── Template C: Sidebar ── */
-function TemplateC({ card }) {
+function TemplateC({ card, qrDataUrl, showQr }) {
   return (
     <article className={`template-card modern-template modern-template-c ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="split-layout">
@@ -199,6 +200,7 @@ function TemplateC({ card }) {
           <Avatar card={card} />
           <CardLogo card={card} />
           <SocialIcons card={card} />
+          <CardQrBadge card={card} qrDataUrl={qrDataUrl} showQr={showQr} />
         </div>
         <div className="split-right">
           <h3>{card.full_name || "Your Name"}</h3>
@@ -213,12 +215,12 @@ function TemplateC({ card }) {
   );
 }
 
-/* ── Template D: Centered with divider ── */
-function TemplateD({ card }) {
+function TemplateD({ card, qrDataUrl, showQr }) {
   return (
     <article className={`template-card modern-template modern-template-d ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="card-content centered-content">
         <CardLogo card={card} />
+        <CardQrBadge card={card} qrDataUrl={qrDataUrl} showQr={showQr} />
         <Avatar card={card} />
         <h3>{card.full_name || "Your Name"}</h3>
         {card.title && <p className="job-title">{card.title}</p>}
@@ -233,12 +235,12 @@ function TemplateD({ card }) {
   );
 }
 
-/* ── Template E: Glass ── */
-function TemplateE({ card }) {
+function TemplateE({ card, qrDataUrl, showQr }) {
   return (
     <article className={`template-card modern-template modern-template-e ${styleClass(card)} ${fontClass(card)} ${radiusClass(card)}`} style={{ "--template-bg": card.background_color, "--card-text": card.text_color || "#0f172a" }}>
       <div className="glass-content">
         <CardLogo card={card} />
+        <CardQrBadge card={card} qrDataUrl={qrDataUrl} showQr={showQr} />
         <div className="card-header-info">
           <h3>{card.full_name || "Your Name"}</h3>
           {card.title && <p className="job-title">{card.title}</p>}
@@ -254,18 +256,27 @@ function TemplateE({ card }) {
   );
 }
 
-export default function CardPreview({ template, card, wrapperClass = "" }) {
+function templateLetter(template, card) {
+  if (template) return template.length === 1 ? template.toUpperCase() : template.replace("template-", "").toUpperCase();
+  return (card.template_key || "template-a").replace("template-", "").toUpperCase();
+}
+
+export default function CardPreview({ template, card, wrapperClass = "", qrDataUrl = "", showQr }) {
   if (!card) return null;
-  const classes = `card-preview ${wrapperClass}`;
+
+  const classes = `card-preview ${wrapperClass}`.trim();
+  const activeTemplate = templateLetter(template, card);
+  const shouldShowQr = showQr ?? Boolean(card.show_qr_on_card);
+  const props = { card, qrDataUrl, showQr: shouldShowQr };
 
   const renderTemplate = () => {
-    switch (template) {
-      case "A": return <TemplateA card={card} />;
-      case "B": return <TemplateB card={card} />;
-      case "C": return <TemplateC card={card} />;
-      case "D": return <TemplateD card={card} />;
-      case "E": return <TemplateE card={card} />;
-      default:  return <TemplateA card={card} />;
+    switch (activeTemplate) {
+      case "A": return <TemplateA {...props} />;
+      case "B": return <TemplateB {...props} />;
+      case "C": return <TemplateC {...props} />;
+      case "D": return <TemplateD {...props} />;
+      case "E": return <TemplateE {...props} />;
+      default: return <TemplateA {...props} />;
     }
   };
 

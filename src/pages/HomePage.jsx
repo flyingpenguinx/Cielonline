@@ -1,213 +1,131 @@
 import { Link } from "react-router-dom";
-import { useRef, useState, useEffect, useCallback } from "react";
-import CardPreview from "../components/CardPreview";
-import PhoneFrame from "../components/PhoneFrame";
 
-const carlosCardExample = {
-  full_name: "Carlos Leon",
-  slug: "carlos-leon",
-  title: "Owner & Founder",
-  company: "Cielonline",
-  bio: "QR codes made for you.",
-  website: "https://cielonline.com",
-  avatar_url: "",
-  template_key: "template-c",
-  card_style: "glossy",
-  background_color: "#355dff",
-  phone_1: "(916) 616-3269",
-  phone_2: "",
-  email_1: "carloslmgustavo@gmail.com",
-  email_2: "",
-  address: "Sacramento, CA",
-  instagram_url: "https://instagram.com/cielonline",
-  linkedin_url: "https://linkedin.com/in/carlosleon",
-  facebook_url: "",
-  twitter_url: "",
-  tiktok_url: "",
-  youtube_url: "",
-  github_url: "",
-};
+const featureCards = [
+  {
+    to: "/qr-preview",
+    eyebrow: "QR Preview",
+    title: "Branded QR experiences",
+    text: "Show customers a digital card, website link, or Wi-Fi access flow that feels polished from the first scan.",
+    metric: "3 scan types",
+  },
+  {
+    to: "/admin-preview",
+    eyebrow: "Admin Preview",
+    title: "Business command center",
+    text: "Track inquiries, jobs, payments, customers, and site updates from a calm dashboard built for daily work.",
+    metric: "8 core tools",
+  },
+  {
+    to: "/preview",
+    eyebrow: "Card Designer",
+    title: "Simple custom layouts",
+    text: "Experiment with a lightweight card designer before creating the QR-ready profile your customers will open.",
+    metric: "Live preview",
+  },
+];
+
+const dashboardRows = [
+  ["Revenue", "$12,480", "+18%"],
+  ["Open inquiries", "24", "6 new"],
+  ["Bookings", "41", "This month"],
+];
 
 export default function HomePage({ session }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const touchStartX = useRef(0);
-  const touchDeltaX = useRef(0);
-  const autoplayRef = useRef(null);
-
-  const slides = [
-    {
-      label: "Business Card",
-      content: (
-        <PhoneFrame className="home-phone">
-          <CardPreview card={carlosCardExample} />
-        </PhoneFrame>
-      ),
-    },
-    {
-      label: "Website Link",
-      content: (
-        <PhoneFrame className="home-phone">
-          <div className="mini-screen-content">
-            <p className="mini-screen-title">Cielonline</p>
-            <p className="muted">Landing page opened from QR scan.</p>
-            <a className="btn btn-secondary" href="https://cielonline.com" target="_blank" rel="noreferrer">
-              Open Website
-            </a>
-          </div>
-        </PhoneFrame>
-      ),
-    },
-    {
-      label: "Wi-Fi Access",
-      content: (
-        <PhoneFrame className="home-phone">
-          <div className="mini-screen-content">
-            <p className="mini-screen-title">Join Network</p>
-            <p className="muted">SSID: Cielonline Guest</p>
-            <p className="muted">Tap connect after scanning.</p>
-          </div>
-        </PhoneFrame>
-      ),
-    },
-  ];
-
-  const totalSlides = slides.length;
-
-  const goTo = useCallback((index) => {
-    setActiveIndex(((index % totalSlides) + totalSlides) % totalSlides);
-  }, [totalSlides]);
-
-  const next = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
-
-  // Auto-advance every 8 seconds
-  useEffect(() => {
-    autoplayRef.current = setInterval(next, 8000);
-    return () => clearInterval(autoplayRef.current);
-  }, [next]);
-
-  const resetAutoplay = useCallback(() => {
-    clearInterval(autoplayRef.current);
-    autoplayRef.current = setInterval(next, 8000);
-  }, [next]);
-
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchDeltaX.current = 0;
-  };
-
-  const handleTouchMove = (e) => {
-    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
-  };
-
-  const handleTouchEnd = () => {
-    const threshold = 50;
-    if (touchDeltaX.current < -threshold) {
-      goTo(activeIndex + 1);
-      resetAutoplay();
-    } else if (touchDeltaX.current > threshold) {
-      goTo(activeIndex - 1);
-      resetAutoplay();
-    }
-  };
-
   return (
-    <main>
-      {/* ── Dark Hero ── */}
-      <section className="hero-section">
-        <div className="hero-inner">
-          <div className="hero-badge">Professional QR Experiences</div>
-          <h1>
-            Build stunning{" "}
-            <span className="gradient-text">digital cards</span>{" "}
-            in minutes
-          </h1>
-          <p className="hero-lead">
-            Design once, preview instantly, and publish a clean mobile-first business card, website link, or Wi-Fi QR code.
-          </p>
-          <div className="hero-actions">
-            {session ? (
-              <>
-                <Link className="btn btn-primary btn-lg" to="/dashboard">
-                  Dashboard
-                </Link>
-                <Link className="btn btn-secondary btn-lg" to="/admin">
-                  Admin Portal
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link className="btn btn-primary btn-lg" to="/login">
-                  Get Started
-                </Link>
-                <Link className="btn btn-secondary btn-lg" to="/preview">
-                  Try the Builder
-                </Link>
-              </>
-            )}
+    <main className="home-landing fade-in">
+      <section className="home-hero-section">
+        <div className="home-hero-bg" aria-hidden="true" />
+        <div className="container home-hero-grid">
+          <div className="home-hero-copy">
+            <div className="home-logo-mark">
+              <img src="/Logo.svg" alt="" />
+              <span>Cielonline</span>
+            </div>
+            <p className="home-kicker">Client sites, QR cards, and business tools in one place</p>
+            <h1>Run your online presence with less clutter and more control.</h1>
+            <p className="home-lead">
+              Cielonline helps service businesses publish polished QR experiences, manage website content, and keep daily operations organized from one modern dashboard.
+            </p>
+            <div className="hero-actions home-actions">
+              <Link className="btn btn-primary btn-lg" to={session ? "/dashboard" : "/login"}>
+                {session ? "Open Dashboard" : "Log in"}
+              </Link>
+              <Link className="btn btn-secondary btn-lg" to="/qr-preview">QR Preview</Link>
+              <Link className="btn btn-secondary btn-lg" to="/admin-preview">Admin Preview</Link>
+            </div>
+          </div>
+
+          <div className="liquid-dashboard-preview" aria-label="Cielonline dashboard preview">
+            <div className="preview-topbar">
+              <img src="/Logo.svg" alt="" />
+              <div>
+                <strong>Cielonline</strong>
+                <span>Operations dashboard</span>
+              </div>
+            </div>
+            <div className="preview-stat-grid">
+              {dashboardRows.map(([label, value, detail]) => (
+                <div className="preview-stat" key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                  <small>{detail}</small>
+                </div>
+              ))}
+            </div>
+            <div className="preview-workspace">
+              <div className="preview-side-nav">
+                <span className="active" />
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="preview-chart-card">
+                <div className="chart-line" />
+                <div className="chart-bars">
+                  <span style={{ height: "38%" }} />
+                  <span style={{ height: "58%" }} />
+                  <span style={{ height: "46%" }} />
+                  <span style={{ height: "78%" }} />
+                  <span style={{ height: "64%" }} />
+                </div>
+              </div>
+              <div className="preview-task-stack">
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Showcase — infinite swipe carousel ── */}
-      <div className="container">
-        <section className="showcase-section">
-          <div className="showcase-header">
-            <h2>What you can build</h2>
-            <p>Three QR types, one dashboard. Swipe to explore.</p>
+      <section className="container home-feature-section" aria-label="Cielonline previews">
+        <div className="section-heading-row">
+          <div>
+            <p className="section-kicker">Choose what to explore</p>
+            <h2>Simple previews for the tools that matter most.</h2>
           </div>
+          <p className="muted">Start with the QR experience, preview the admin dashboard, or test a lighter card designer before signing in.</p>
+        </div>
 
-          <div
-            className="showcase-carousel-wrap"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {slides.map((slide, i) => {
-              // Compute offset: -1 = left, 0 = center, 1 = right
-              let offset = i - activeIndex;
-              if (offset > 1) offset -= totalSlides;
-              if (offset < -1) offset += totalSlides;
-
-              const isActive = offset === 0;
-              const cls = isActive ? "showcase-card-active" : offset < 0 ? "showcase-card-left" : "showcase-card-right";
-
-              return (
-                <article
-                  key={slide.label}
-                  className={`showcase-card ${cls}`}
-                  onClick={() => { if (!isActive) { goTo(i); resetAutoplay(); } }}
-                >
-                  <h3>{slide.label} <span className="card-badge">QR</span></h3>
-                  {slide.content}
-                </article>
-              );
-            })}
-          </div>
-
-          <div className="showcase-dots">
-            {slides.map((slide, i) => (
-              <button
-                key={slide.label}
-                className={`showcase-dot ${i === activeIndex ? "active" : ""}`}
-                onClick={() => { goTo(i); resetAutoplay(); }}
-                aria-label={`Show ${slide.label}`}
-              />
-            ))}
-          </div>
-
-          {/* Compact profile row */}
-          <div className="profile-row">
-            <div className="profile-row-avatar">CL</div>
-            <div className="profile-row-info">
-              <strong>Carlos Leon</strong>
-              <span>Owner & Founder · Cielonline · /c/carlos-leon</span>
-            </div>
-            <Link className="btn btn-secondary" to="/preview" style={{ flexShrink: 0 }}>
-              View
+        <div className="home-feature-grid">
+          {featureCards.map((card) => (
+            <Link className="home-feature-card" to={card.to} key={card.title}>
+              <span className="feature-eyebrow">{card.eyebrow}</span>
+              <h3>{card.title}</h3>
+              <p>{card.text}</p>
+              <div className="feature-card-footer">
+                <span>{card.metric}</span>
+                <span aria-hidden="true">-&gt;</span>
+              </div>
             </Link>
-          </div>
-        </section>
-      </div>
+          ))}
+        </div>
+
+        <div className="home-beta-link-row">
+          <a href="/web-builder-beta.html" target="_blank" rel="noreferrer">Open experimental WebBuilder beta</a>
+        </div>
+      </section>
     </main>
   );
 }
