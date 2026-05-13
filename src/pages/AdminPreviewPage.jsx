@@ -19,10 +19,6 @@ export default function AdminPreviewPage({ session }) {
   return (
     <main className="container main-space admin-preview-page fade-in">
       <section className="admin-preview-hero">
-        <div className="home-logo-mark">
-          <img src="/Logo.svg" alt="" />
-          <span>Cielonline</span>
-        </div>
         <div className="admin-preview-copy">
           <p className="section-kicker">Admin Dashboard Preview</p>
           <h1>A calmer way to run the moving parts of your business.</h1>

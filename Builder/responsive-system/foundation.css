@@ -1,0 +1,323 @@
+/* =============================================================
+   foundation.css — Drop-in responsive design system
+   Pair with README.md. Works in any project (HTML / React / Vue).
+   Last reviewed: 2026
+   ============================================================= */
+
+/* -----------------------------------------------------------------
+   1. TOKENS — change these to re-skin the whole site.
+   Fluid values use clamp(MIN, PREFERRED, MAX) where PREFERRED is a
+   vw-based expression that ramps between two viewport widths.
+   Default ramp: 320px (20rem) → 1440px (90rem).
+   ----------------------------------------------------------------- */
+:root {
+  /* ---- Type scale (ratio 1.25 — Major Third) ---- */
+  /* Each step = clamp(small-screen size, fluid, large-screen size)   */
+  --fs-xs:    clamp(0.694rem, 0.66rem + 0.17vw, 0.8rem);
+  --fs-sm:    clamp(0.833rem, 0.79rem + 0.21vw, 0.95rem);
+  --fs-base:  clamp(1.000rem, 0.95rem + 0.25vw, 1.125rem);
+  --fs-md:    clamp(1.200rem, 1.13rem + 0.34vw, 1.406rem);
+  --fs-lg:    clamp(1.440rem, 1.34rem + 0.47vw, 1.758rem);
+  --fs-xl:    clamp(1.728rem, 1.59rem + 0.65vw, 2.197rem);
+  --fs-2xl:   clamp(2.074rem, 1.88rem + 0.90vw, 2.747rem);
+  --fs-3xl:   clamp(2.488rem, 2.22rem + 1.24vw, 3.433rem);
+  --fs-4xl:   clamp(2.986rem, 2.62rem + 1.69vw, 4.292rem);
+
+  --lh-tight:   1.15;
+  --lh-snug:    1.3;
+  --lh-normal:  1.55;
+  --lh-relaxed: 1.7;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold: 600;
+  --fw-bold:    700;
+
+  /* ---- Spacing scale (base 4px, fluid where it matters) ---- */
+  --space-0:  0;
+  --space-1:  0.25rem;   /* 4  */
+  --space-2:  0.5rem;    /* 8  */
+  --space-3:  0.75rem;   /* 12 */
+  --space-4:  1rem;      /* 16 */
+  --space-5:  1.5rem;    /* 24 */
+  --space-6:  2rem;      /* 32 */
+  --space-7:  3rem;      /* 48 */
+  --space-8:  4rem;      /* 64 */
+  --space-9:  6rem;      /* 96 */
+  --space-10: 8rem;      /* 128 */
+
+  /* Fluid section paddings — use these on <section> elements. */
+  --section-y-sm: clamp(1.5rem, 1rem + 2vw, 3rem);
+  --section-y-md: clamp(2.5rem, 1.5rem + 4vw, 5rem);
+  --section-y-lg: clamp(4rem,   2rem + 8vw, 8rem);
+
+  /* Fluid gutters (horizontal page padding) */
+  --gutter:   clamp(1rem, 0.5rem + 2vw, 2rem);
+
+  /* ---- Container widths ---- */
+  --measure-narrow: 45ch;   /* short paragraphs                */
+  --measure:        65ch;   /* ideal reading column            */
+  --measure-wide:   80ch;   /* dense content                   */
+  --container-sm:   40rem;  /* 640                              */
+  --container-md:   48rem;  /* 768                              */
+  --container-lg:   64rem;  /* 1024                             */
+  --container-xl:   80rem;  /* 1280                             */
+  --container-2xl:  90rem;  /* 1440                             */
+
+  /* ---- Radii ---- */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-pill: 999px;
+
+  /* ---- Elevation (subtle, pro) ---- */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:  0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg:  0 12px 32px rgba(0,0,0,.12);
+
+  /* ---- Color (neutral defaults — override in your app theme) ---- */
+  --color-bg:        #ffffff;
+  --color-surface:   #f7f7f8;
+  --color-border:    #e5e5ea;
+  --color-text:      #111418;
+  --color-text-muted:#5b6470;
+  --color-accent:    #1d6cf3;
+  --color-accent-contrast: #ffffff;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-med:  220ms;
+  --dur-slow: 360ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg:        #0e1014;
+    --color-surface:   #161922;
+    --color-border:    #262a36;
+    --color-text:      #ecedef;
+    --color-text-muted:#9aa1ad;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -----------------------------------------------------------------
+   2. MODERN RESET (combination of Andy Bell + Josh Comeau)
+   ----------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html {
+  /* Lets the user's browser font-size preference win.
+     1rem will equal whatever they set (default 16px).         */
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Honor user's reduced motion preference for smooth scroll. */
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+input, button, textarea, select { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; padding: 0; }
+
+p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; hyphens: auto; }
+h1, h2, h3, h4 { line-height: var(--lh-tight); text-wrap: balance; font-weight: var(--fw-semibold); }
+p, li { text-wrap: pretty; max-width: var(--measure); }
+
+h1 { font-size: var(--fs-4xl); letter-spacing: -0.02em; }
+h2 { font-size: var(--fs-3xl); letter-spacing: -0.015em; }
+h3 { font-size: var(--fs-2xl); letter-spacing: -0.01em; }
+h4 { font-size: var(--fs-xl);  }
+h5 { font-size: var(--fs-lg);  }
+h6 { font-size: var(--fs-md);  }
+
+a { color: var(--color-accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.15em; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+#root, #__next { isolation: isolate; }
+
+/* -----------------------------------------------------------------
+   3. LAYOUT PRIMITIVES (Every Layout patterns)
+   Use these utility classes anywhere. They are zero-decoration —
+   they only manage flow, spacing, and breakpoints.
+   ----------------------------------------------------------------- */
+
+/* --- 3a. Stack: vertical rhythm. Children get even gap. --- */
+.stack            { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack-xs         { gap: var(--space-2); }
+.stack-sm         { gap: var(--space-3); }
+.stack-md         { gap: var(--space-5); }
+.stack-lg         { gap: var(--space-7); }
+.stack-xl         { gap: var(--space-9); }
+
+/* --- 3b. Cluster: horizontal group that wraps. --- */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* --- 3c. Center: max-width column, horizontally centered. --- */
+.center {
+  box-sizing: content-box;
+  max-inline-size: var(--measure);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.center-wide   { max-inline-size: var(--container-xl); }
+.center-narrow { max-inline-size: var(--measure-narrow); }
+
+/* --- 3d. Sidebar: content + side column that collapses. --- */
+/* Source: Every Layout. The magic is flex-basis math.        */
+.sidebar { display: flex; flex-wrap: wrap; gap: var(--space-6); }
+.sidebar > :first-child { flex-basis: 16rem; flex-grow: 1; }
+.sidebar > :last-child  { flex-basis: 0; flex-grow: 999; min-inline-size: 60%; }
+
+/* --- 3e. Switcher: row above threshold, column below. --- */
+.switcher { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.switcher > * {
+  flex-grow: 1;
+  flex-basis: calc((40rem - 100%) * 999); /* 40rem ≈ 640px threshold */
+}
+
+/* --- 3f. Auto-grid: responsive cards without media queries. --- */
+.auto-grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+}
+.auto-grid-tight { gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr)); }
+.auto-grid-wide  { gap: var(--space-7); grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); }
+
+/* --- 3g. Frame: aspect-ratio media wrapper. --- */
+.frame      { aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-md); }
+.frame > *  { width: 100%; height: 100%; object-fit: cover; }
+.frame-1-1  { aspect-ratio: 1 / 1; }
+.frame-4-3  { aspect-ratio: 4 / 3; }
+.frame-3-4  { aspect-ratio: 3 / 4; }
+
+/* --- 3h. Cover: hero / full-bleed section. --- */
+.cover {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 60dvh;
+  padding-block: var(--section-y-lg);
+  padding-inline: var(--gutter);
+  justify-content: center;
+}
+
+/* -----------------------------------------------------------------
+   4. SECTION + CONTAINER HELPERS
+   ----------------------------------------------------------------- */
+section { padding-block: var(--section-y-md); padding-inline: var(--gutter); }
+section.section-lg { padding-block: var(--section-y-lg); }
+section.section-sm { padding-block: var(--section-y-sm); }
+
+.container {
+  width: 100%;
+  max-inline-size: var(--container-xl);
+  margin-inline: auto;
+}
+
+/* -----------------------------------------------------------------
+   5. CONTAINER QUERIES (component-level responsiveness)
+   Apply container-type: inline-size on the wrapper, then use
+   @container in your component CSS:
+     .card { container-type: inline-size; }
+     @container (min-width: 28rem) { ... }
+   These helpers expose breakpoints for any container.
+   ----------------------------------------------------------------- */
+.cq          { container-type: inline-size; }
+.cq-named    { container-type: inline-size; container-name: card; }
+
+/* -----------------------------------------------------------------
+   6. TYPOGRAPHY UTILITIES
+   ----------------------------------------------------------------- */
+.text-xs   { font-size: var(--fs-xs); }
+.text-sm   { font-size: var(--fs-sm); }
+.text-base { font-size: var(--fs-base); }
+.text-md   { font-size: var(--fs-md); }
+.text-lg   { font-size: var(--fs-lg); }
+.text-xl   { font-size: var(--fs-xl); }
+.text-2xl  { font-size: var(--fs-2xl); }
+.text-3xl  { font-size: var(--fs-3xl); }
+.text-4xl  { font-size: var(--fs-4xl); }
+.text-muted{ color: var(--color-text-muted); }
+.text-balance{ text-wrap: balance; }
+.text-pretty { text-wrap: pretty; }
+.measure       { max-inline-size: var(--measure); }
+.measure-narrow{ max-inline-size: var(--measure-narrow); }
+.measure-wide  { max-inline-size: var(--measure-wide); }
+
+/* -----------------------------------------------------------------
+   7. BUTTONS / INTERACTIVE  (>=44px touch target)
+   ----------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-block-size: 2.75rem;          /* 44px */
+  padding-inline: 1.25em;
+  padding-block: 0.6em;
+  border-radius: var(--radius-md);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-base);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  transition: transform var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.btn:hover  { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn:active { transform: translateY(0); }
+.btn-ghost  { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
+
+/* -----------------------------------------------------------------
+   8. DEBUG OVERLAYS — toggle on while building.
+   Add class="debug" to <body> to see a baseline grid + outline
+   every box. Add class="debug-spacing" to color all margins/padding.
+   ----------------------------------------------------------------- */
+body.debug {
+  background-image:
+    linear-gradient(to bottom, rgba(255,0,80,0.12) 0 1px, transparent 1px 100%);
+  background-size: 100% 8px;
+}
+body.debug * { outline: 1px solid rgba(0,200,255,0.25); }
+body.debug-spacing *  { background: rgba(255,0,80,0.06); }
+body.debug-spacing *::before,
+body.debug-spacing *::after { background: rgba(0,255,120,0.15); }

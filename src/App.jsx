@@ -45,7 +45,6 @@ function AppHeader({ session, signOut }) {
       <Link to="/" onClick={close}>Home</Link>
       {!session && <Link to="/qr-preview" onClick={close}>QR Preview</Link>}
       {!session && <Link to="/admin-preview" onClick={close}>Admin Preview</Link>}
-      {!session && <Link to="/preview" onClick={close}>Card Designer</Link>}
       {session ? <Link to="/dashboard" onClick={close}>Dashboard</Link> : null}
       {session ? <Link to="/qr-builder" onClick={close}>Build QR</Link> : null}
       {session ? <Link to="/admin" onClick={close}>Admin Portal</Link> : null}

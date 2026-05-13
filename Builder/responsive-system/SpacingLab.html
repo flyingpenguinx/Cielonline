@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spacing Lab — Responsive Design Toolkit</title>
+<style>
+  /* Inline a slim subset of foundation.css so the Lab works standalone. */
+  :root{
+    --bg:#0e1014;--surface:#161922;--surface-2:#1c2030;--border:#262a36;
+    --text:#ecedef;--muted:#9aa1ad;--accent:#5b9bff;--accent-2:#b78bff;
+    --good:#4cd49a;--warn:#ffb547;--bad:#ff6c7a;
+    --r-sm:6px;--r-md:10px;--r-lg:14px;
+    --fs-base: clamp(0.92rem, 0.88rem + 0.2vw, 1rem);
+    --space-3:.75rem;--space-4:1rem;--space-5:1.5rem;--space-6:2rem;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  *{margin:0}
+  html,body{height:100%}
+  body{
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);font-size:var(--fs-base);
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  input,select,textarea{font:inherit;color:inherit}
+  a{color:var(--accent)}
+
+  /* Layout */
+  .app{display:grid;grid-template-rows:auto 1fr;height:100dvh}
+  header{
+    display:flex;align-items:center;gap:var(--space-5);
+    padding:var(--space-3) var(--space-5);
+    border-bottom:1px solid var(--border);background:var(--surface);
+    flex-wrap:wrap;
+  }
+  header h1{font-size:1.05rem;letter-spacing:-.01em;font-weight:600}
+  header h1 .dot{display:inline-block;width:.6em;height:.6em;border-radius:50%;background:var(--accent);margin-right:.4em;vertical-align:1px;box-shadow:0 0 14px var(--accent)}
+  .tabs{display:flex;gap:2px;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border)}
+  .tab{padding:6px 12px;border-radius:6px;font-size:.82rem;color:var(--muted);font-weight:500}
+  .tab.active{background:var(--surface-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+  .tab:hover:not(.active){color:var(--text)}
+  .env{margin-left:auto;display:flex;gap:var(--space-4);font-size:.75rem;color:var(--muted);flex-wrap:wrap}
+  .env b{color:var(--text);font-weight:600}
+
+  main{overflow:auto}
+  .view{display:none;padding:var(--space-5);max-width:none}
+  .view.active{display:block}
+
+  /* Card / panel */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--space-5)}
+  .grid{display:grid;gap:var(--space-5)}
+  .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.35rem}
+  .row{display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:center}
+  .field{display:flex;flex-direction:column;gap:.25rem}
+  .field input[type=number],.field input[type=text],.field select{
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);
+    padding:.4rem .55rem;min-width:6rem;
+  }
+  .field input[type=range]{accent-color:var(--accent);width:14rem}
+  .pill{display:inline-flex;align-items:center;gap:.4em;padding:.2em .6em;border-radius:999px;background:var(--surface-2);font-size:.72rem;border:1px solid var(--border)}
+  .out{
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+    background:#0a0c11;border:1px solid var(--border);border-radius:var(--r-sm);
+    padding:.55rem .7rem;color:#cfe;font-size:.82rem;overflow-x:auto;white-space:pre;
+    user-select:all;
+  }
+  .btn{
+    background:var(--accent);color:#001020;font-weight:600;
+    padding:.45rem .9rem;border-radius:var(--r-sm);font-size:.82rem;
+  }
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+  .btn:hover{filter:brightness(1.1)}
+
+  /* ========= VIEWPORTS VIEW ========= */
+  .vp-controls{display:flex;gap:var(--space-4);align-items:end;flex-wrap:wrap;margin-bottom:var(--space-5)}
+  .vp-grid{display:grid;gap:var(--space-5)}
+  .vp{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;display:flex;flex-direction:column}
+  .vp-head{display:flex;align-items:center;justify-content:space-between;padding:.45rem .7rem;background:var(--surface-2);font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border)}
+  .vp-head b{color:var(--text)}
+  .vp-stage{background:#fff;flex:1;overflow:auto;position:relative}
+  .vp-stage iframe{border:0;display:block;background:#fff;transform-origin:top left}
+  .baseline-overlay{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to bottom,rgba(255,40,90,.18) 0 1px,transparent 1px 8px);mix-blend-mode:multiply;display:none}
+  .vp.show-baseline .baseline-overlay{display:block}
+
+  /* ========= SCALE BUILDER ========= */
+  .scale-table{width:100%;border-collapse:collapse;font-size:.85rem}
+  .scale-table th,.scale-table td{padding:.5rem .6rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+  .scale-table th{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .scale-preview{font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:24rem}
+  .scale-table code{font-size:.76rem;color:#cfe;font-family:ui-monospace,Consolas,monospace}
+
+  /* spacing visualizer bars */
+  .space-row{display:grid;grid-template-columns:5rem 1fr 7rem;gap:.7rem;align-items:center;padding:.35rem 0;border-bottom:1px dashed var(--border)}
+  .space-bar{height:14px;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:3px}
+
+  /* ========= CLAMP GENERATOR ========= */
+  .clamp-preview{background:#fff;color:#111;padding:var(--space-5);border-radius:var(--r-md);overflow:hidden}
+  .clamp-preview .demo{font-weight:600;letter-spacing:-.01em;line-height:1.1}
+  .clamp-canvas{resize:horizontal;overflow:auto;border:1px dashed var(--border);min-width:280px;max-width:100%;width:100%}
+
+  /* ========= CHECKLIST ========= */
+  .check{display:flex;align-items:flex-start;gap:.6rem;padding:.45rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
+  .check input{margin-top:.2rem;accent-color:var(--accent);transform:scale(1.1)}
+
+  details{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem .9rem}
+  details+details{margin-top:.5rem}
+  summary{cursor:pointer;font-weight:600;font-size:.9rem}
+  details p{margin-top:.5rem;color:var(--muted);font-size:.85rem;line-height:1.55}
+  details code{background:#0a0c11;padding:.05em .35em;border-radius:3px;color:#cfe;font-size:.85em}
+
+  .note{font-size:.78rem;color:var(--muted);margin-top:.4rem;line-height:1.45}
+  h2.sec{font-size:1.05rem;margin-bottom:var(--space-3);letter-spacing:-.01em}
+  h3.sub{font-size:.95rem;color:var(--muted);font-weight:600;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(22rem,100%),1fr));gap:var(--space-5)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1><span class="dot"></span>Spacing Lab</h1>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="viewports">Viewports</button>
+      <button class="tab" data-view="clamp">Clamp Generator</button>
+      <button class="tab" data-view="scale">Type &amp; Space Scales</button>
+      <button class="tab" data-view="checklist">Pro Checklist</button>
+      <button class="tab" data-view="learn">The Science</button>
+    </nav>
+    <div class="env">
+      <span>Viewport <b id="env-vp">—</b></span>
+      <span>DPR <b id="env-dpr">—</b></span>
+      <span>1rem = <b id="env-rem">—</b></span>
+      <span>Zoom (est.) <b id="env-zoom">—</b></span>
+    </div>
+  </header>
+
+  <main>
+
+  <!-- ========================= VIEWPORTS ========================= -->
+  <section class="view active" id="view-viewports">
+    <div class="vp-controls card">
+      <div class="field" style="flex:1;min-width:18rem">
+        <span class="label">URL or path to preview</span>
+        <input id="vp-url" type="text" value="../webBuilder.html" placeholder="https://example.com or relative/path.html">
+      </div>
+      <div class="field">
+        <span class="label">Zoom (simulate browser/OS scale)</span>
+        <div class="row" style="gap:.6rem">
+          <input id="vp-zoom" type="range" min="50" max="200" step="5" value="100">
+          <span class="pill"><b id="vp-zoom-val">100%</b></span>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Overlays</span>
+        <div class="row">
+          <label class="row" style="gap:.35rem"><input type="checkbox" id="vp-baseline">8px baseline grid</label>
+          <button class="btn ghost" id="vp-reload">Reload</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="vp-grid" id="vp-grid"></div>
+    <p class="note">
+      Each frame is a real browser at the indicated CSS width. Resize your window — the lab is responsive too.
+      The zoom slider applies a CSS transform identical to what browser zoom does, so you can see how the page reflows
+      for users on Windows 150–175% scale or who hit Ctrl + to enlarge text.
+    </p>
+  </section>
+
+  <!-- ========================= CLAMP ========================= -->
+  <section class="view" id="view-clamp">
+    <div class="split">
+      <div class="card">
+        <h2 class="sec">Fluid <code>clamp()</code> generator</h2>
+        <p class="note" style="margin-bottom:var(--space-4)">
+          Type the smallest size you want on a phone and the largest size you want on a big monitor.
+          The output is a single CSS value that ramps smoothly between the two — no media queries needed.
+        </p>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-3)">
+          <div class="field"><span class="label">Min size (px)</span><input type="number" id="c-min" value="16"></div>
+          <div class="field"><span class="label">Max size (px)</span><input type="number" id="c-max" value="48"></div>
+          <div class="field"><span class="label">Min viewport (px)</span><input type="number" id="c-vmin" value="320"></div>
+          <div class="field"><span class="label">Max viewport (px)</span><input type="number" id="c-vmax" value="1440"></div>
+        </div>
+        <div style="margin-top:var(--space-4)">
+          <span class="label">CSS output (click to select)</span>
+          <div class="out" id="c-out">clamp(...)</div>
+        </div>
+        <div class="row" style="margin-top:var(--space-3)">
+          <button class="btn" id="c-copy">Copy</button>
+          <button class="btn ghost" id="c-preset-h1">H1 preset</button>
+          <button class="btn ghost" id="c-preset-body">Body preset</button>
+          <button class="btn ghost" id="c-preset-section">Section padding</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="sec">Live preview (drag the right edge)</h2>
+        <div class="clamp-canvas" id="c-canvas">
+          <div class="clamp-preview">
+            <div class="demo" id="c-demo">Resize me to see fluid scaling</div>
+            <p style="margin-top:1rem;color:#333;font-size:.9rem">
+              Container width: <b id="c-cw">—</b>. The value above is computed by the browser
+              using the clamp() string on the left. Drag the dashed right edge of this box.
+            </p>
+          </div>
+        </div>
+        <p class="note">
+          The preview uses your current viewport for vw math. To verify behavior on a phone, switch to the
+          <b>Viewports</b> tab and inspect the 375px frame.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= SCALE ========================= -->
+  <section class="view" id="view-scale">
+    <div class="split">
+      <div class="card">
+        <h2 class="sec">Modular type scale</h2>
+        <div class="row" style="margin-bottom:var(--space-4)">
+          <div class="field"><span class="label">Base (rem)</span><input type="number" id="s-base" value="1" step="0.05"></div>
+          <div class="field"><span class="label">Ratio</span>
+            <select id="s-ratio">
+              <option value="1.125">1.125 — Major Second (dense UI)</option>
+              <option value="1.2">1.2 — Minor Third</option>
+              <option value="1.25" selected>1.25 — Major Third (default)</option>
+              <option value="1.333">1.333 — Perfect Fourth</option>
+              <option value="1.414">1.414 — Augmented Fourth</option>
+              <option value="1.5">1.5 — Perfect Fifth (dramatic)</option>
+              <option value="1.618">1.618 — Golden</option>
+            </select>
+          </div>
+          <div class="field"><span class="label">Mobile shrink</span>
+            <select id="s-shrink">
+              <option value="0">0% (no fluid)</option>
+              <option value="0.15" selected>15%</option>
+              <option value="0.25">25%</option>
+              <option value="0.35">35%</option>
+            </select>
+          </div>
+        </div>
+        <table class="scale-table">
+          <thead><tr><th>Token</th><th>Preview</th><th>Size</th><th>CSS</th></tr></thead>
+          <tbody id="s-body"></tbody>
+        </table>
+        <div style="margin-top:var(--space-4)">
+          <span class="label">Copy as CSS variables</span>
+          <div class="out" id="s-css"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="sec">Spacing scale</h2>
+        <p class="note" style="margin-bottom:var(--space-4)">
+          Base 4px. Use these everywhere; never invent in-between values. The shorter the scale, the more consistent your design feels.
+        </p>
+        <div id="space-list"></div>
+        <div style="margin-top:var(--space-4)">
+          <span class="label">Copy as CSS variables</span>
+          <div class="out" id="space-css"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= CHECKLIST ========================= -->
+  <section class="view" id="view-checklist">
+    <div class="card" style="max-width:48rem">
+      <h2 class="sec">Pre-ship "Looks Professional" checklist</h2>
+      <p class="note" style="margin-bottom:var(--space-4)">
+        Run through this list before declaring a page done. Boxes persist in localStorage so you can keep state per session.
+      </p>
+      <div id="checklist"></div>
+      <div class="row" style="margin-top:var(--space-4)">
+        <button class="btn ghost" id="reset-check">Reset</button>
+        <span class="pill" id="check-score">0 / 0</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= LEARN ========================= -->
+  <section class="view" id="view-learn">
+    <div class="card" style="max-width:52rem">
+      <h2 class="sec">The Science (condensed)</h2>
+      <p style="color:var(--muted);margin-bottom:var(--space-4)">
+        For the full version, read <code>README.md</code> in this folder. These are the load-bearing concepts.
+      </p>
+
+      <details open>
+        <summary>1. OS display scale is invisible to your CSS.</summary>
+        <p>Windows 175% / macOS Retina scaling rescales <em>physical</em> pixels into CSS pixels before your stylesheet ever runs. A 4K monitor at 200% reports the same ~1920 CSS px viewport as a 1080p monitor at 100%. You don't need to detect scale — just build for a range of CSS widths.</p>
+      </details>
+
+      <details>
+        <summary>2. Browser zoom is the variable that actually changes layout.</summary>
+        <p>Ctrl + multiplies every CSS pixel value. A user at 150% zoom on a 1280px window sees layout as if the viewport were ~853px wide. Honor it: use <code>em</code> in your media queries and <code>rem</code> in your font sizes.</p>
+      </details>
+
+      <details>
+        <summary>3. clamp(MIN, PREFERRED, MAX) replaces 90% of media queries.</summary>
+        <p>Instead of "size is 16px below 768 and 20px above," write <code>clamp(1rem, 0.9rem + 0.5vw, 1.25rem)</code>. The value ramps smoothly between breakpoints. No jumps, no extra rules.</p>
+      </details>
+
+      <details>
+        <summary>4. A modular scale + fixed spacing scale = visual consistency.</summary>
+        <p>All font sizes derive from one base × ratio. All spacing comes from a 4px-based scale. Use the <b>Type &amp; Space Scales</b> tab to generate yours. After that, never invent a number — pick the token.</p>
+      </details>
+
+      <details>
+        <summary>5. Layout = 5 primitives, not 50 unique flex/grid rules.</summary>
+        <p><b>Stack</b> (vertical rhythm), <b>Cluster</b> (horizontal wrap), <b>Sidebar</b> (collapsing column), <b>Switcher</b> (row↔column flip), <b>Auto-grid</b> (responsive cards). Most sites need nothing else. See <code>foundation.css</code>.</p>
+      </details>
+
+      <details>
+        <summary>6. Container queries beat media queries for components.</summary>
+        <p>A card in a sidebar shouldn't read the viewport — it should read its own container. <code>container-type: inline-size</code> + <code>@container (min-width: 30rem)</code> makes a component truly portable.</p>
+      </details>
+
+      <details>
+        <summary>7. Why AI-generated CSS looks bad (and how to fix it).</summary>
+        <p>Models pick pixel literals (<code>padding: 20px 40px</code>) because that's what most tutorials show. They duplicate values, mix scales, fear small text. Paste <code>ai-rules.md</code> at the top of every prompt and the issue mostly disappears.</p>
+      </details>
+
+      <details>
+        <summary>8. Test matrix that catches everything.</summary>
+        <p>320px, 768px, 1280px, 1920px viewport widths × 100% / 150% / 200% browser zoom × light / dark mode. Twelve combinations. If they all look right, the page works on every laptop and every monitor anyone has.</p>
+      </details>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<script>
+/* ========================= TABS ========================= */
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (!b) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + b.dataset.view));
+});
+
+/* ========================= ENV PANEL ========================= */
+function updateEnv() {
+  document.getElementById('env-vp').textContent = `${innerWidth}×${innerHeight}`;
+  document.getElementById('env-dpr').textContent = devicePixelRatio.toFixed(2);
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  document.getElementById('env-rem').textContent = `${remPx.toFixed(1)}px`;
+  // Best-effort zoom estimate: outerWidth/innerWidth is rough but useful.
+  const zoom = Math.round((outerWidth / innerWidth) * 100);
+  document.getElementById('env-zoom').textContent = isFinite(zoom) ? `${zoom}%` : '—';
+}
+updateEnv();
+addEventListener('resize', updateEnv);
+
+/* ========================= VIEWPORTS ========================= */
+const VIEWPORTS = [
+  { name: 'Mobile S',  w: 320,  label: 'iPhone SE' },
+  { name: 'Mobile L',  w: 414,  label: 'iPhone Pro Max' },
+  { name: 'Tablet',    w: 768,  label: 'iPad portrait' },
+  { name: 'Laptop',    w: 1280, label: 'MacBook 13" / standard laptop' },
+  { name: 'Desktop',   w: 1920, label: 'Full HD desktop' },
+];
+const PREVIEW_H = 560;
+
+function buildViewports() {
+  const grid = document.getElementById('vp-grid');
+  const url = document.getElementById('vp-url').value.trim();
+  const zoom = +document.getElementById('vp-zoom').value / 100;
+  const showBaseline = document.getElementById('vp-baseline').checked;
+  grid.innerHTML = '';
+  // Decide layout: stack on narrow screens, row of small previews on wide.
+  const wide = innerWidth > 1200;
+  grid.style.gridTemplateColumns = wide ? 'repeat(auto-fit,minmax(260px,1fr))' : '1fr';
+  VIEWPORTS.forEach(v => {
+    const card = document.createElement('div');
+    card.className = 'vp' + (showBaseline ? ' show-baseline' : '');
+    // Available stage width:
+    const stageW = wide ? Math.min(v.w, 360) : Math.min(v.w, innerWidth - 60);
+    const scale = stageW / v.w;
+    card.innerHTML = `
+      <div class="vp-head">
+        <span><b>${v.name}</b> · ${v.w}px <span style="color:var(--muted)">${v.label}</span></span>
+        <span class="pill">${Math.round(scale*100)}% scale</span>
+      </div>
+      <div class="vp-stage" style="height:${PREVIEW_H * scale}px">
+        <iframe src="${url}" width="${v.w}" height="${PREVIEW_H}"
+          style="width:${v.w}px;height:${PREVIEW_H}px;transform:scale(${scale * zoom});"></iframe>
+        <div class="baseline-overlay"></div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+['input','change'].forEach(ev => {
+  document.getElementById('vp-url').addEventListener('change', buildViewports);
+  document.getElementById('vp-zoom').addEventListener(ev, () => {
+    document.getElementById('vp-zoom-val').textContent = document.getElementById('vp-zoom').value + '%';
+    buildViewports();
+  });
+});
+document.getElementById('vp-baseline').addEventListener('change', buildViewports);
+document.getElementById('vp-reload').addEventListener('click', buildViewports);
+addEventListener('resize', buildViewports);
+buildViewports();
+
+/* ========================= CLAMP GENERATOR ========================= */
+function toRem(px){ return +(px/16).toFixed(4); }
+function buildClamp(minPx, maxPx, vmin, vmax){
+  if (vmax === vmin) return `${toRem(minPx)}rem`;
+  const slope = (maxPx - minPx) / (vmax - vmin);          // px per px viewport
+  const interceptPx = minPx - slope * vmin;               // px at viewport=0
+  const slopeVw = slope * 100;                            // because 1vw = 1% of viewport width
+  return `clamp(${toRem(minPx)}rem, ${toRem(interceptPx)}rem + ${slopeVw.toFixed(3)}vw, ${toRem(maxPx)}rem)`;
+}
+function updateClamp(){
+  const minPx = +document.getElementById('c-min').value;
+  const maxPx = +document.getElementById('c-max').value;
+  const vmin  = +document.getElementById('c-vmin').value;
+  const vmax  = +document.getElementById('c-vmax').value;
+  const css = buildClamp(minPx, maxPx, vmin, vmax);
+  document.getElementById('c-out').textContent = `font-size: ${css};`;
+  document.getElementById('c-demo').style.fontSize = css;
+}
+['c-min','c-max','c-vmin','c-vmax'].forEach(id => document.getElementById(id).addEventListener('input', updateClamp));
+document.getElementById('c-copy').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(document.getElementById('c-out').textContent);
+  const b = document.getElementById('c-copy'); const t = b.textContent;
+  b.textContent = 'Copied!'; setTimeout(()=>b.textContent=t,1200);
+});
+function applyPreset(min,max,vmin=320,vmax=1440,demo){
+  document.getElementById('c-min').value = min;
+  document.getElementById('c-max').value = max;
+  document.getElementById('c-vmin').value = vmin;
+  document.getElementById('c-vmax').value = vmax;
+  if (demo) document.getElementById('c-demo').textContent = demo;
+  updateClamp();
+}
+document.getElementById('c-preset-h1').addEventListener('click',() => applyPreset(32,64,320,1440,'A balanced display heading'));
+document.getElementById('c-preset-body').addEventListener('click',() => applyPreset(16,18,320,1440,'Comfortable body text size.'));
+document.getElementById('c-preset-section').addEventListener('click',() => { applyPreset(40,96,320,1440,'Section vertical padding (3rem ↔ 6rem)'); document.getElementById('c-out').textContent = `padding-block: ${buildClamp(40,96,320,1440)};`; });
+updateClamp();
+// Resize observer to show container width.
+new ResizeObserver(([e]) => { document.getElementById('c-cw').textContent = Math.round(e.contentRect.width)+'px'; })
+  .observe(document.getElementById('c-canvas'));
+
+/* ========================= TYPE SCALE ========================= */
+const TYPE_STEPS = [
+  {name:'--fs-xs',  step:-2},
+  {name:'--fs-sm',  step:-1},
+  {name:'--fs-base',step: 0},
+  {name:'--fs-md',  step: 1},
+  {name:'--fs-lg',  step: 2},
+  {name:'--fs-xl',  step: 3},
+  {name:'--fs-2xl', step: 4},
+  {name:'--fs-3xl', step: 5},
+  {name:'--fs-4xl', step: 6},
+];
+function buildScale(){
+  const base = +document.getElementById('s-base').value;
+  const ratio = +document.getElementById('s-ratio').value;
+  const shrink = +document.getElementById('s-shrink').value;
+  const tbody = document.getElementById('s-body');
+  tbody.innerHTML = '';
+  const cssLines = [':root {'];
+  TYPE_STEPS.forEach(({name, step}) => {
+    const maxRem = +(base * Math.pow(ratio, step)).toFixed(4);
+    const minRem = +(maxRem * (1 - shrink)).toFixed(4);
+    const minPx = minRem * 16, maxPx = maxRem * 16;
+    const css = shrink === 0 ? `${maxRem}rem` : buildClamp(minPx, maxPx, 320, 1440);
+    cssLines.push(`  ${name}: ${css};`);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${name}</code></td>
+      <td><span class="scale-preview" style="font-size:${css}">Aa Bb Cc 123</span></td>
+      <td style="color:var(--muted)">${shrink === 0 ? maxPx.toFixed(1) + 'px' : minPx.toFixed(1) + ' → ' + maxPx.toFixed(1) + 'px'}</td>
+      <td><code>${css}</code></td>`;
+    tbody.appendChild(tr);
+  });
+  cssLines.push('}');
+  document.getElementById('s-css').textContent = cssLines.join('\n');
+}
+['s-base','s-ratio','s-shrink'].forEach(id => document.getElementById(id).addEventListener('input', buildScale));
+buildScale();
+
+/* ========================= SPACING SCALE ========================= */
+const SPACES = [
+  ['--space-1', 4],['--space-2', 8],['--space-3', 12],['--space-4', 16],
+  ['--space-5', 24],['--space-6', 32],['--space-7', 48],['--space-8', 64],
+  ['--space-9', 96],['--space-10', 128],
+];
+(function(){
+  const list = document.getElementById('space-list');
+  const css = [':root {'];
+  SPACES.forEach(([name,px]) => {
+    const rem = (px/16).toFixed(3) + 'rem';
+    css.push(`  ${name}: ${rem};   /* ${px}px */`);
+    const row = document.createElement('div');
+    row.className = 'space-row';
+    row.innerHTML = `<code>${name}</code><div class="space-bar" style="width:${Math.min(px, 200)}px"></div><span style="color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:.8rem">${px}px / ${rem}</span>`;
+    list.appendChild(row);
+  });
+  css.push('}');
+  document.getElementById('space-css').textContent = css.join('\n');
+})();
+
+/* ========================= CHECKLIST ========================= */
+const CHECK_ITEMS = [
+  'No raw px values for font-size — all rem or clamp().',
+  'Body line-height ≥ 1.5, headings 1.1–1.25.',
+  'Paragraph max-width 60–75ch.',
+  'Vertical section padding uses one fluid clamp() token.',
+  'Touch targets at least 44×44px.',
+  'No horizontal scroll at 320px width.',
+  'No layout shift between breakpoints (smooth transition).',
+  'Page works at 200% browser zoom — nothing overlaps.',
+  'Contrast passes WCAG AA (4.5:1 body, 3:1 large text).',
+  'Single accent color, max two font weights.',
+  'Works in both light and dark mode.',
+  'prefers-reduced-motion is honored.',
+  ':focus-visible styles defined on all interactive elements.',
+  'Images have width/height attrs or aspect-ratio wrappers.',
+  'Media queries use em, not px.',
+];
+(function(){
+  const wrap = document.getElementById('checklist');
+  const saved = JSON.parse(localStorage.getItem('sl-check') || '{}');
+  CHECK_ITEMS.forEach((text, i) => {
+    const id = 'chk-' + i;
+    const row = document.createElement('label');
+    row.className = 'check';
+    row.innerHTML = `<input type="checkbox" id="${id}" ${saved[id]?'checked':''}><span>${text}</span>`;
+    row.querySelector('input').addEventListener('change', e => {
+      saved[id] = e.target.checked;
+      localStorage.setItem('sl-check', JSON.stringify(saved));
+      updateScore();
+    });
+    wrap.appendChild(row);
+  });
+  function updateScore(){
+    const n = Object.values(JSON.parse(localStorage.getItem('sl-check')||'{}')).filter(Boolean).length;
+    document.getElementById('check-score').textContent = `${n} / ${CHECK_ITEMS.length}`;
+  }
+  document.getElementById('reset-check').addEventListener('click',()=>{
+    localStorage.removeItem('sl-check');
+    document.querySelectorAll('#checklist input').forEach(i=>i.checked=false);
+    updateScore();
+  });
+  updateScore();
+})();
+</script>
+</body>
+</html>

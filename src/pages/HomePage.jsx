@@ -37,10 +37,6 @@ export default function HomePage({ session }) {
         <div className="home-hero-bg" aria-hidden="true" />
         <div className="container home-hero-grid">
           <div className="home-hero-copy">
-            <div className="home-logo-mark">
-              <img src="/Logo.svg" alt="" />
-              <span>Cielonline</span>
-            </div>
             <p className="home-kicker">Client sites, QR cards, and business tools in one place</p>
             <h1>Run your online presence with less clutter and more control.</h1>
             <p className="home-lead">
@@ -50,8 +46,8 @@ export default function HomePage({ session }) {
               <Link className="btn btn-primary btn-lg" to={session ? "/dashboard" : "/login"}>
                 {session ? "Open Dashboard" : "Log in"}
               </Link>
-              <Link className="btn btn-secondary btn-lg" to="/qr-preview">QR Preview</Link>
-              <Link className="btn btn-secondary btn-lg" to="/admin-preview">Admin Preview</Link>
+              <Link className="btn btn-secondary btn-lg hide-on-mobile" to="/qr-preview">QR Preview</Link>
+              <Link className="btn btn-secondary btn-lg hide-on-mobile" to="/admin-preview">Admin Preview</Link>
             </div>
           </div>
 
@@ -122,7 +118,7 @@ export default function HomePage({ session }) {
           ))}
         </div>
 
-        <div className="home-beta-link-row">
+        <div className="home-beta-link-row hide-on-mobile">
           <a href="/web-builder-beta.html" target="_blank" rel="noreferrer">Open experimental WebBuilder beta</a>
         </div>
       </section>

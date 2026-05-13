@@ -2329,6 +2329,11 @@ input, textarea, select { font: inherit; }
 @media (max-width: 640px) {
   :root { --header-h: 56px; }
 
+  /* Utility: hide on mobile (used for redundant CTAs that already
+     live in the hamburger menu, and for the experimental
+     desktop-only WebBuilder beta link). */
+  .hide-on-mobile { display: none !important; }
+
   .hero-section { padding: 44px 0 36px; }
   .hero-actions { flex-direction: column; gap: 10px; }
   .hero-actions .btn { width: 100%; }

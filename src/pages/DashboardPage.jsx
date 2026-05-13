@@ -68,10 +68,6 @@ export default function DashboardPage() {
   return (
     <main className="container main-space fade-in light-designer-page">
       <section className="light-designer-hero panel">
-        <div className="home-logo-mark">
-          <img src="/Logo.svg" alt="" />
-          <span>Cielonline</span>
-        </div>
         <div>
           <p className="section-kicker">Starter card designer</p>
           <h1>Try the business card layout tool before building a QR code.</h1>
