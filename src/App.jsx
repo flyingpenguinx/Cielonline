@@ -15,7 +15,7 @@ const AdminPreviewPage = lazy(() => import("./pages/AdminPreviewPage"));
 const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
 const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
-const MercadoReviewPage = lazy(() => import("./pages/MercadoReviewPage"));
+const MercadoReviewPage = lazy(() => import("./features/mercado-loco/MercadoReviewPage"));
 
 const MenuIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -91,8 +91,8 @@ export default function App() {
   const location = useLocation();
 
   // Standalone landing pages render their own minimal chrome (no global header).
-  const standalonePaths = ["/mercadoloco"];
-  const isStandalone = standalonePaths.includes(location.pathname);
+  const standalonePaths = ["/ml-qr"];
+  const isStandalone = standalonePaths.includes(location.pathname.toLowerCase());
 
   if (loading) {
     return (
@@ -228,7 +228,7 @@ export default function App() {
         />
         <Route path="/c/:slug" element={<PublicCardPage />} />
         <Route
-          path="/mercadoloco"
+          path="/ML-Qr"
           element={
             <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Cargando...</span></div>}>
               <MercadoReviewPage />

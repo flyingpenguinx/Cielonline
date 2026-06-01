@@ -2,7 +2,7 @@
   MERCADO LOCO REVIEW FORM — GOOGLE APPS SCRIPT EMAIL SETUP
 ================================================================
 
-The "Mercado Loco" review page (URL path: /mercadoloco) collects a
+The "Mercado Loco" review page (URL path: /ML-Qr) collects a
 customer comment and sends it by email to:
 
         rosevillemercado@gmail.com
@@ -112,8 +112,8 @@ it to the browser.
 ----------------------------------------------------------------
   STEP 5 — Test it
 ----------------------------------------------------------------
-1. Open the page in a browser:   https://cielonline.com/mercadoloco
-   (or http://localhost:5173/mercadoloco while developing)
+1. Open the page in a browser:   https://cielonline.com/ML-Qr
+   (or http://localhost:5173/ML-Qr while developing)
 2. Type a test comment and click  "Enviar".
 3. You should see the "¡Gracias por tu comentario!" message and receive
    the test email at rosevillemercado@gmail.com within a minute.
@@ -123,7 +123,7 @@ it to the browser.
 ----------------------------------------------------------------
 In QR.io, point the QR code to the full URL of the page:
 
-      https://cielonline.com/mercadoloco
+      https://cielonline.com/ML-Qr
 
 The page does NOT require login and is not linked anywhere in the
 Cielonline navigation, so it can only be reached by typing the URL

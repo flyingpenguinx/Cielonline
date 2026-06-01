@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import "./mercado.css";
 
 // Endpoint of the Google Apps Script Web App that emails the review to the
 // store. Configure it by setting VITE_MERCADO_REVIEW_ENDPOINT in your
@@ -7,11 +8,22 @@ import { Link } from "react-router-dom";
 const REVIEW_ENDPOINT = import.meta.env.VITE_MERCADO_REVIEW_ENDPOINT || "";
 
 const STORE_NAME = "Mercado Loco";
+const PAGE_TITLE = "Mercado Loco · Opiniones";
 
 export default function MercadoReviewPage() {
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
+
+  // Give this standalone page its own browser-tab title (and keep the
+  // Cielonline favicon) so it looks polished like a professional site.
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = PAGE_TITLE;
+    return () => {
+      document.title = previousTitle;
+    };
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
