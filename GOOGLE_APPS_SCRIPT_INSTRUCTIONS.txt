@@ -1,0 +1,146 @@
+================================================================
+  MERCADO LOCO REVIEW FORM — GOOGLE APPS SCRIPT EMAIL SETUP
+================================================================
+
+The "Mercado Loco" review page (URL path: /mercadoloco) collects a
+customer comment and sends it by email to:
+
+        rosevillemercado@gmail.com
+
+Because a static/single-page site cannot send email on its own, the
+form posts the comment to a free Google Apps Script "Web App" that you
+own. The Web App receives the comment and emails it to you using your
+own Google account. Follow the steps below ONE time to set it up.
+
+----------------------------------------------------------------
+  STEP 1 — Create the Apps Script project
+----------------------------------------------------------------
+1. Sign in to the Google account that owns rosevillemercado@gmail.com
+   (or any Google account you want to send the email FROM).
+2. Go to:  https://script.google.com
+3. Click  "New project".
+4. Give it a name, e.g.  "Mercado Loco Reviews".
+
+----------------------------------------------------------------
+  STEP 2 — Paste the script
+----------------------------------------------------------------
+Delete everything in the editor (the default "myFunction") and paste
+the code below exactly:
+
+------------------------- COPY BELOW -------------------------
+// Email address that should receive the reviews.
+var RECIPIENT = "rosevillemercado@gmail.com";
+
+function doPost(e) {
+  try {
+    var params = (e && e.parameter) ? e.parameter : {};
+    var store   = params.store   || "Mercado Loco";
+    var name    = params.name    || "Anónimo";
+    var comment = params.comment || "";
+
+    if (!comment) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: "empty" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var subject = "Nuevo comentario - " + store;
+    var body =
+      "Tienda: " + store + "\n" +
+      "Nombre: " + name + "\n\n" +
+      "Comentario:\n" + comment + "\n";
+
+    MailApp.sendEmail(RECIPIENT, subject, body);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+------------------------- COPY ABOVE -------------------------
+
+5. Click the floppy-disk "Save" icon.
+
+----------------------------------------------------------------
+  STEP 3 — Deploy as a Web App
+----------------------------------------------------------------
+1. Click  "Deploy"  (top right)  ->  "New deployment".
+2. Click the gear icon next to "Select type"  ->  choose  "Web app".
+3. Fill in:
+      Description:       Mercado Loco Reviews
+      Execute as:        Me (your@gmail.com)
+      Who has access:    Anyone
+   (Both settings above are required so the public form can reach it.)
+4. Click  "Deploy".
+5. Google will ask you to authorize the script. Click
+   "Authorize access", choose your account, and allow the permissions
+   (it needs permission to send email on your behalf).
+      - If you see "Google hasn't verified this app", click
+        "Advanced"  ->  "Go to Mercado Loco Reviews (unsafe)".
+        This is safe because it is YOUR own script.
+6. After deploying, copy the  "Web app URL".  It looks like:
+      https://script.google.com/macros/s/AKfyc..................../exec
+
+   KEEP THIS URL — you need it in Step 4.
+
+----------------------------------------------------------------
+  STEP 4 — Connect the URL to the Cielonline site
+----------------------------------------------------------------
+The review page reads the Web App URL from an environment variable
+named  VITE_MERCADO_REVIEW_ENDPOINT.
+
+Option A — Hosting provider (recommended, e.g. Vercel):
+  1. Open your project dashboard  ->  Settings  ->  Environment Variables.
+  2. Add a new variable:
+        Name:   VITE_MERCADO_REVIEW_ENDPOINT
+        Value:  (paste the Web app URL from Step 3)
+  3. Redeploy the site so the new variable takes effect.
+
+Option B — Local development / .env file:
+  1. In the project root, create (or edit) a file named  .env
+  2. Add this line:
+        VITE_MERCADO_REVIEW_ENDPOINT=https://script.google.com/macros/s/AKfyc..../exec
+  3. Restart  npm run dev .
+
+NOTE: The variable name MUST start with "VITE_" or Vite will not expose
+it to the browser.
+
+----------------------------------------------------------------
+  STEP 5 — Test it
+----------------------------------------------------------------
+1. Open the page in a browser:   https://cielonline.com/mercadoloco
+   (or http://localhost:5173/mercadoloco while developing)
+2. Type a test comment and click  "Enviar".
+3. You should see the "¡Gracias por tu comentario!" message and receive
+   the test email at rosevillemercado@gmail.com within a minute.
+
+----------------------------------------------------------------
+  QR CODE
+----------------------------------------------------------------
+In QR.io, point the QR code to the full URL of the page:
+
+      https://cielonline.com/mercadoloco
+
+The page does NOT require login and is not linked anywhere in the
+Cielonline navigation, so it can only be reached by typing the URL
+directly or by scanning the QR code.
+
+----------------------------------------------------------------
+  TROUBLESHOOTING
+----------------------------------------------------------------
+* No email arrives:
+    - Make sure "Who has access" is set to "Anyone" (Step 3.3).
+    - Re-check that VITE_MERCADO_REVIEW_ENDPOINT is the "/exec" URL,
+      not the "/dev" URL.
+    - Confirm you redeployed the site after adding the variable.
+* You changed the script later:
+    - Each time you edit the script, click Deploy -> "Manage
+      deployments" -> edit (pencil) -> "New version" -> Deploy, so the
+      live URL serves your latest code.
+* Gmail sending limits: a normal Gmail account can send up to ~100
+  emails/day via Apps Script, which is far more than enough here.
+================================================================

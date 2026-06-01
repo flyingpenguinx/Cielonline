@@ -6819,3 +6819,119 @@ input, textarea, select { font: inherit; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ================================================================
+   MERCADO LOCO — Standalone Public Review Landing
+   ================================================================ */
+.mercado-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(37, 99, 235, 0.06), transparent 60%),
+    var(--bg);
+}
+.mercado-topbar {
+  display: flex;
+  align-items: center;
+  padding: clamp(16px, 4vw, 28px) clamp(16px, 5vw, 40px);
+}
+.mercado-brand {
+  display: inline-flex;
+  align-items: center;
+}
+.mercado-brand-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: transform var(--transition-fast);
+}
+.mercado-brand:hover .mercado-brand-logo {
+  transform: scale(1.04);
+}
+.mercado-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 3vw, 24px) clamp(16px, 5vw, 40px) clamp(24px, 5vw, 48px);
+}
+.mercado-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: clamp(24px, 5vw, 44px);
+}
+.mercado-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.mercado-title {
+  font-size: clamp(24px, 5vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.mercado-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+.mercado-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.mercado-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+.mercado-error {
+  color: #b91c1c;
+  font-size: 14px;
+}
+.mercado-success {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+.mercado-success h2 {
+  font-size: 22px;
+  color: var(--text);
+}
+.mercado-success p {
+  color: var(--text-secondary);
+}
+.mercado-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px clamp(20px, 4vw, 32px);
+}
+.mercado-powered {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 0.32;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  transition: opacity var(--transition-fast);
+}
+.mercado-powered:hover {
+  opacity: 0.55;
+}
+.mercado-powered-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}

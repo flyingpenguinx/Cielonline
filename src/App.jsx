@@ -15,6 +15,7 @@ const AdminPreviewPage = lazy(() => import("./pages/AdminPreviewPage"));
 const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
 const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
+const MercadoReviewPage = lazy(() => import("./pages/MercadoReviewPage"));
 
 const MenuIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,6 +88,11 @@ function AppHeader({ session, signOut }) {
 
 export default function App() {
   const { loading, session, signInWithEmail, signInWithPassword, signUpWithPassword, signOut } = useAuth();
+  const location = useLocation();
+
+  // Standalone landing pages render their own minimal chrome (no global header).
+  const standalonePaths = ["/mercadoloco"];
+  const isStandalone = standalonePaths.includes(location.pathname);
 
   if (loading) {
     return (
@@ -99,7 +105,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <AppHeader session={session} signOut={signOut} />
+      {!isStandalone && <AppHeader session={session} signOut={signOut} />}
       <Routes>
         <Route path="/" element={<HomePage session={session} />} />
         <Route
@@ -221,6 +227,14 @@ export default function App() {
           }
         />
         <Route path="/c/:slug" element={<PublicCardPage />} />
+        <Route
+          path="/mercadoloco"
+          element={
+            <Suspense fallback={<div className="loading-state"><div className="loading-spinner" /><span>Cargando...</span></div>}>
+              <MercadoReviewPage />
+            </Suspense>
+          }
+        />
       </Routes>
     </div>
   );
