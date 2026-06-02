@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import "../styles/mercado.css";
 
 // Endpoint of the Google Apps Script Web App that emails the review to the
@@ -9,14 +8,14 @@ const REVIEW_ENDPOINT = import.meta.env.VITE_MERCADO_REVIEW_ENDPOINT || "";
 
 // The store is fixed for this page — customers reach it by scanning the
 // store's own QR code, so they never need to pick or type a store name.
-const STORE_NAME = "Mercado Loco";
+const STORE_NAME = "Mercado Loco Roseville";
 
 // All user-facing text in both languages. Spanish is the default; the
 // customer can switch to English with one tap. Nothing here mentions how
 // the form works behind the scenes.
 const TEXT = {
   es: {
-    pageTitle: "Mercado Loco · Opiniones",
+    pageTitle: "Mercado Loco Roseville · Opiniones",
     langButton: "English",
     langButtonLabel: "Cambiar a inglés",
     title: "Cuéntanos cómo lo estamos haciendo",
@@ -33,7 +32,7 @@ const TEXT = {
     close: "Cerrar",
   },
   en: {
-    pageTitle: "Mercado Loco · Reviews",
+    pageTitle: "Mercado Loco Roseville · Reviews",
     langButton: "Español",
     langButtonLabel: "Switch to Spanish",
     title: "Tell us how we're doing",
@@ -121,9 +120,6 @@ export default function MercadoReviewPage() {
   return (
     <div className="mercado-page">
       <header className="mercado-topbar">
-        <Link to="/" className="mercado-brand" aria-label="Cielonline">
-          <img src="/Logo.svg" alt="Cielonline" className="mercado-brand-logo" />
-        </Link>
         <button
           type="button"
           className="mercado-lang"
@@ -194,10 +190,10 @@ export default function MercadoReviewPage() {
       </main>
 
       <footer className="mercado-footer">
-        <Link className="mercado-powered" to="/">
+        <a className="mercado-powered" href="https://cielonline.com">
           <img src="/Logo.svg" alt="" aria-hidden="true" className="mercado-powered-logo" />
           <span>powered by Cielonline</span>
-        </Link>
+        </a>
       </footer>
 
       {status === "success" && (
