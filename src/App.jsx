@@ -15,7 +15,7 @@ const AdminPreviewPage = lazy(() => import("./pages/AdminPreviewPage"));
 const SiteEditorPage = lazy(() => import("./pages/SiteEditorPage"));
 const PublicSitePage = lazy(() => import("./pages/PublicSitePage"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
-const MercadoReviewPage = lazy(() => import("./features/mercado-loco/MercadoReviewPage"));
+const MercadoReviewPage = lazy(() => import("./pages/MercadoReviewPage"));
 
 const MenuIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

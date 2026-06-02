@@ -1,5 +1,3 @@
-/* MOVED: styles now live at src/styles/mercado.css. This leftover file is
-   imported by nothing and can be deleted along with this old folder. */
 /* ================================================================
    MERCADO LOCO — Standalone Public Review Landing
    Mobile-first. This page is used almost exclusively on phones, so
@@ -21,6 +19,8 @@
 .mercado-topbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 18px 20px;
 }
 .mercado-brand {
@@ -35,6 +35,31 @@
   transition: transform var(--transition-fast);
 }
 .mercado-brand:active .mercado-brand-logo {
+  transform: scale(0.96);
+}
+
+/* --- Language toggle (top-right) --- */
+.mercado-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+.mercado-lang:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.mercado-lang:active {
   transform: scale(0.96);
 }
 
@@ -80,6 +105,16 @@
   margin-bottom: 22px;
 }
 
+/* Honeypot anti-bot field — visually hidden, never filled by real users */
+.mercado-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .mercado-form {
   display: flex;
   flex-direction: column;
@@ -109,19 +144,83 @@
   margin: 0;
 }
 
-.mercado-success {
+/* --- Success modal popup --- */
+.mercado-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  animation: mercado-fade 0.2s ease;
+}
+.mercado-modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border-radius: var(--radius-xl, var(--radius-lg));
+  box-shadow: var(--shadow-lg);
+  padding: 32px 26px 26px;
+  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 12px;
 }
-.mercado-success h2 {
-  font-size: 20px;
+.mercado-modal-title {
+  font-size: 21px;
   color: var(--text);
+  margin: 4px 0 0;
 }
-.mercado-success p {
+.mercado-modal-body {
   font-size: 15px;
   color: var(--text-secondary);
+  margin: 0;
+}
+.mercado-modal-close {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 48px;
+}
+
+.pop-in {
+  animation: mercado-pop 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+@keyframes mercado-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mercado-pop {
+  0% { opacity: 0; transform: scale(0.9) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* --- Animated success checkmark --- */
+.mercado-check {
+  width: 76px;
+  height: 76px;
+}
+.mercado-check-circle {
+  stroke: #16a34a;
+  stroke-width: 3;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: mercado-stroke 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+.mercado-check-mark {
+  stroke: #16a34a;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: mercado-stroke 0.35s cubic-bezier(0.65, 0, 0.45, 1) 0.45s forwards;
+}
+@keyframes mercado-stroke {
+  to { stroke-dashoffset: 0; }
 }
 
 .mercado-footer {
