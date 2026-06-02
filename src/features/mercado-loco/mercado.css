@@ -1,0 +1,168 @@
+/* ================================================================
+   MERCADO LOCO — Standalone Public Review Landing
+   Mobile-first. This page is used almost exclusively on phones, so
+   spacing and font sizes are tuned for small screens first and only
+   scale up gently on larger viewports.
+   ================================================================ */
+.mercado-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1000px 520px at 50% -10%, rgba(37, 99, 235, 0.06), transparent 60%),
+    var(--bg);
+  /* Respect notches / home indicators on mobile devices. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mercado-topbar {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px;
+}
+.mercado-brand {
+  display: inline-flex;
+  align-items: center;
+}
+.mercado-brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: transform var(--transition-fast);
+}
+.mercado-brand:active .mercado-brand-logo {
+  transform: scale(0.96);
+}
+
+.mercado-main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8px 18px 28px;
+}
+
+.mercado-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 24px 20px;
+}
+
+.mercado-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.mercado-title {
+  /* Capped so long Spanish strings never get so large they reflow
+     the layout when the keyboard opens on mobile. */
+  font-size: clamp(22px, 6vw, 28px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+.mercado-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 22px;
+}
+
+.mercado-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mercado-form .field span {
+  font-size: 14px;
+}
+.mercado-form input,
+.mercado-form textarea {
+  /* 16px keeps iOS Safari from auto-zooming when a field is focused,
+     which otherwise shifts the whole layout around. */
+  font-size: 16px;
+}
+.mercado-form textarea {
+  resize: vertical;
+  min-height: 128px;
+}
+.mercado-submit {
+  width: 100%;
+  margin-top: 4px;
+  min-height: 48px; /* comfortable mobile tap target */
+}
+.mercado-error {
+  color: #b91c1c;
+  font-size: 14px;
+  margin: 0;
+}
+
+.mercado-success {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+.mercado-success h2 {
+  font-size: 20px;
+  color: var(--text);
+}
+.mercado-success p {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.mercado-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px 22px;
+}
+.mercado-powered {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 0.32;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  transition: opacity var(--transition-fast);
+}
+.mercado-powered:active {
+  opacity: 0.55;
+}
+.mercado-powered-logo {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
+/* --- Larger screens: gently increase breathing room only --- */
+@media (min-width: 600px) {
+  .mercado-topbar {
+    padding: 26px 32px;
+  }
+  .mercado-brand-logo {
+    width: 44px;
+    height: 44px;
+  }
+  .mercado-main {
+    align-items: center;
+    padding: 16px 32px 44px;
+  }
+  .mercado-card {
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: 40px 36px;
+  }
+}
