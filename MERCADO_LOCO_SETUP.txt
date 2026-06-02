@@ -1,9 +1,3 @@
-################################################################
-  MOVED: the up-to-date setup guide is now MERCADO_LOCO_SETUP.txt
-  at the repository root. This old copy can be deleted along with
-  the src/features/mercado-loco/ folder.
-################################################################
-
 ================================================================
   MERCADO LOCO REVIEW FORM — GOOGLE APPS SCRIPT EMAIL SETUP
 ================================================================
@@ -12,6 +6,10 @@ The "Mercado Loco" review page (URL path: /ML-Qr) collects a
 customer comment and sends it by email to:
 
         rosevillemercado@gmail.com
+
+Source files:
+  - Page:   src/pages/MercadoReviewPage.jsx
+  - Styles: src/styles/mercado.css
 
 Because a static/single-page site cannot send email on its own, the
 form posts the comment to a free Google Apps Script "Web App" that you
@@ -34,38 +32,77 @@ Delete everything in the editor (the default "myFunction") and paste
 the code below exactly:
 
 ------------------------- COPY BELOW -------------------------
-// Email address that should receive the reviews.
+// ─────────────────────────────────────────────────────────────
+// CONFIGURATION — edit only these two lines
+// ─────────────────────────────────────────────────────────────
+// The Google account you deploy this script with is the SENDER.
+// RECIPIENT is where the review emails land (the store inbox).
 var RECIPIENT = "rosevillemercado@gmail.com";
+var STORE     = "Mercado Loco";
+
+// ─────────────────────────────────────────────────────────────
+// SPAM / BOT PROTECTION — no need to change these
+// ─────────────────────────────────────────────────────────────
+var MAX_SUBMISSIONS = 20;    // max emails allowed...
+var WINDOW_SECONDS  = 3600;  // ...per hour (resets automatically)
 
 function doPost(e) {
   try {
-    var params = (e && e.parameter) ? e.parameter : {};
-    var store   = params.store   || "Mercado Loco";
-    var name    = params.name    || "Anónimo";
-    var comment = params.comment || "";
+    var params  = (e && e.parameter) ? e.parameter : {};
 
-    if (!comment) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: false, error: "empty" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
+    // 1. HONEYPOT — hidden field only bots fill out.
+    //    Real users never see it; bots fill every field.
+    //    We silently accept so bots don't know they were blocked.
+    var honey = params.honey || "";
+    if (honey !== "") return silent();
 
-    var subject = "Nuevo comentario - " + store;
+    var name    = (params.name    || "Anónimo").trim();
+    var comment = (params.comment || "").trim();
+
+    // 2. CONTENT VALIDATION — reject empty, too short, or absurdly long
+    if (comment.length < 3 || comment.length > 2000) return silent();
+
+    // 3. RATE LIMITING — uses Google's built-in CacheService
+    //    Caps total emails to MAX_SUBMISSIONS per WINDOW_SECONDS
+    var cache = CacheService.getScriptCache();
+    var count = parseInt(cache.get("ml_count") || "0", 10);
+    if (count >= MAX_SUBMISSIONS) return silent();
+    cache.put("ml_count", String(count + 1), WINDOW_SECONDS);
+
+    // 4. SEND EMAIL
+    var subject = "Nuevo comentario - " + STORE;
     var body =
-      "Tienda: " + store + "\n" +
-      "Nombre: " + name + "\n\n" +
+      "Tienda: "     + STORE   + "\n" +
+      "Nombre: "     + name    + "\n\n" +
       "Comentario:\n" + comment + "\n";
 
-    MailApp.sendEmail(RECIPIENT, subject, body);
+    // replyTo lets you reply directly from rosevillemercado@gmail.com
+    MailApp.sendEmail({
+      to:      RECIPIENT,
+      subject: subject,
+      body:    body,
+      replyTo: RECIPIENT,
+    });
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ok();
   } catch (err) {
     return ContentService
       .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+function ok() {
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function silent() {
+  // Returns success so bots/scanners don't know they were blocked.
+  return ok();
 }
 ------------------------- COPY ABOVE -------------------------
 
