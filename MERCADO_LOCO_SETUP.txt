@@ -5,7 +5,7 @@
 The "Mercado Loco" review page (URL path: /ML-Qr) collects a
 customer comment and sends it by email to:
 
-        rosevillemercado@gmail.com
+        rosevillemercadoloco@gmail.com
 
 Source files:
   - Page:   src/pages/MercadoReviewPage.jsx
@@ -19,7 +19,7 @@ own Google account. Follow the steps below ONE time to set it up.
 ----------------------------------------------------------------
   STEP 1 — Create the Apps Script project
 ----------------------------------------------------------------
-1. Sign in to the Google account that owns rosevillemercado@gmail.com
+1. Sign in to the Google account that owns rosevillemercadoloco@gmail.com
    (or any Google account you want to send the email FROM).
 2. Go to:  https://script.google.com
 3. Click  "New project".
@@ -37,8 +37,8 @@ the code below exactly:
 // ─────────────────────────────────────────────────────────────
 // The Google account you deploy this script with is the SENDER.
 // RECIPIENT is where the review emails land (the store inbox).
-var RECIPIENT = "rosevillemercado@gmail.com";
-var STORE     = "Mercado Loco";
+var RECIPIENT = "rosevillemercadoloco@gmail.com";
+var STORE     = "Mercado Loco Roseville";
 
 // ─────────────────────────────────────────────────────────────
 // SPAM / BOT PROTECTION — no need to change these
@@ -76,7 +76,7 @@ function doPost(e) {
       "Nombre: "     + name    + "\n\n" +
       "Comentario:\n" + comment + "\n";
 
-    // replyTo lets you reply directly from rosevillemercado@gmail.com
+    // replyTo lets you reply directly from rosevillemercadoloco@gmail.com
     MailApp.sendEmail({
       to:      RECIPIENT,
       subject: subject,
@@ -159,7 +159,7 @@ it to the browser.
    (or http://localhost:5173/ML-Qr while developing)
 2. Type a test comment and click  "Enviar".
 3. You should see the "¡Gracias por tu comentario!" message and receive
-   the test email at rosevillemercado@gmail.com within a minute.
+   the test email at rosevillemercadoloco@gmail.com within a minute.
 
 ----------------------------------------------------------------
   QR CODE

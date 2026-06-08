@@ -19,7 +19,7 @@
 .mercado-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding: 18px 20px;
 }
@@ -79,6 +79,17 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 24px 20px;
+}
+
+/* Restaurant logo inside the question card. Kept intentionally small
+   because the source image is low resolution and looks poor when scaled up. */
+.mercado-store-logo {
+  display: block;
+  width: auto;
+  height: 52px;
+  max-width: 150px;
+  object-fit: contain;
+  margin: 0 0 14px;
 }
 
 .mercado-eyebrow {
