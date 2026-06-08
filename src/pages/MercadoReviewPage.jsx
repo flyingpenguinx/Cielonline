@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../styles/mercado.css";
+import storeLogo from "../features/mercado-loco/ML.jpg";
 
 // Endpoint of the Google Apps Script Web App that emails the review to the
 // store. Configure it by setting VITE_MERCADO_REVIEW_ENDPOINT in your
@@ -133,6 +134,7 @@ export default function MercadoReviewPage() {
 
       <main className="mercado-main">
         <section className="mercado-card fade-in">
+          <img src={storeLogo} alt={STORE_NAME} className="mercado-store-logo" />
           <p className="mercado-eyebrow">{STORE_NAME}</p>
           <h1 className="mercado-title">{t.title}</h1>
           <p className="mercado-subtitle">{t.subtitle}</p>

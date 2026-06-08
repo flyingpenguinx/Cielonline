@@ -81,6 +81,17 @@
   padding: 24px 20px;
 }
 
+/* Restaurant logo inside the question card. Kept intentionally small
+   because the source image is low resolution and looks poor when scaled up. */
+.mercado-store-logo {
+  display: block;
+  width: auto;
+  height: 52px;
+  max-width: 150px;
+  object-fit: contain;
+  margin: 0 0 14px;
+}
+
 .mercado-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;
